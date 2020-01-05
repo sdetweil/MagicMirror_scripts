@@ -121,10 +121,12 @@ if [ -d ~/MagicMirror ]; then
 		# make sure git respones are in english, so code works
 		if [ "$lang." != "en_US.UTF-8." ]; then
        echo not english or locale not set, set git alias >>$logfile
-			 if [ "$LC_ALL." == "." ]; then
-					alias git='LANGUAGE=en_US.UTF-8 git' >>$logfile
+			 if [ "$LC_ALL." != "." ]; then
+					alias git='LC_ALL=en_US.UTF-8 git' >>$logfile					
+			 elif [ "$LANG." != "." ]; then
+					alias git='LANG=en_US.UTF-8 git' >>$logfile
 			 else
-					alias git='LC_ALL=en_US.UTF-8 git' >>$logfile
+					alias git='LANGUAGE=en_US.UTF-8 git' >>$logfile
 			 fi
 			 alias >>$logfile
 		fi
