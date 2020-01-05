@@ -244,7 +244,7 @@ if [ -d ~/MagicMirror ]; then
 									echo "updating MagicMirror runtime, please wait" | tee -a $logfile
 									npm install $forced_arch 2>&1 | tee -a $logfile
 									done_update=`date +"completed - %a %b %e %H:%M:%S %Z %Y"`
-									echo npm install $done_update on base >> $ logfile
+									echo npm install $done_update on base >> $logfile
 								fi
 								# process updates for modules after base changed
 								cd modules
