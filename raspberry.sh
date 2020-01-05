@@ -42,32 +42,36 @@ trim() {
     echo -n "$var"
 }
 
-
+cd $HOME
 
 mac=$(uname -s)
-if [ $mac == 'Darwin' ]; then
-  echo this is a mac | tee -a $logfile
-	cmd=greadlink
-else
-	cmd=readlink
-fi
-
-
-# put the log where the script is located
-logdir=$(dirname $($cmd -f "$0"))
-# if the script was execute from the web
-if [[ $logdir != *"MagicMirror/installers"* ]]; then
-	# use the MagicMirror/installers folder, if setup
-	if [ -d MagicMirror ]; then
-		cd ~/MagicMirror/installers >/dev/null
-			logdir=$(pwd)
-		cd - >/dev/null
+if [ 0 -eq 1 ]; then 
+	if [ "$0" == "bash" ]; then
+		logdir=.
 	else
-	  # use the users home folder if initial install
-	  logdir=$HOME
+		if [ $mac == 'Darwin' ]; then
+			echo this is a mac >> $logfile
+			logdir=$(dirname "$0")
+		else
+			# put the log where the script is located
+				logdir=$(dirname $(readlink -f "$0"))
+		fi
 	fi
-fi
-logfile=$logdir/install.log
+
+	# if the script was execute from the web
+	if [[ $logdir != *"MagicMirror/installers"* ]]; then
+		# use the MagicMirror/installers folder, if setup
+		if [ -d MagicMirror ]; then
+			cd ~/MagicMirror/installers >/dev/null
+				logdir=$(pwd)
+			cd - >/dev/null
+		else
+			# use the users home folder if initial install
+			logdir=$HOME
+		fi
+	fi
+fi 
+logfile=$HOME/install.log
 echo install log being saved to $logfile
 
 # Determine which Pi is running.
@@ -122,7 +126,7 @@ if [ $mac != 'Darwin' ]; then
 		upgrade=$true
 	fi
 	if [ $upgrade -eq $true ]; then
-	   upgrade_result=$(sudo apt-get upgrade 2>&1)
+	   upgrade_result=$(sudo apt-get upgrade --assume-yes 2>&1)
 		 upgrade_rc=$?
 		 echo apt upgrade result ="rc=$upgrade_rc $upgrade_result" >> $logfile
 	fi
