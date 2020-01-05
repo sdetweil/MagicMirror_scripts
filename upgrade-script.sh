@@ -131,7 +131,7 @@ if [ -d ~/MagicMirror ]; then
 			 alias >>$logfile
 		fi
 		# get the git remote name
-		remote=$(git remote 2>/dev/null | awk '{print $1}')
+		remote=$(git remote 2>/dev/null | grep -i michmich | grep fetch | awk '{print $1}')
 
 		# if remote name set
 		if [ "$remote." != "." ]; then
