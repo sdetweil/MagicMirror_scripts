@@ -117,7 +117,7 @@ if [ -d ~/MagicMirror ]; then
 			cp -p custom.css save_custom.css
 		cd - >/dev/null
 		save_alias=$(alias git 2>/dev/null)
-		lang=$(locale | grep LANGUAGE | awk -F= '{print $2}')
+		lang=$(locale | grep 'LANG=' | awk -F= '{print $2}')
 		# make sure git respones are in english, so code works
 		if [ "$lang." != "en_US.UTF-8." ]; then
        echo not english or locale not set, set git alias >>$logfile
@@ -126,7 +126,7 @@ if [ -d ~/MagicMirror ]; then
 			 else
 					alias git='LC_ALL=en_US.UTF-8 git' >>$logfile
 			 fi
-			 #alias >>$logfile
+			 alias >>$logfile
 		fi
 		# get the git remote name
 		remote=$(git remote 2>/dev/null | awk '{print $1}')
@@ -256,7 +256,7 @@ if [ -d ~/MagicMirror ]; then
 
 												 if [ ! -f ~/MagicMirror/installers/dumpactivemodules.js ]; then
 														echo downloading dumpactivemodules script >> $logfile
-														curl -sL https://www.dropbox.com/s/wwe6bfg2lcjmj43/dumpactivemodules.js?dl=0 > ~/MagicMirror/installers/dumpactivemodules.js
+														curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/dumpactivemodules.js> ~/MagicMirror/installers/dumpactivemodules.js
 														justloaded=true
 												 fi
 										modules=$(node ../installers/dumpactivemodules.js)
