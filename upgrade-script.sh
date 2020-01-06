@@ -117,19 +117,12 @@ if [ -d ~/MagicMirror ]; then
 			cp -p custom.css save_custom.css
 		cd - >/dev/null
 		save_alias=$(alias git 2>/dev/null)
-		lang=$(locale | grep 'LANG=' | awk -F= '{print $2}')
+		#lang=$(locale | egrep -e 'LANG | LC_ALL' | awk -F= '{print $2}')
 		# make sure git respones are in english, so code works
-		if [ "$lang." != "en_US.UTF-8." ]; then
-       echo not english or locale not set, set git alias >>$logfile
-			 if [ "$LC_ALL." != "." ]; then
-					alias git='LC_ALL=en_US.UTF-8 git' >>$logfile					
-			 elif [ "$LANG." != "." ]; then
-					alias git='LANG=en_US.UTF-8 git' >>$logfile
-			 else
-					alias git='LANGUAGE=en_US.UTF-8 git' >>$logfile
-			 fi
-			 alias >>$logfile
-		fi
+		#if [ "$lang." != "en_US.UTF-8." ]; then
+    #   echo not english or locale not set, set git alias >>$logfile
+			 alias git='LC_ALL=C git' >>$logfile
+		#fi
 		# get the git remote name
 		remote=$(git remote -v 2>/dev/null | grep -i michmich | grep fetch | awk '{print $1}')
 
@@ -329,7 +322,7 @@ if [ -d ~/MagicMirror ]; then
 			cp -p save_custom.css custom.css
 			rm save_custom.css
 		cd - >/dev/null
-		if [ "$lang." != "en_US.UTF-8." ]; then
+		#if [ "$lang." != "en_US.UTF-8." ]; then
 		   if [ "$save_alias." != "." ]; then
 			    echo restoring git alias >>$logfile
 			    $save_alias >/dev/null
@@ -337,7 +330,7 @@ if [ -d ~/MagicMirror ]; then
 			    echo removing git alias >>$logfile
 			    unalias git >/dev/null
 			 fi
-		fi
+		#fi
 	IFS=$SAVEIFS   # Restore IFS
 
 	if [ $stashed == $true ]; then
