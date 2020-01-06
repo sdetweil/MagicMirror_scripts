@@ -113,8 +113,10 @@ if [ -d ~/MagicMirror ]; then
 
 		# save custom.css
 		cd css
-			echo "saving custom.css" | tee -a $logfile
-			cp -p custom.css save_custom.css
+			if [ -f custom.css ]; then 		
+				echo "saving custom.css" | tee -a $logfile
+				cp -p custom.css save_custom.css 
+			fi 
 		cd - >/dev/null
 		save_alias=$(alias git 2>/dev/null)
 		#lang=$(locale | egrep -e 'LANG | LC_ALL' | awk -F= '{print $2}')
@@ -187,7 +189,7 @@ if [ -d ~/MagicMirror ]; then
 						echo save/restore files selection = $choice >> $logfile
 						if [[ $choice =~ ^[Yy]$ ]]; then
 						  git_user=$(git config --global --get user.email)
-							if [ "git_user." == "." ]; then
+							if [ "$git_user." == "." ]; then
 							   git_user_name="-c user.name=upgrade_script"
 								 git_user_email="-c user.email=script@upgrade.com"
 							fi
@@ -327,9 +329,11 @@ if [ -d ~/MagicMirror ]; then
 		# should be in MagicMirror base
 		cd css
 			# restore  custom.css
-			echo "restoring custom.css" | tee -a $logfile
-			cp -p save_custom.css custom.css
-			rm save_custom.css
+			if [ -f save_custom.css ]; then 			
+				echo "restoring custom.css" | tee -a $logfile
+				cp -p save_custom.css custom.css 
+				rm save_custom.css
+			fi 
 		cd - >/dev/null
 		#if [ "$lang." != "en_US.UTF-8." ]; then
 		   if [ "$save_alias." != "." ]; then
@@ -337,7 +341,7 @@ if [ -d ~/MagicMirror ]; then
 			    $save_alias >/dev/null
 			 else
 			    echo removing git alias >>$logfile
-			    unalias git >/dev/null
+			    #unalias git >/dev/null
 			 fi
 		#fi
 	IFS=$SAVEIFS   # Restore IFS
