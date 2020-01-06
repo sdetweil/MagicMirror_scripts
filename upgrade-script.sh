@@ -121,7 +121,7 @@ if [ -d ~/MagicMirror ]; then
 		# make sure git respones are in english, so code works
 		#if [ "$lang." != "en_US.UTF-8." ]; then
     #   echo not english or locale not set, set git alias >>$logfile
-			 alias git='LC_ALL=C git' >>$logfile
+		#	 alias git='LC_ALL=C git' >>$logfile
 		#fi
 		# get the git remote name
 		remote=$(git remote -v 2>/dev/null | grep -i michmich | grep fetch | awk '{print $1}')
@@ -134,6 +134,15 @@ if [ -d ~/MagicMirror ]; then
 		  # get the local and remote package.json versions
 			local_version=$(grep -m1 version package.json | awk -F\" '{print $4}')
 			remote_version=$(curl -s https://raw.githubusercontent.com/MichMich/MagicMirror/master/package.json | grep -m1 version | awk -F\" '{print $4}')
+			
+			# if on 2.9
+			if [ $local_version == '2.9.0' ]; then 
+			  # and the activemodule js file is loaded
+				if [ -f installers/dumpactivemodules.js ]; then
+				  # erase cause the fetch will pull another, and the merge will fail
+					rm installers/dumpactivemodules.js
+			  fi 
+			fi
 
 			# only change if they are different
 			if [ "$local_version." != "$remote_version." -o $force == $true -o $test_run == $true ]; then
