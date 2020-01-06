@@ -150,10 +150,10 @@ if [ -d ~/MagicMirror ]; then
 					current_branch=$(git branch | grep "*" | awk '{print $2}')
 					echo current branch = $current_branch >>$logfile
 
-					git status 2>&1 >>$logfile
+					LC_ALL=C git status 2>&1 >>$logfile
 
 					# get the names of the files that are different locally
-					diffs=$(git status 2>&1 | grep modified | awk -F: '{print $2}')
+					diffs=$(LC_ALL=C git status 2>&1 | grep modified | awk -F: '{print $2}')
 
 					# split names into an array
 					diffs=($diffs) # split to array $diffs
@@ -201,7 +201,7 @@ if [ -d ~/MagicMirror ]; then
 					fi
 
 					# lets test merge, in memory, no changes to working directory or local repo
-					test_merge_output=$(git merge-tree `git merge-base $current_branch HEAD` HEAD $current_branch | grep "^<<<<<<<\|changed in both")
+					test_merge_output=$(LC_ALL=C git merge-tree `git merge-base $current_branch HEAD` HEAD $current_branch | grep "^<<<<<<<\|changed in both")
 					echo "test merge result rc='$test_merge_output' , if empty, no conflicts" >> $logfile
 
 					# if there were no conflicts reported
@@ -211,7 +211,7 @@ if [ -d ~/MagicMirror ]; then
 							# go ahead and merge now
 							echo "executing merge, apply specified" >> $logfile
 							# get the text output of merge
-							merge_output=$(git merge $remote/$current_branch 2>&1)
+							merge_output=$(LC_ALL=C git merge $remote/$current_branch 2>&1)
 							# and its return code
 							merge_result=$?
 							# make any long line readable
