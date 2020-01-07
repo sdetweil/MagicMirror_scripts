@@ -126,7 +126,7 @@ if [ $mac != 'Darwin' ]; then
 		upgrade=$true
 	fi
 	if [ $upgrade -eq $true ]; then
-	   upgrade_result=$(sudo apt-get upgrade --assume-yes 2>&1)
+	   upgrade_result=$(sudo apt-get --assume-yes upgrade  2>&1)
 		 upgrade_rc=$?
 		 echo apt upgrade result ="rc=$upgrade_rc $upgrade_result" >> $logfile
 	fi
