@@ -187,13 +187,15 @@ if [ -d ~/MagicMirror ]; then
 						fi
 						read -p "do you want to save these files for later   (Y/n)?" choice
 						echo save/restore files selection = $choice >> $logfile
+						set_username=$false
 						if [[ $choice =~ ^[Yy]$ ]]; then
 						  git_user=$(git config --global --get user.email)
 							if [ "$git_user." == "." ]; then
-							   git_user_name="-c user.name=upgrade_script"
-								 git_user_email="-c user.email=script@upgrade.com"
+							   set_username=$true
+							    git config --global user.name "upgrade_script"
+								  git config --global user.email "script@upgrade.com"
 							fi
-							git $git_user_name $git_user_email stash >>$logfile
+							git stash >>$logfile
 							stashed=$true
 						else
 							for file in "${diffs[@]}"
@@ -362,6 +364,10 @@ if [ -d ~/MagicMirror ]; then
 			 echo WARNING..
 			 echo WARNING.. either will overlay the file just installed by the update
 			 echo WARNING..
+			 if [ $set_username == $true ]; then
+			    git config --global --unset user.name >>/$logfile
+					git config --global --unset user.email >>/$logfile
+			 fi 
 		 fi
 	fi
 	# return to original folder
