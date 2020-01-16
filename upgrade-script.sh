@@ -186,6 +186,7 @@ if [ -d ~/MagicMirror ]; then
 							echo "any *-lock.json files do not need to be saved"
 						fi
 						read -p "do you want to save these files for later   (Y/n)?" choice
+						choice="${choice:=y}"
 						echo save/restore files selection = $choice >> $logfile
 						set_username=$false
 						if [[ $choice =~ ^[Yy]$ ]]; then

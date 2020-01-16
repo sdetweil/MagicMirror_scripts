@@ -82,6 +82,7 @@ echo the os is $(lsb_release -a 2>/dev/null) >> $logfile
 # Check the Raspberry Pi version.
 if [ "$ARM" != "armv7l" ]; then
   read -p "this appears not to be a Raspberry Pi 2 or 3, do you want to continue installation (y/N)?" choice
+	choice="${choice:-N}"
 	if [[ $choice =~ ^[Nn]$ ]]; then
 	  echo user stopped install on $ARM hardware  >>$logfile
 		echo -e "\e[91mSorry, your Raspberry Pi is not supported."
@@ -335,6 +336,7 @@ fi
 
 # Use pm2 control like a service MagicMirror
 read -p "Do you want use pm2 for auto starting of your MagicMirror (y/N)?" choice
+choice="${choice:-Y}"
 if [[ $choice =~ ^[Yy]$ ]]; then
       echo install and setup pm2 | tee -a $logfile
  			# assume pm2 will be found on the path
@@ -459,6 +461,7 @@ fi
 # Disable Screensaver
 choice=n
 read -p "Do you want to disable the screen saver? (y/N)?" choice
+choice="${choice:-Y}"
 if [[ $choice =~ ^[Yy]$ ]]; then
   # if this is a mac
 	if [ $mac == 'Darwin' ]; then
@@ -527,7 +530,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 		  # if screen saver NOT already disabled?
 			if [ $(grep 'xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf | wc -l) == 0 ]; then
 			  echo install screensaver via lightdm.conf >> $logfile
-				sudo sed -i '/^\[Seat:\*\]/a xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf
+				sudo sed -i '/^\[Seat:/a xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf
 			else
 			  echo screensaver via lightdm already disabled >> $logfile
 			fi
