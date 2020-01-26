@@ -81,7 +81,7 @@ echo installing on $ARM processor system >>$logfile
 echo the os is $(lsb_release -a 2>/dev/null) >> $logfile
 # Check the Raspberry Pi version.
 if [ "$ARM" != "armv7l" ]; then
-  read -p "this appears not to be a Raspberry Pi 2 or 3, do you want to continue installation (y/N)?" choice
+  read -p "this appears not to be a Raspberry Pi 2 or 3, do you want to continue installation (y/N)?" choice <&1
 	choice="${choice:-N}"
 	if [[ $choice =~ ^[Nn]$ ]]; then
 	  echo user stopped install on $ARM hardware  >>$logfile
@@ -335,8 +335,8 @@ else
 fi
 
 # Use pm2 control like a service MagicMirror
-read -p "Do you want use pm2 for auto starting of your MagicMirror (y/N)?" choice
-choice="${choice:-Y}"
+read -p "Do you want use pm2 for auto starting of your MagicMirror (y/N)?" choice <&1
+choice="${choice:-N)"
 if [[ $choice =~ ^[Yy]$ ]]; then
       echo install and setup pm2 | tee -a $logfile
  			# assume pm2 will be found on the path
@@ -459,8 +459,8 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 		pm2setup=$true
 fi
 # Disable Screensaver
-choice=n
-read -p "Do you want to disable the screen saver? (y/N)?" choice
+
+read -p "Do you want to disable the screen saver? (y/N)?" choice <&1
 choice="${choice:-Y}"
 if [[ $choice =~ ^[Yy]$ ]]; then
   # if this is a mac
@@ -526,14 +526,6 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 			    echo "please configure it manually" | tee -a $logfile
 			   ;;
 		  esac
-		elif [ -e "/etc/lightdm/lightdm.conf" ]; then
-		  # if screen saver NOT already disabled?
-			if [ $(grep 'xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf | wc -l) == 0 ]; then
-			  echo install screensaver via lightdm.conf >> $logfile
-				sudo sed -i '/^\[Seat:/a xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf
-			else
-			  echo screensaver via lightdm already disabled >> $logfile
-			fi
 		elif [ $(which gsettings | wc -l) == 1 ]; then
 			setting=$(gsettings get org.gnome.desktop.screensaver lock-enabled)
 			setting1=$(gsettings get org.gnome.desktop.session idle-delay)
@@ -545,6 +537,14 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 			else
 			  echo gsettings screen saver already disabled >> $logfile
 			fi
+		elif [ -e "/etc/lightdm/lightdm.conf" ]; then
+		  # if screen saver NOT already disabled?
+			if [ $(grep 'xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf | wc -l) == 0 ]; then
+			  echo install screensaver via lightdm.conf >> $logfile
+				sudo sed -i '/^\[Seat:/a xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf
+			else
+			  echo screensaver via lightdm already disabled >> $logfile
+			fi			
 		elif [ -d "/etc/xdg/lxsession" ]; then
 		  currently_set=$(grep -m1 '\-dpms' /etc/xdg/lxsession/LXDE-pi/autostart)
 			if [ "$currently_set." == "." ]; then
