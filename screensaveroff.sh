@@ -62,6 +62,7 @@ mac=$(uname -s)
 			    echo "please configure it manually" | tee -a $logfile
 			   ;;
 		  esac
+		fi
 		if [ $(which gsettings | wc -l) == 1 ]; then
 			setting=$(gsettings get org.gnome.desktop.screensaver lock-enabled)
 			setting1=$(gsettings get org.gnome.desktop.session idle-delay)
