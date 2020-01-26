@@ -81,7 +81,7 @@ echo installing on $ARM processor system >>$logfile
 echo the os is $(lsb_release -a 2>/dev/null) >> $logfile
 # Check the Raspberry Pi version.
 if [ "$ARM" != "armv7l" ]; then
-  read -p "this appears not to be a Raspberry Pi 2 or 3, do you want to continue installation (y/N)?" choice <&1
+  read -p "this appears not to be a Raspberry Pi 2 or 3, do you want to continue installation (y/N)?" choice
 	choice="${choice:-N}"
 	if [[ $choice =~ ^[Nn]$ ]]; then
 	  echo user stopped install on $ARM hardware  >>$logfile
@@ -335,7 +335,7 @@ else
 fi
 
 # Use pm2 control like a service MagicMirror
-read -p "Do you want use pm2 for auto starting of your MagicMirror (y/N)?" choice <&1
+read -p "Do you want use pm2 for auto starting of your MagicMirror (y/N)?" choice 
 choice="${choice:-N)"
 if [[ $choice =~ ^[Yy]$ ]]; then
       echo install and setup pm2 | tee -a $logfile
@@ -460,7 +460,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 fi
 # Disable Screensaver
 
-read -p "Do you want to disable the screen saver? (y/N)?" choice <&1
+read -p "Do you want to disable the screen saver? (y/N)?" choice 
 choice="${choice:-Y}"
 if [[ $choice =~ ^[Yy]$ ]]; then
   # if this is a mac
