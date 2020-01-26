@@ -416,7 +416,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 		echo configure the pm2 config file for MagicMirror >>$logfile
 		if [ "$USER"  != "pi" ]; then
 			echo the user is not pi >>$logfile
-			# go to the installers folder`
+			# go to the installers folder
 			cd installers
 			# edit the startup script for the right user
 			echo change mm.sh >>$logfile
