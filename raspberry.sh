@@ -336,7 +336,7 @@ fi
 
 # Use pm2 control like a service MagicMirror
 read -p "Do you want use pm2 for auto starting of your MagicMirror (y/N)?" choice 
-choice="${choice:-N)"
+choice="${choice:-N}"
 if [[ $choice =~ ^[Yy]$ ]]; then
       echo install and setup pm2 | tee -a $logfile
  			# assume pm2 will be found on the path
