@@ -62,7 +62,7 @@ mac=$(uname -s)
 			    echo "please configure it manually" | tee -a $logfile
 			   ;;
 		  esac
-		elif [ $(which gsettings | wc -l) == 1 ]; then
+		if [ $(which gsettings | wc -l) == 1 ]; then
 			setting=$(gsettings get org.gnome.desktop.screensaver lock-enabled)
 			setting1=$(gsettings get org.gnome.desktop.session idle-delay)
 			if [ "$setting $setting1" != 'false uint32 0' ]; then
@@ -73,7 +73,8 @@ mac=$(uname -s)
 			else
 			  echo gsettings screen saver already disabled >> $logfile
 			fi
-		elif [ -e "/etc/lightdm/lightdm.conf" ]; then
+		fi
+		if [ -e "/etc/lightdm/lightdm.conf" ]; then
 		  # if screen saver NOT already disabled?
 			if [ $(grep 'xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf | wc -l) == 0 ]; then
 			  echo install screensaver via lightdm.conf >> $logfile
@@ -83,7 +84,8 @@ mac=$(uname -s)
 			else
 			  echo screensaver via lightdm already disabled >> $logfile
 			fi			
-		elif [ -d "/etc/xdg/lxsession" ]; then
+		fi
+		if [ -d "/etc/xdg/lxsession" ]; then
 		  currently_set=$(grep -m1 '\-dpms' /etc/xdg/lxsession/LXDE-pi/autostart)
 			if [ "$currently_set." == "." ]; then
 				echo disable screensaver via lxsession >> $logfile
