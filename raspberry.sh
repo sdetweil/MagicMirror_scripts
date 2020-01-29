@@ -90,10 +90,6 @@ if [ "$ARM" != "armv7l" ]; then
 		echo -e "\e[91mIf this is a Pi Zero, the setup will configure to run in server only mode wih a local browser."
 		exit;
 	fi
-	#if [ "$ARM" == "armv6l" ]; then
-	#  echo forcing armv71 architecture for pi 0 >>$logfile
-	#  force_arch=-'--arch=armv7l'
-	# fi
 fi
 
 # Define helper methods.
@@ -108,20 +104,25 @@ if [ $mac != 'Darwin' ]; then
 	update=$(sudo apt-get update 2>&1)
 	echo $update >> $logfile
 	update_rc=$?
+    if [ $(echo $update | grep -i "is not valid yet" | wc -l) -ne 0 ]; then 
+       echo -e "\e[91mSystem date/time is in the past, please correct ...\e[90m" | tee -a $logfile
+       exit 1
+    fi 
 	if [ $update_rc -ne 0 ]; then
-	 echo -e "\e[91mUpdate failed, retrying installation ...\e[90m" | tee -a $logfile
-	 if [ $(echo $update | grep "apt-secure" | wc -l) -eq 1 ]; then
-			update=$(sudo apt-get update --allow-releaseinfo-change 2>&1)
-			update_rc=$?
-			echo $update >> $logfile
-			if [ $update_rc -ne 0 ]; then
-				echo "second apt-get update failed" $update | tee -a $logfile
-				exit 1
-			else
-				echo "second apt-get update completed ok" >> $logfile
-				upgrade=$true
-			fi
-	 fi
+
+        echo -e "\e[91mUpdate failed, retrying installation ...\e[90m" | tee -a $logfile
+        if [ $(echo $update | grep "apt-secure" | wc -l) -eq 1 ]; then
+	        update=$(sudo apt-get update --allow-releaseinfo-change 2>&1)
+	        update_rc=$?
+	        echo $update >> $logfile
+	        if [ $update_rc -ne 0 ]; then
+		        echo "second apt-get update failed" $update | tee -a $logfile
+		        exit 1
+	        else
+		        echo "second apt-get update completed ok" >> $logfile
+		        upgrade=$true
+	        fi
+        fi
 	else
 		echo "apt-get update  completed ok" >> $logfile
 		upgrade=$true
@@ -196,7 +197,7 @@ if $NODE_INSTALL; then
 			node_vnum=$(echo $NODE_STABLE_BRANCH | awk -F. '{print $1}')
 			# get the highest release number in the stable branch line for this processor architecture
 			node_ver=$(curl -sL https://unofficial-builds.nodejs.org/download/release/index.tab | grep $ARM | grep -m 1 v$node_vnum | awk '{print $1}')
-			echo latest release in the $NODE_STABLE_BRANCH family for $ARM is $node_ver >> $logfile
+			echo "latest release in the $NODE_STABLE_BRANCH family for $ARM is $node_ver" >> $logfile
 			curl -sL https://unofficial-builds.nodejs.org/download/release/$node_ver/node-$node_ver-linux-$ARM.tar.gz >node_release-$node_ver.tar.gz
 			cd /usr/local
 			echo using release tar file = node_release-$node_ver.tar.gz >> $logfile
@@ -234,11 +235,9 @@ if command_exists npm; then
 			echo "Please quit all npm processes and restart the installer." | tee -a $logfile
 			exit;
 		fi
-
 	else
 		echo -e "\e[92mNo npm upgrade necessary.\e[0m" | tee -a $logfile
 	fi
-
 else
 	echo -e "\e[93mnpm is not installed.\e[0m" | tee -a $logfile
 	NPM_INSTALL=true
@@ -281,11 +280,11 @@ if [ $doInstall == 1 ]; then
 
 	echo -e "\e[96mCloning MagicMirror ...\e[90m" | tee -a $logfile
 	if git clone --depth=1 https://github.com/MichMich/MagicMirror.git; then
-		echo -e "\e[92mCloning MagicMirror Done!\e[0m" | tee -a $logfile
+		echo -e "\e[92mCloning MagicMirror Done!\e[90m" | tee -a $logfile
 		# replace faulty run-start.sh
 		curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >MagicMirror/run-start.sh
 	else
-		echo -e "\e[91mUnable to clone MagicMirror." | tee -a $logfile
+		echo -e "\e[91mUnable to clone MagicMirror. \e[90m" | tee -a $logfile
 		exit;
 	fi
 
@@ -296,10 +295,15 @@ if [ $doInstall == 1 ]; then
 		git checkout develop > /dev/null 2>&1
 	fi
 	echo -e "\e[96mInstalling dependencies ...\e[90m" | tee -a $logfile
-	if npm install $force_arch --only=prod; then
-		echo -e "\e[92mDependencies installation Done!\e[0m" | tee -a $logfile
+	npm_i_r=$(npm install $force_arch --only=prod) 
+    npm_i_rc=$?
+    if [ $npm_i_rc -eq 0 ]; then 
+		echo -e "\e[92mDependencies installation Done!\e[90m" | tee -a $logfile
 	else
-		echo -e "\e[91mUnable to install dependencies!" | tee -a $logfile
+        if [ $(echo $npm_i_r | grep "CERT_NOT_YET_VALID" | wc -l) -ne 0 ]; then 
+            echo "\e[91mSystem date/time is in the past, please correct \e[90m" | tee -a $logfile
+        fi 
+		echo -e "\e[91mUnable to install dependencies! \e[90m" | tee -a $logfile
 		exit;
 	fi
 	# fixup permissions on sandbox file if it exists
@@ -378,7 +382,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 				echo pm2 install result $result >>$logfile
 				# if this is a mac
 				if [ $mac == 'Darwin' ]; then
-					echo this is a mac, fixup for path >>$logfile
+					echo "this is a mac, fixup for path" >>$logfile
 					# get the location of pm2 install
 					# parse the npm install output to get the command
 					pm2cmd=`echo $result | awk -F -  '{print $1}' | tr -d '[:space:]'`
@@ -387,7 +391,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 					echo ${pm2cmd%$c} >installers/pm2path
 				fi
 			fi
-			echo get the pm2 platform specific startup command >>$logfile
+			echo "get the pm2 platform specific startup command" >>$logfile
 			# get the platform specific pm2 startup command
 			v=$($pm2cmd startup | tail -n 1)
 			if [ $mac != 'Darwin' ]; then
@@ -400,14 +404,14 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 					fi
 				fi
 			fi
-			echo startup command = $v >>$logfile
+			echo "startup command = $v" >>$logfile
 			# execute the command returned
-		  $v 2>&1 >>$logfile
-			echo pm2 startup command done >>$logfile
+            $v 2>&1 >>$logfile
+			echo "pm2 startup command done" >>$logfile
 			# is this is mac
 			# need to fix pm2 startup, only on catalina
-			if [ $mac == 'Darwin' ];then
-        if [ $(sw_vers -productVersion | head -c 6) == '10.15.' ]; then
+			if [ $mac == 'Darwin' ]; then
+                if [ $(sw_vers -productVersion | head -c 6) == '10.15.' ]; then
 					# only do if the faulty tag is present (pm2 may fix this, before the script is fixed)
 					if [ $(grep -m 1 UserName /Users/$USER/Library/LaunchAgents/pm2.$USER.plist | wc -l) -eq 1 ]; then
 						# copy the pm2 startup file config
@@ -420,7 +424,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 				fi
 			fi
 		# if the user is no pi, we have to fixup the pm2 json file
-		echo configure the pm2 config file for MagicMirror >>$logfile
+		echo "configure the pm2 config file for MagicMirror" >>$logfile
 		if [ "$USER"  != "pi" ]; then
 			echo the user is not pi >>$logfile
 			# go to the installers folder
@@ -520,12 +524,12 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 					setting1=$(gsettings get org.gnome.desktop.session idle-delay 2>/dev/null)
 					if [ "$setting. $setting1." != '. .' ]; then
 						if [ "$setting $setting1" != 'false uint32 0' ]; then
-							echo disable screensaver via gsettings was $setting and $setting1>> $logfile
+							echo "disable screensaver via gsettings was $setting and $setting1" >> $logfile
 							gsettings set org.gnome.desktop.screensaver lock-enabled false
 							gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
 							gsettings set org.gnome.desktop.session idle-delay 0
 						else
-							echo gsettings screen saver already disabled >> $logfile
+							echo "gsettings screen saver already disabled" >> $logfile
 						fi
 					fi
 					;;
@@ -539,38 +543,38 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 			setting1=$(gsettings get org.gnome.desktop.session idle-delay 2>/dev/null)
 			if [ "$setting. $setting1." != '. .' ]; then			
 				if [ "$setting $setting1" != 'false uint32 0' ]; then
-					echo disable screensaver via gsettings was $setting and $setting1>> $logfile
+					echo "disable screensaver via gsettings was $setting and $setting1">> $logfile
 					gsettings set org.gnome.desktop.screensaver lock-enabled false
 					gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
 					gsettings set org.gnome.desktop.session idle-delay 0
 				else
-					echo gsettings screen saver already disabled >> $logfile
+					echo "gsettings screen saver already disabled" >> $logfile
 				fi
 			fi
 		fi
 		if [ -e "/etc/lightdm/lightdm.conf" ]; then
 		  # if screen saver NOT already disabled?
 			if [ $(grep 'xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf | wc -l) == 0 ]; then
-			  echo install screensaver via lightdm.conf >> $logfile
+			  echo "disable screensaver via lightdm.conf" >> $logfile
 				sudo sed -i '/^\[Seat:/a xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf
 			else
-			  echo screensaver via lightdm already disabled >> $logfile
+			  echo "screensaver via lightdm already disabled" >> $logfile
 			fi
 		fi
 		if [ -d "/etc/xdg/lxsession" ]; then
 		  currently_set=$(grep -m1 '\-dpms' /etc/xdg/lxsession/LXDE-pi/autostart)
 			if [ "$currently_set." == "." ]; then
-				echo disable screensaver via lxsession >> $logfile
+				echo "disable screensaver via lxsession" >> $logfile
 				# turn it off for the future
 				sudo su -c "echo -e '@xset s noblank\n@xset s off\n@xset -dpms' >> /etc/xdg/lxsession/LXDE-pi/autostart"
 				# turn it off now
 				export DISPLAY=:0; xset s noblank;xset s off;xset -dpms
 			else
-			  echo lxsession screen saver already disabled >> $logfile
+			  echo "lxsession screen saver already disabled" >> $logfile
 			fi
-		else
-			echo " "
-			echo -e "unable to disable screen saver, /etc/xdg/lxsession does not exist" | tee -a $logfile
+		#else
+		#	echo " "
+		#	echo -e "unable to disable screen saver, /etc/xdg/lxsession does not exist" | tee -a $logfile
 		fi
 	fi
 fi
