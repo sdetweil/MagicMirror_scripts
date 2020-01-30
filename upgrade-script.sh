@@ -48,7 +48,11 @@ if [ -d ~/MagicMirror ]; then
 	echo  >>$logfile
 	date +"Upgrade started - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 	echo system is $(uname -a) >> $logfile
-	echo the os is $(lsb_release -a) >> $logfile
+	if [ $mac == 'Darwin' ]; then
+		echo the os is $(system_profiler SPSoftwareDataType | grep -i "system version" | awk -F: '{ print $2 }') >> $logfile
+	else
+		echo the os is $(lsb_release -a) >> $logfile
+	fi
 
 	# because of how its executed from the web, p0 gets overlayed with parm
 	# check to see if a parm was passed .. easy apply without  editing
@@ -152,13 +156,13 @@ if [ -d ~/MagicMirror ]; then
 
 				# get the latest upgrade
 				echo fetching latest revisions | tee -a $logfile
-				git fetch $remote >/dev/null
+				LC_ALL=C git fetch $remote >/dev/null
 				rc=$?
 				echo git fetch rc=$rc >>$logfile
 				if [ $rc -eq 0 ]; then
 
 					# need to get the current branch
-					current_branch=$(git branch | grep "*" | awk '{print $2}')
+					current_branch=$(LC_ALL=C git branch | grep "*" | awk '{print $2}')
 					echo current branch = $current_branch >>$logfile
 
 					LC_ALL=C git status 2>&1 >>$logfile
