@@ -47,8 +47,8 @@ mac=$(uname -s)
 				 fi
 			   ;;
 			 gsd-screensaver | gsd-screensaver-proxy)
-					setting=$(gsettings get org.gnome.desktop.screensaver lock-enabled)
-					setting1=$(gsettings get org.gnome.desktop.session idle-delay)
+					setting=$(gsettings get org.gnome.desktop.screensaver lock-enabled 2>/dev/null)
+					setting1=$(gsettings get org.gnome.desktop.session idle-delay 2>/dev/null)
 					if [ "$setting $setting1" != 'false uint32 0' ]; then
 						echo disable screensaver via gsettings was $setting and $setting1>> $logfile
 						gsettings set org.gnome.desktop.screensaver lock-enabled false
@@ -64,15 +64,17 @@ mac=$(uname -s)
 		  esac
 		fi
 		if [ $(which gsettings | wc -l) == 1 ]; then
-			setting=$(gsettings get org.gnome.desktop.screensaver lock-enabled)
-			setting1=$(gsettings get org.gnome.desktop.session idle-delay)
-			if [ "$setting $setting1" != 'false uint32 0' ]; then
-			  echo disable screensaver via gsettings was $setting and $setting1>> $logfile
-				gsettings set org.gnome.desktop.screensaver lock-enabled false
-				gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
-				gsettings set org.gnome.desktop.session idle-delay 0
-			else
-			  echo gsettings screen saver already disabled >> $logfile
+			setting=$(gsettings get org.gnome.desktop.screensaver lock-enabled 2>/dev/null)
+			setting1=$(gsettings get org.gnome.desktop.session idle-delay 2>/dev/null)
+			if [ "$setting. $setting1." != '. .' ]; then
+				if [ "$setting. $setting1" != 'false uint32 0' ]; then
+					echo disable screensaver via gsettings was $setting and $setting1>> $logfile
+					gsettings set org.gnome.desktop.screensaver lock-enabled false
+					gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
+					gsettings set org.gnome.desktop.session idle-delay 0
+				else
+					echo gsettings screen saver already disabled >> $logfile
+				fi
 			fi
 		fi
 		if [ -e "/etc/lightdm/lightdm.conf" ]; then

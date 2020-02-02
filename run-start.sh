@@ -72,6 +72,6 @@ else
     fi 
   else  
     # we can use electron directly	
-    electron js/electron.js $1;
+    node_modules/.bin/electron js/electron.js $1;
   fi
 fi

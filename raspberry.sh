@@ -127,6 +127,7 @@ if [ $mac != 'Darwin' ]; then
 		upgrade=$true
 	fi
 	if [ $upgrade -eq $true ]; then
+	   echo "apt-get upgrade  started" >> $logfile
 	   upgrade_result=$(sudo apt-get --assume-yes upgrade  2>&1)
 		 upgrade_rc=$?
 		 echo apt upgrade result ="rc=$upgrade_rc $upgrade_result" >> $logfile
@@ -281,6 +282,8 @@ if [ $doInstall == 1 ]; then
 	echo -e "\e[96mCloning MagicMirror ...\e[90m" | tee -a $logfile
 	if git clone --depth=1 https://github.com/MichMich/MagicMirror.git; then
 		echo -e "\e[92mCloning MagicMirror Done!\e[0m" | tee -a $logfile
+		# replace faulty run-start.sh
+		curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >MagicMirror/run-start.sh
 	else
 		echo -e "\e[91mUnable to clone MagicMirror." | tee -a $logfile
 		exit;
@@ -299,7 +302,11 @@ if [ $doInstall == 1 ]; then
 		echo -e "\e[91mUnable to install dependencies!" | tee -a $logfile
 		exit;
 	fi
-
+	# fixup permissions on sandbox file if it exists
+	if [ -f node_modules/electron/dist/chrome-sandbox ]; then
+		 sudo chmod 4755 node_modules/electron/dist/chrome-sandbox 2>/dev/null
+		 sudo chown root node_modules/electron/dist/chrome-sandbox 2>/dev/null
+	fi
 	# Use sample config for start MagicMirror
 	echo setting up initial config.js | tee -a $logfile
 	cp config/config.js.sample config/config.js
