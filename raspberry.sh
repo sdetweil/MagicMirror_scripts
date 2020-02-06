@@ -135,7 +135,7 @@ if [ $mac != 'Darwin' ]; then
 
 	# Installing helper tools
 	echo -e "\e[96mInstalling helper tools ...\e[90m" | tee -a $logfile
-	sudo apt-get --assume-yes install curl wget git build-essential unzip || exit
+	sudo apt-get --assume-yes install curl wget git build-essential unzip  >>$logfile
 fi
 
 # Check if we need to install or upgrade Node.js.
@@ -296,7 +296,7 @@ if [ $doInstall == 1 ]; then
 		git checkout develop > /dev/null 2>&1
 	fi
 	echo -e "\e[96mInstalling dependencies ...\e[90m" | tee -a $logfile
-	if npm install $force_arch; then
+	if npm install $force_arch --only=prod; then
 		echo -e "\e[92mDependencies installation Done!\e[0m" | tee -a $logfile
 	else
 		echo -e "\e[91mUnable to install dependencies!" | tee -a $logfile
