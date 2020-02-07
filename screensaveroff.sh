@@ -3,8 +3,11 @@ logfile=~/screensaver.log
 mac=$(uname -s)
 
 	if [ $mac == 'Darwin' ]; then
+	  # get the current setting	
 	  setting=$(defaults -currentHost read com.apple.screensaver idleTime)
+		# if its on		
 		if [ $setting != 0 ] ; then
+		  # turn it off		
 			echo disable screensaver via mac profile >> $logfile
 			defaults -currentHost write com.apple.screensaver idleTime 0
 		else
@@ -25,9 +28,6 @@ mac=$(uname -s)
 		  # some screensaver running
 			case "$screen_saver_running" in
 			 mate-screensaver) echo 'mate screen saver' >>$logfile
-			   #killall mate-screensaver >/dev/null 2>&1
-			   #ms=$(which mate-screensaver-command)
-			   #$ms -d >/dev/null 2>&1
 						gsettings set org.mate.screensaver lock-enabled false	 2>/dev/null
 						gsettings set org.mate.screensaver idle-activation-enabled false	 2>/dev/null
 						gsettings set org.mate.screensaver lock_delay 0	 2>/dev/null
@@ -49,13 +49,15 @@ mac=$(uname -s)
 			 gsd-screensaver | gsd-screensaver-proxy)
 					setting=$(gsettings get org.gnome.desktop.screensaver lock-enabled 2>/dev/null)
 					setting1=$(gsettings get org.gnome.desktop.session idle-delay 2>/dev/null)
-					if [ "$setting $setting1" != 'false uint32 0' ]; then
-						echo disable screensaver via gsettings was $setting and $setting1>> $logfile
-						gsettings set org.gnome.desktop.screensaver lock-enabled false
-						gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
-						gsettings set org.gnome.desktop.session idle-delay 0
-					else
-						echo gsettings screen saver already disabled >> $logfile
+					if [ "$setting. $setting1." != '. .' ]; then
+						if [ "$setting $setting1" != 'false uint32 0' ]; then
+							echo disable screensaver via gsettings was $setting and $setting1>> $logfile
+							gsettings set org.gnome.desktop.screensaver lock-enabled false
+							gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
+							gsettings set org.gnome.desktop.session idle-delay 0
+						else
+							echo gsettings screen saver already disabled >> $logfile
+						fi
 					fi
 					;;
 			 *) echo "some other screensaver $screen_saver_running" found | tee -a $logfile
@@ -67,7 +69,7 @@ mac=$(uname -s)
 			setting=$(gsettings get org.gnome.desktop.screensaver lock-enabled 2>/dev/null)
 			setting1=$(gsettings get org.gnome.desktop.session idle-delay 2>/dev/null)
 			if [ "$setting. $setting1." != '. .' ]; then
-				if [ "$setting. $setting1" != 'false uint32 0' ]; then
+				if [ "$setting $setting1" != 'false uint32 0' ]; then
 					echo disable screensaver via gsettings was $setting and $setting1>> $logfile
 					gsettings set org.gnome.desktop.screensaver lock-enabled false
 					gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
@@ -82,8 +84,6 @@ mac=$(uname -s)
 			if [ $(grep 'xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf | wc -l) == 0 ]; then
 			  echo install screensaver via lightdm.conf >> $logfile
 				sudo sed -i '/^\[Seat:\*\]/a xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf
-				#sudo cp _myconf /etc/lightdm/lightdm.conf
-				#rm _myconf >/dev/null
 			else
 			  echo screensaver via lightdm already disabled >> $logfile
 			fi			

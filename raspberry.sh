@@ -45,7 +45,7 @@ trim() {
 cd $HOME
 
 mac=$(uname -s)
-if [ 0 -eq 1 ]; then 
+if [ 0 -eq 1 ]; then
 	if [ "$0" == "bash" ]; then
 		logdir=.
 	else
@@ -70,7 +70,7 @@ if [ 0 -eq 1 ]; then
 			logdir=$HOME
 		fi
 	fi
-fi 
+fi
 logfile=$HOME/install.log
 echo install log being saved to $logfile
 
@@ -342,7 +342,7 @@ else
 fi
 
 # Use pm2 control like a service MagicMirror
-read -p "Do you want use pm2 for auto starting of your MagicMirror (y/N)?" choice 
+read -p "Do you want use pm2 for auto starting of your MagicMirror (y/N)?" choice
 choice="${choice:-N}"
 if [[ $choice =~ ^[Yy]$ ]]; then
       echo install and setup pm2 | tee -a $logfile
@@ -467,7 +467,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 fi
 # Disable Screensaver
 
-read -p "Do you want to disable the screen saver? (y/N)?" choice 
+read -p "Do you want to disable the screen saver? (y/N)?" choice
 choice="${choice:-Y}"
 if [[ $choice =~ ^[Yy]$ ]]; then
   # if this is a mac
@@ -497,8 +497,6 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 		  # some screensaver running
 			case "$screen_saver_running" in
 			 mate-screensaver) echo 'mate screen saver' >>$logfile
-			   #killall mate-screensaver >/dev/null 2>&1
-			   #$ms -d >/dev/null 2>&1
 						gsettings set org.mate.screensaver lock-enabled false	 2>/dev/null
 						gsettings set org.mate.screensaver idle-activation-enabled false	 2>/dev/null
 						gsettings set org.mate.screensaver lock_delay 0	 2>/dev/null
@@ -518,41 +516,48 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 				 fi
 			   ;;
 			 gsd-screensaver | gsd-screensaver-proxy)
-					setting=$(gsettings get org.gnome.desktop.screensaver lock-enabled)
-					setting1=$(gsettings get org.gnome.desktop.session idle-delay)
-					if [ "$setting $setting1" != 'false uint32 0' ]; then
-						echo disable screensaver via gsettings was $setting and $setting1>> $logfile
-						gsettings set org.gnome.desktop.screensaver lock-enabled false
-						gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
-						gsettings set org.gnome.desktop.session idle-delay 0
-					else
-						echo gsettings screen saver already disabled >> $logfile
+					setting=$(gsettings get org.gnome.desktop.screensaver lock-enabled 2>/dev/null)
+					setting1=$(gsettings get org.gnome.desktop.session idle-delay 2>/dev/null)
+					if [ "$setting. $setting1." != '. .' ]; then
+						if [ "$setting $setting1" != 'false uint32 0' ]; then
+							echo disable screensaver via gsettings was $setting and $setting1>> $logfile
+							gsettings set org.gnome.desktop.screensaver lock-enabled false
+							gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
+							gsettings set org.gnome.desktop.session idle-delay 0
+						else
+							echo gsettings screen saver already disabled >> $logfile
+						fi
 					fi
 					;;
 			 *) echo "some other screensaver $screen_saver_running" found | tee -a $logfile
 			    echo "please configure it manually" | tee -a $logfile
 			   ;;
 		  esac
-		elif [ $(which gsettings | wc -l) == 1 ]; then
-			setting=$(gsettings get org.gnome.desktop.screensaver lock-enabled)
-			setting1=$(gsettings get org.gnome.desktop.session idle-delay)
-			if [ "$setting $setting1" != 'false uint32 0' ]; then
-			  echo disable screensaver via gsettings was $setting and $setting1>> $logfile
-				gsettings set org.gnome.desktop.screensaver lock-enabled false
-				gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
-				gsettings set org.gnome.desktop.session idle-delay 0
-			else
-			  echo gsettings screen saver already disabled >> $logfile
+		fi
+		if [ $(which gsettings | wc -l) == 1 ]; then
+			setting=$(gsettings get org.gnome.desktop.screensaver lock-enabled 2>/dev/null)
+			setting1=$(gsettings get org.gnome.desktop.session idle-delay 2>/dev/null)
+			if [ "$setting. $setting1." != '. .' ]; then			
+				if [ "$setting $setting1" != 'false uint32 0' ]; then
+					echo disable screensaver via gsettings was $setting and $setting1>> $logfile
+					gsettings set org.gnome.desktop.screensaver lock-enabled false
+					gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
+					gsettings set org.gnome.desktop.session idle-delay 0
+				else
+					echo gsettings screen saver already disabled >> $logfile
+				fi
 			fi
-		elif [ -e "/etc/lightdm/lightdm.conf" ]; then
+		fi
+		if [ -e "/etc/lightdm/lightdm.conf" ]; then
 		  # if screen saver NOT already disabled?
 			if [ $(grep 'xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf | wc -l) == 0 ]; then
 			  echo install screensaver via lightdm.conf >> $logfile
 				sudo sed -i '/^\[Seat:/a xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf
 			else
 			  echo screensaver via lightdm already disabled >> $logfile
-			fi			
-		elif [ -d "/etc/xdg/lxsession" ]; then
+			fi
+		fi
+		if [ -d "/etc/xdg/lxsession" ]; then
 		  currently_set=$(grep -m1 '\-dpms' /etc/xdg/lxsession/LXDE-pi/autostart)
 			if [ "$currently_set." == "." ]; then
 				echo disable screensaver via lxsession >> $logfile
