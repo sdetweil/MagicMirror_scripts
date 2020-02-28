@@ -1,6 +1,6 @@
 #!/bin/bash 
   # use bash instead of sh
-./untrack-css.sh
+[ -f ./untrack-css.sh ] && ./untrack-css.sh
 
 if grep docker /proc/1/cgroup -qa; then
   # if running in docker, only start electron
@@ -18,7 +18,7 @@ else
 
   # get the config option, if any
   # only check non comment lines
-  serveronly=$(grep -v '^\s//'  config/config.js | grep -i serveronly: | awk '{print tolower($2)}' | tr -d ,\"\'\\r)
+  serveronly=$(grep -v '^[[:blank:]]*//'  config/config.js | grep -i serveronly: | awk '{print tolower($2)}' | tr -d ,\"\'\\r)
   # set default if not defined in config
   serveronly=${serveronly:-false}
   # check for xwindows running
