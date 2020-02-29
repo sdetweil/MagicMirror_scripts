@@ -294,6 +294,9 @@ if [ $doInstall == 1 ]; then
 		git branch develop FETCH_HEAD > /dev/null 2>&1
 		git checkout develop > /dev/null 2>&1
 	fi
+    if [ !-e css/custom.css ]; then 
+       touch css/custom.css
+    fi
 	echo -e "\e[96mInstalling dependencies ...\e[90m" | tee -a $logfile
 	npm_i_r=$(npm install $force_arch --only=prod) 
     npm_i_rc=$?
