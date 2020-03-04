@@ -515,7 +515,8 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 				 echo " $screen_saver_running disabled" >> $logfile
 			   ;;
 			 xscreensaver) echo 'xscreensaver running' | tee -a $logfile
-				 if [ $(grep -m1 'mode:' ~/.xscreensaver | awk '{print $2}') != 'off' ]; then
+			   xsetting=$(grep -m1 'mode:' ~/.xscreensaver )
+				 if [ $(echo $xsetting | awk '{print $2}') != 'off' ]; then
 					 sed -i 's/$xsetting/mode: off/' ~/.xscreensaver
 					 echo " xscreensaver set to off" >> $logfile
 				 else
