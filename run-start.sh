@@ -34,7 +34,7 @@ else
 
     # if user explicitly configured to run server only (no ui local)
     # OR there is no xwindows running, so no support for browser graphics
-    if [ "$serveronly." == "true." -o "$xorg." == "." ]; then
+    if [ "$serveronly." == "true." ] || [ "$xorg." == "." -a $mac != 'Darwin' ]; then
       # start server mode, 
       node serveronly
     else 
@@ -67,7 +67,11 @@ else
       echo "Starting chromium browser now, have patience, it takes a minute"
       # continue to spool stdout to console
       tee <&3 &
-      chromium-browser -noerrdialogs -kiosk -start_maximized  --disable-infobars --app=http://localhost:$port  --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors 2>/dev/null
+			if [ $mac != 'Darwin' ]; then
+				chromium-browser -noerrdialogs -kiosk -start_maximized  --disable-infobars --app=http://localhost:$port  --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors 2>/dev/null
+			else
+			  open -a "Google Chrome" http://localhost:$port --args -noerrdialogs -kiosk -start_maximized  --disable-infobars --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors 2>/dev/null
+			fi 
       exit		  
     fi 
   else  
