@@ -88,7 +88,7 @@ mac=$(uname -s)
 			  echo screensaver via lightdm already disabled >> $logfile
 			fi			
 		fi
-		if [ -d "/etc/xdg/lxsession" ]; then
+		if [ -d "/etc/xdg/lxsession/LXDE-pi" ]; then
 		  currently_set=$(grep -m1 '\-dpms' /etc/xdg/lxsession/LXDE-pi/autostart)
 			if [ "$currently_set." == "." ]; then
 				echo disable screensaver via lxsession >> $logfile
