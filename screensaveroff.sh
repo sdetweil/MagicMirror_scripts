@@ -22,7 +22,7 @@ mac=$(uname -s)
 		# if the process name is a path, parse it and get the last field ( the actual pgm name)
 
 	  screen_saver_running=$(ps -A -o args | awk '{print $1}' | grep -m1 [s]aver | awk -F\/ '{print $NF}');
-
+screen_saver_running='xscreensaver'
 		# if we found something
 		if [ "$screen_saver_running." != "." ]; then
 		  # some screensaver running
@@ -41,7 +41,7 @@ mac=$(uname -s)
 			 xscreensaver) echo 'xscreensaver running' | tee -a $logfile
 			   xsetting=$(grep -m1 'mode:' ~/.xscreensaver )
 				 if [ $(echo $xsetting | awk '{print $2}') != 'off' ]; then
-					 sed -i "'s/$xsetting/mode: off/'" ~/.xscreensaver
+					 sed -i "s/$xsetting/mode: off/" "$HOME/.xscreensaver"
 					 echo " xscreensaver set to off" >> $logfile
 				 else
 				   echo " xscreensaver already disabled" >> $logfile
