@@ -41,7 +41,7 @@ mac=$(uname -s)
 			 xscreensaver) echo 'xscreensaver running' | tee -a $logfile
 			   xsetting=$(grep -m1 'mode:' ~/.xscreensaver )
 				 if [ $(echo $xsetting | awk '{print $2}') != 'off' ]; then
-					 sed -i 's/$xsetting/mode: off/' ~/.xscreensaver
+					 sed -i "'s/$xsetting/mode: off/'" ~/.xscreensaver
 					 echo " xscreensaver set to off" >> $logfile
 				 else
 				   echo " xscreensaver already disabled" >> $logfile
@@ -100,8 +100,5 @@ mac=$(uname -s)
 			else
 			  echo lxsession screen saver already disabled >> $logfile
 			fi
-		else
-			echo " "
-			echo -e "unable to disable screen saver, /etc/xdg/lxsession does not exist" | tee >>$logfile
 		fi
 	fi
