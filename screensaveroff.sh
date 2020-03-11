@@ -22,7 +22,6 @@ mac=$(uname -s)
 		# if the process name is a path, parse it and get the last field ( the actual pgm name)
 
 	  screen_saver_running=$(ps -A -o args | awk '{print $1}' | grep -m1 [s]aver | awk -F\/ '{print $NF}');
-screen_saver_running='xscreensaver'
 		# if we found something
 		if [ "$screen_saver_running." != "." ]; then
 		  # some screensaver running
