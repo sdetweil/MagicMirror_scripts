@@ -23,6 +23,10 @@ else
   serveronly=${serveronly:-false}
   # check for xwindows running
   xorg=$(pgrep Xorg)
+  if [ "$xorg." == "." ]; then
+     # check for x on Lubuntu
+     xorg=$(pgrep X)
+  fi
   #check for macOS
   mac=$(uname)
   #
