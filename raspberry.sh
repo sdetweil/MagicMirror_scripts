@@ -4,7 +4,7 @@
 # and then download and run MagicMirror2.
 
 if [ $USER == 'root' ]; then
-	 echo Please logon as a user to execute the MagicMirror installation,  not root
+	 echo Please login as a user to execute the MagicMirror installation,  not root
 	 exit 1
 fi
 
