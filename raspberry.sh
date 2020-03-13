@@ -298,6 +298,7 @@ if [ $doInstall == 1 ]; then
        touch css/custom.css
     fi
 	echo -e "\e[96mInstalling dependencies ...\e[90m" | tee -a $logfile
+	rm package-lock.json 2>/dev/null
 	npm_i_r=$(npm install $force_arch --only=prod) 
     npm_i_rc=$?
     if [ $npm_i_rc -eq 0 ]; then 
