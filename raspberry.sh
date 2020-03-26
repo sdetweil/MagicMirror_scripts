@@ -283,6 +283,7 @@ if [ $doInstall == 1 ]; then
 		echo -e "\e[92mCloning MagicMirror Done!\e[90m" | tee -a $logfile
 		# replace faulty run-start.sh
 		curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >MagicMirror/run-start.sh
+		chmod +x MagicMirror/run-start.sh
 	else
 		echo -e "\e[91mUnable to clone MagicMirror. \e[90m" | tee -a $logfile
 		exit;
@@ -290,7 +291,7 @@ if [ $doInstall == 1 ]; then
 
 	cd ~/MagicMirror  || exit
 	if [ $(grep version package.json | awk -F: '{print $2}') == '"2.9.0",' -a $ARM == 'armv6l' ]; then
-	  git fetch https://github.com/MichMich/MagicMirror.git develop >/dev/null 2>&1
+	    git fetch https://github.com/MichMich/MagicMirror.git develop >/dev/null 2>&1
 		git branch develop FETCH_HEAD > /dev/null 2>&1
 		git checkout develop > /dev/null 2>&1
 	fi
@@ -314,6 +315,11 @@ if [ $doInstall == 1 ]; then
 	if [ -f node_modules/electron/dist/chrome-sandbox ]; then
 		 sudo chmod 4755 node_modules/electron/dist/chrome-sandbox 2>/dev/null
 		 sudo chown root node_modules/electron/dist/chrome-sandbox 2>/dev/null
+	fi
+	# if this is the updated release
+	if [ $(grep version package.json| awk -F: '{print $2}' | tr -d \", | awk -F\- '{print $1}') -gt 2.10 ]; then 
+		# replace the start command with the old one
+		grep -v start package.json  | sed '/"scripts": {/a \ \ \ \ "start":\ "bash run-start.sh",' >package.json
 	fi
 	# Use sample config for start MagicMirror
 	echo setting up initial config.js | tee -a $logfile
@@ -369,7 +375,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 			pm2_installed=$(which $pm2cmd)
 			if [  "$pm2_installed." != "." ]; then
 			    # does it work?
-					pm2_fails=$(pm2 list | grep -i -m 1 "App Name" | wc -l )
+					pm2_fails=$(pm2 list | grep -i -m 1 "uptime" | wc -l )
 					if [ $pm2_fails != 1 ]; then
 					   # uninstall it
 						 echo pm2 installed, but does not work, uninstalling >> $logfile
@@ -429,6 +435,11 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 			fi
 		# if the user is no pi, we have to fixup the pm2 json file
 		echo "configure the pm2 config file for MagicMirror" >>$logfile
+		# if the files we need aren't here, get them
+		if [ ! -e installers/pm2_MagicMirror.json ]; then 
+			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/pm2_MagicMirror.json >installers/pm2_MagicMirror.json
+			curl -sl https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm.sh
+		fi
 		if [ "$USER"  != "pi" ]; then
 			echo the user is not pi >>$logfile
 			# go to the installers folder
