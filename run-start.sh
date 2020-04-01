@@ -72,7 +72,11 @@ else
       # continue to spool stdout to console
       tee <&3 &
 			if [ $mac != 'Darwin' ]; then
-				chromium-browser -noerrdialogs -kiosk -start_maximized  --disable-infobars --app=http://localhost:$port  --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors 2>/dev/null
+        if [ $(which chromium-browser) != '' ]; then
+				  chromium-browser -noerrdialogs -kiosk -start_maximized  --disable-infobars --app=http://localhost:$port  --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors 2>/dev/null
+        else
+          echo "Chromium_browser not installed"
+        fi
 			else
 			  open -a "Google Chrome" http://localhost:$port --args -noerrdialogs -kiosk -start_maximized  --disable-infobars --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors 2>/dev/null
 			fi 

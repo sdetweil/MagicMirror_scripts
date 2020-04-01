@@ -23,6 +23,9 @@ trim() {
     var="${var%"${var##*[![:space:]]}"}"
     echo -n "$var"
 }
+
+function verlte() {  [ "$1" = "`echo -e "$1\n$2" | sort -V | head -n1`" ];}
+function verlt() { [ "$1" = "$2" ] && return 1 || verlte $1 $2 ;}
 # is this a mac
 mac=$(uname -s)
 # get the processor architecture
@@ -249,15 +252,25 @@ if [ -d ~/MagicMirror ]; then
 								if [ $doinstalls == $true ]; then
 								  # if this is a pi zero
 									echo processor architecture is $arch >> $logfile
-									if [ "$arch" == "armv6l" ]; then
-									   # force to look like pi 2
-										 echo forcing architecture armv7l >>$logfile
-										 forced_arch='--arch=armv7l'
-									fi
+									#if [ "$arch" == "armv6l" ]; then
+									#   # force to look like pi 2
+									#	 echo forcing architecture armv7l >>$logfile
+									#	 forced_arch='--arch=armv7l'
+									#fi
 									echo "updating MagicMirror runtime, please wait" | tee -a $logfile
-									npm install $forced_arch 2>&1 | tee -a $logfile
+									npm install $forced_arch --only=prod 2>&1 | tee -a $logfile
 									done_update=`date +"completed - %a %b %e %H:%M:%S %Z %Y"`
 									echo npm install $done_update on base >> $logfile
+									# if this is v 2.11 or higher
+									if verlte "2.11.0" $(grep -i version package.json | awk -F: '{ print $2 }' | awk -F\- '{print $1}' | tr -d \",); then
+									  # if one of the older devices, fix the start script to execute in serveronly mode	
+									  if [ "$arch" == "armv6l" ]; then	
+										  # fixup the start script 
+										  sed -i '/start/ c \    "start\"\:\"./run-start.sh $1\",' package.json 	
+										  curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
+										  chmod +x run-start.sh		  
+									  fi
+									fi										
 								fi
 								# process updates for modules after base changed
 								cd modules
