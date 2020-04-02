@@ -80,7 +80,9 @@ if [ -d ~/MagicMirror ]; then
 	fi
 
 	if [ $test_run == $true ]; then
-		echo doing test run = true | tee -a $logfile
+		echo
+		echo doing test run = true, NO updates will be applied! | tee -a $logfile
+		echo
 	else
 		echo doing test run = false | tee -a $logfile
 	fi
