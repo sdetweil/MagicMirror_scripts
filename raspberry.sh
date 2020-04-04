@@ -450,6 +450,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 		if [ ! -e installers/pm2_MagicMirror.json ]; then 
 			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/pm2_MagicMirror.json >installers/pm2_MagicMirror.json
 			curl -sl https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm.sh
+			chmod +x installers/mm.sh
 		fi
 		if [ "$USER"  != "pi" ]; then
 			echo the user is not pi >>$logfile
