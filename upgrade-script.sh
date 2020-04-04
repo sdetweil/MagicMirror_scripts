@@ -311,6 +311,8 @@ if [ -d ~/MagicMirror ]; then
 											cd  $module
 												# process its dependencies
 												if [ $doinstalls == $true ]; then
+												         rm -rf node_modules 2>/dev/null
+													 rm package-lock.json 2>/dev/null
 													 npm install $forced_arch 2>&1| tee -a $logfile
 												else
 													echo skipped processing for $module, doing test run | tee -a $logfile
