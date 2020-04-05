@@ -268,7 +268,14 @@ if [ -d ~/MagicMirror ]; then
 									  # if one of the older devices, fix the start script to execute in serveronly mode	
 									  if [ "$arch" == "armv6l" ]; then	
 										  # fixup the start script 
-										  sed -i '/start/ c \    "start\"\:\"./run-start.sh $1\",' package.json 	
+										  sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < package.json 	>new_package.json
+										  if [ -s new_package.json ]; then
+										  	cp new_package.json package.json
+										  	rm new_package.json
+										  	echo "package.json update for armv6l completed ok" >>$logfile
+										  else
+										  	echo "package.json update for armv6l failed " >>$logfile
+										  fi
 										  curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
 										  chmod +x run-start.sh		  
 									  fi
@@ -311,7 +318,7 @@ if [ -d ~/MagicMirror ]; then
 											cd  $module
 												# process its dependencies
 												if [ $doinstalls == $true ]; then
-												         rm -rf node_modules 2>/dev/null
+												     rm -rf node_modules 2>/dev/null
 													 rm package-lock.json 2>/dev/null
 													 npm install $forced_arch 2>&1| tee -a $logfile
 												else
