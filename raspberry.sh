@@ -298,9 +298,18 @@ if [ $doInstall == 1 ]; then
 	# if this is v 2.11 or higher
 	if verlte "2.11.0" $(grep -i version package.json | awk -F: '{ print $2 }' | awk -F\- '{print $1}' | tr -d \",); then
 	  # if one of the older devices, fix the start script to execute in serveronly mode	
-	  if [ "$ARM" == "armv6l" ]; then	
+	  if [ "$arch" == "armv6l" ]; then	
 		  # fixup the start script 
-		  sed -i '/start/ c \    "start\"\:\"./run-start.sh $1\",' package.json 	
+		  sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < package.json 	>new_package.json
+		  if [ -s new_package.json ]; then
+		  	cp new_package.json package.json
+		  	rm new_package.json
+		  	echo "package.json update for armv6l completed ok" >>$logfile
+		  else
+		  	echo "package.json update for armv6l failed " >>$logfile
+		  fi
+		  curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
+		  chmod +x run-start.sh		  
 	  fi
 	fi	
     if [ ! -e css/custom.css ]; then 
