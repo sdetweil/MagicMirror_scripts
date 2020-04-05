@@ -265,6 +265,11 @@ if [ -d ~/MagicMirror ]; then
 									npm install $forced_arch --only=prod 2>&1 | tee -a $logfile
 									done_update=`date +"completed - %a %b %e %H:%M:%S %Z %Y"`
 									echo npm install $done_update on base >> $logfile
+									# fixup permissions on sandbox file if it exists
+									if [ -f node_modules/electron/dist/chrome-sandbox ]; then
+										 sudo chmod 4755 node_modules/electron/dist/chrome-sandbox 2>/dev/null
+										 sudo chown root node_modules/electron/dist/chrome-sandbox 2>/dev/null
+									fi									
 									# if this is v 2.11 or higher
 									if verlte "2.11.0" $(grep -i version package.json | awk -F: '{ print $2 }' | awk -F\- '{print $1}' | tr -d \",); then
 									  # if one of the older devices, fix the start script to execute in serveronly mode	
