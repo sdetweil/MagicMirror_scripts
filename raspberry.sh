@@ -79,6 +79,7 @@ date +"install starting  - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 ARM=$(uname -m)
 echo installing on $ARM processor system >>$logfile
 echo the os is $(lsb_release -a 2>/dev/null) >> $logfile
+OS=$(lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
 # Check the Raspberry Pi version.
 if [ "$ARM" != "armv7l" ]; then
   read -p "this appears not to be a Raspberry Pi 2 or 3, do you want to continue installation (y/N)?" choice
@@ -298,7 +299,7 @@ if [ $doInstall == 1 ]; then
 	# if this is v 2.11 or higher
 	if verlte "2.11.0" $(grep -i version package.json | awk -F: '{ print $2 }' | awk -F\- '{print $1}' | tr -d \",); then
 	  # if one of the older devices, fix the start script to execute in serveronly mode	
-	  if [ "$arch" == "armv6l" ]; then	
+	  if [ "$ARM" == "armv6l" ]; then	
 		  # fixup the start script 
 		  sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < package.json 	>new_package.json
 		  if [ -s new_package.json ]; then
@@ -309,7 +310,16 @@ if [ $doInstall == 1 ]; then
 		  	echo "package.json update for armv6l failed " >>$logfile
 		  fi
 		  curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
-		  chmod +x run-start.sh		  
+		  chmod +x run-start.sh	
+	  elif [ "$ARM" == "x86_64" -a "$OS" == 'buster' ]; then
+	  	cd fonts
+	  	   sed '/roboto-fontface/ c \    "roboto-fontface": "latest"' < package.json 	>new_package.json
+	  	   if [ -s new_package.json ]; then
+		  	cp new_package.json package.json
+		  	rm new_package.json
+		  	echo "package.json update for x86 fontface completed ok" >>$logfile
+		  fi
+	  	cd -
 	  fi
 	fi	
     if [ ! -e css/custom.css ]; then 

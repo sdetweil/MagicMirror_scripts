@@ -51,10 +51,12 @@ if [ -d ~/MagicMirror ]; then
 	echo  >>$logfile
 	date +"Upgrade started - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 	echo system is $(uname -a) >> $logfile
+	OS=.
 	if [ $mac == 'Darwin' ]; then
 		echo the os is $(system_profiler SPSoftwareDataType | grep -i "system version" | awk -F: '{ print $2 }') >> $logfile
 	else
 		echo the os is $(lsb_release -a) >> $logfile
+		OS=$(lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
 	fi
 
 	# because of how its executed from the web, p0 gets overlayed with parm
@@ -278,6 +280,15 @@ if [ -d ~/MagicMirror ]; then
 										  fi
 										  curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
 										  chmod +x run-start.sh		  
+									  elif [ "$arch" == "x86_64" -a "$OS" == 'buster' ]; then
+									  	cd fonts
+									  	   sed '/roboto-fontface/ c \    "roboto-fontface": "latest"' < package.json 	>new_package.json
+									  	   if [ -s new_package.json ]; then
+										  	cp new_package.json package.json
+										  	rm new_package.json
+										  	echo "package.json update for x86 fontface completed ok" >>$logfile
+										  fi
+									  	cd -
 									  fi
 									fi										
 								fi
