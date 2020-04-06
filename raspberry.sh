@@ -297,7 +297,7 @@ if [ $doInstall == 1 ]; then
 		git checkout develop > /dev/null 2>&1
 	fi
 	# if this is v 2.11 or higher
-	if verlte "2.11.0" $(grep -i version package.json | awk -F: '{ print $2 }' | awk -F\- '{print $1}' | tr -d \",); then
+	if verlte "2.11.0" $(grep -i version package.json | awk -F\" '{ print $4 }'); then
 	  # if one of the older devices, fix the start script to execute in serveronly mode	
 	  if [ "$ARM" == "armv6l" ]; then	
 		  # fixup the start script 
@@ -343,14 +343,14 @@ if [ $doInstall == 1 ]; then
 		 sudo chmod 4755 node_modules/electron/dist/chrome-sandbox 2>/dev/null
 		 sudo chown root node_modules/electron/dist/chrome-sandbox 2>/dev/null
 	fi
-	# if this an armvb6l device (pi 0/1)
-	if [ $ARM == 'armv6l' ]; then
-		# if this is the updated release		
-		if ! verlt $(grep version package.json| awk -F: '{print $2}' | tr -d \"\, | awk -F\- '{print $1}')  2.10 ]; then 
-			# replace the start command with the old one
-			grep -v start package.json  | sed '/"scripts": {/a \ \ \ \ "start":\ "bash run-start.sh",' >package.json
-		fi
-	fi
+	# if this an armv6l device (pi 0/1)
+	# if [ $ARM == 'armv6l' ]; then
+	#	# if this is the updated release		
+	#	if ! verlt $(grep -i version package.json | awk -F\" '{ print $4 }')  2.10 ]; then 
+	#		# replace the start command with the old one
+	#		grep -v start package.json  | sed '/"scripts": {/a \ \ \ \ "start":\ "bash run-start.sh",' >package.json
+	#	fi
+	# fi
 	# Use sample config for start MagicMirror
 	echo setting up initial config.js | tee -a $logfile
 	cp config/config.js.sample config/config.js
