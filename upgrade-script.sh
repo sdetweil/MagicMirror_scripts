@@ -271,7 +271,7 @@ if [ -d ~/MagicMirror ]; then
 										 sudo chown root node_modules/electron/dist/chrome-sandbox 2>/dev/null
 									fi									
 									# if this is v 2.11 or higher
-									if verlte "2.11.0" $(grep -i version package.json | awk -F: '{ print $2 }' | awk -F\- '{print $1}' | tr -d \",); then
+									if verlte "2.11.0" $(grep -m1 version package.json | awk -F\" '{print $4}'); then
 									  # if one of the older devices, fix the start script to execute in serveronly mode	
 									  if [ "$arch" == "armv6l" ]; then	
 										  # fixup the start script 
