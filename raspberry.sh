@@ -297,7 +297,8 @@ if [ $doInstall == 1 ]; then
 		git checkout develop > /dev/null 2>&1
 	fi
 	# if this is v 2.11 or higher
-	if verlte "2.11.0" $(grep -i version package.json | awk -F\" '{ print $4 }'); then
+	newver=$(grep -i version package.json | awk -F\" '{ print $4 }')
+	if verlte "2.11.0" $newver; then
 	  # if one of the older devices, fix the start script to execute in serveronly mode	
 	  if [ "$ARM" == "armv6l" ]; then	
 		  # fixup the start script 
@@ -329,6 +330,10 @@ if [ $doInstall == 1 ]; then
 	rm package-lock.json 2>/dev/null
 	npm_i_r=$(npm install $forced_arch --only=prod) 
     npm_i_rc=$?
+    if [ $newver == '2.11.0' ]; then
+      # fixup missing eslint (in dev dependencies)
+  	  npm install eslint >>$logfile
+	fi
     if [ $npm_i_rc -eq 0 ]; then 
 		echo -e "\e[92mDependencies installation Done!\e[90m" | tee -a $logfile
 	else
@@ -346,7 +351,7 @@ if [ $doInstall == 1 ]; then
 	# if this an armv6l device (pi 0/1)
 	# if [ $ARM == 'armv6l' ]; then
 	#	# if this is the updated release		
-	#	if ! verlt $(grep -i version package.json | awk -F\" '{ print $4 }')  2.10 ]; then 
+	#	if ! verlt $(grep -i version package.json | awk -F\" '{ print $4 }')  2.10; then 
 	#		# replace the start command with the old one
 	#		grep -v start package.json  | sed '/"scripts": {/a \ \ \ \ "start":\ "bash run-start.sh",' >package.json
 	#	fi

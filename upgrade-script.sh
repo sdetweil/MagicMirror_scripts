@@ -271,7 +271,8 @@ if [ -d ~/MagicMirror ]; then
 										 sudo chown root node_modules/electron/dist/chrome-sandbox 2>/dev/null
 									fi									
 									# if this is v 2.11 or higher
-									if verlte "2.11.0" $(grep -m1 version package.json | awk -F\" '{print $4}'); then
+									newver=$(grep -m1 version package.json | awk -F\" '{print $4}')
+									if verlte "2.11.0" $newver; then
 									  # if one of the older devices, fix the start script to execute in serveronly mode	
 									  if [ "$arch" == "armv6l" ]; then	
 										  # fixup the start script 
@@ -295,7 +296,10 @@ if [ -d ~/MagicMirror ]; then
 										  fi
 									  	cd -
 									  fi
-									fi										
+									fi		
+									if [ $newver == '2.11.0' ]; then
+									   npm install eslint 
+									fi 								
 								fi
 								# process updates for modules after base changed
 								cd modules
