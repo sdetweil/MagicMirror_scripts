@@ -1,4 +1,5 @@
 const config = require('../config/config.js');const fs=require('fs');
+var hash = {}
 for(let m of config.modules){
 	if(!(m.disabled || false)){
 	 try {	
@@ -6,7 +7,10 @@ for(let m of config.modules){
 		 if(f.isDirectory()){ 
 			 f1=fs.statSync(m.module+'/package.json');
 			 if (f1.isFile()){
-				console.log(m.module);
+			 	if(hash[m.module]==undefined){
+			 		hash[m.module]=true;
+					console.log(m.module);
+				}
 			 }
 		 }
 	 }
