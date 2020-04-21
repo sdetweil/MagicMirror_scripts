@@ -103,6 +103,7 @@ if [ $mac != 'Darwin' ]; then
 	echo -e "\e[96mUpdating packages ...\e[90m" | tee -a $logfile
 	upgrade=$false
 	update=$(sudo apt-get update 2>&1)
+    # sudo apt-get update --allow-releaseinfo-change 	
 	echo $update >> $logfile
 	update_rc=$?
     if [ $(echo $update | grep -i "is not valid yet" | wc -l) -ne 0 ]; then 
@@ -345,6 +346,7 @@ if [ $doInstall == 1 ]; then
 	fi
 	# fixup permissions on sandbox file if it exists
 	if [ -f node_modules/electron/dist/chrome-sandbox ]; then
+		 echo "fixing sandbox permissions" >>$logfile
 		 sudo chmod 4755 node_modules/electron/dist/chrome-sandbox 2>/dev/null
 		 sudo chown root node_modules/electron/dist/chrome-sandbox 2>/dev/null
 	fi
