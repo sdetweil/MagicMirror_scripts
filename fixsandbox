@@ -1,0 +1,9 @@
+#!/bin/bash
+cd ~/MagicMirror
+									if [ -f node_modules/electron/dist/chrome-sandbox ]; then
+										 echo "fixing sandbox permissions" 
+										 sudo chown root node_modules/electron/dist/chrome-sandbox 2>/dev/null										 
+										 sudo chmod 4755 node_modules/electron/dist/chrome-sandbox 2>/dev/null
+									else
+										 echo file not found
+									fi		

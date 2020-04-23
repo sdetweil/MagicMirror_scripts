@@ -347,8 +347,8 @@ if [ $doInstall == 1 ]; then
 	# fixup permissions on sandbox file if it exists
 	if [ -f node_modules/electron/dist/chrome-sandbox ]; then
 		 echo "fixing sandbox permissions" >>$logfile
-		 sudo chmod 4755 node_modules/electron/dist/chrome-sandbox 2>/dev/null
 		 sudo chown root node_modules/electron/dist/chrome-sandbox 2>/dev/null
+		 sudo chmod 4755 node_modules/electron/dist/chrome-sandbox 2>/dev/null
 	fi
 	# if this an armv6l device (pi 0/1)
 	# if [ $ARM == 'armv6l' ]; then

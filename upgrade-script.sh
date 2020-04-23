@@ -267,8 +267,9 @@ if [ -d ~/MagicMirror ]; then
 									echo npm install $done_update on base >> $logfile
 									# fixup permissions on sandbox file if it exists
 									if [ -f node_modules/electron/dist/chrome-sandbox ]; then
+										 echo "fixing sandbox permissions" >>$logfile
+										 sudo chown root node_modules/electron/dist/chrome-sandbox 2>/dev/null										 
 										 sudo chmod 4755 node_modules/electron/dist/chrome-sandbox 2>/dev/null
-										 sudo chown root node_modules/electron/dist/chrome-sandbox 2>/dev/null
 									fi									
 									# if this is v 2.11 or higher
 									newver=$(grep -m1 version package.json | awk -F\" '{print $4}')
