@@ -4,7 +4,7 @@ Magic Mirror installation and setup scripts
 these scripts can be used to automate installation of release upgrades. 
 
 ## raspberry.sh  is the installation script, upgraded from the core package
-to execute the install script, cut/paste this line into the terminal window on your device (I can't say PI, cause ity works in a lot of other places too)
+to execute the install script, cut/paste this line into the terminal window on your device (I can't say PI, cause it works in a lot of other places too)
 
 ####  bash -c  "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/raspberry.sh)" 
 
