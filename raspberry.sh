@@ -638,11 +638,52 @@ fi
 
 read -p "Would you like to install MMPM (MagicMirror Package Manager)? "
 choice="${choice:-Y}"
+
 if [[ $choice =~ ^[Yy]$ ]]; then
-  rm -rf /tmp/mmpm
-  git clone https://github.com/Bee-Mar/mmpm.git /tmp/mmpm || echo "Failed to clone the MMPM repo"
-  [ $? == 0 ] && cd /tmp/mmpm && make || echo "Failed to install MMPM"
-  rm -rf /tmp/mmpm
+  original_dir=$(pwd)
+  mmpm_target=/tmp/mmpm
+  repo="https://github.com/Bee-Mar/mmpm.git"
+  proceed=1
+
+  echo "User chose to install MMPM" >> $logfile
+  rm -rf $mmpm_target # just a sanity check
+
+  echo "Attempting to clone $repo into $mmpm_target" >> $logfile
+  git clone $repo $mmpm_target
+
+  if [[ $? == 0 ]]; then
+    echo "Successfully cloned $repo" >> $logfile
+    cd $mmpm_target
+  else
+    proceed=0
+    echo "Failed to clone $repo" >> $logfile
+  fi
+
+  if [[ $? == 0 && $proceed == 1 ]]; then
+    echo "Changed directories into $mmpm_target" >> $logfile
+  else
+    proceed=0
+    echo "Failed to change directory into $mmpm_target" >> $logfile
+  fi
+
+  if [[ $? == 0 && $proceed == 1 ]]; then
+    echo "Beginning installation of MMPM" >> $logfile
+    make
+  else
+    proceed=0
+    echo "Aborting installation of MMPM" >> $logfile
+  fi
+
+  if [[ $? == 0 && $proceed == 1 ]]; then
+    echo "Successfully installed MMPM" >> $logfile
+  else
+    echo "Failed to install MMPM" >> $logfile
+  fi
+
+  cd $original_dir
+  rm -rf $mmpm_target
+else
+  echo "User chose not to install MMPM" >> $logfile
 fi
 
 echo -e "\e[92mWe're ready! Run \e[1m\e[97m$rmessage\e[0m\e[92m from the ~/MagicMirror directory to start your MagicMirror.\e[0m" | tee -a $logfile
