@@ -103,13 +103,13 @@ if [ $mac != 'Darwin' ]; then
 	echo -e "\e[96mUpdating packages ...\e[90m" | tee -a $logfile
 	upgrade=$false
 	update=$(sudo apt-get update 2>&1)
-    # sudo apt-get update --allow-releaseinfo-change 	
+    # sudo apt-get update --allow-releaseinfo-change
 	echo $update >> $logfile
 	update_rc=$?
-    if [ $(echo $update | grep -i "is not valid yet" | wc -l) -ne 0 ]; then 
+    if [ $(echo $update | grep -i "is not valid yet" | wc -l) -ne 0 ]; then
        echo -e "\e[91mSystem date/time is in the past, please correct ...\e[90m" | tee -a $logfile
        exit 1
-    fi 
+    fi
 	if [ $update_rc -ne 0 ]; then
 
         echo -e "\e[91mUpdate failed, retrying installation ...\e[90m" | tee -a $logfile
@@ -300,9 +300,9 @@ if [ $doInstall == 1 ]; then
 	# if this is v 2.11 or higher
 	newver=$(grep -i version package.json | awk -F\" '{ print $4 }')
 	if verlte "2.11.0" $newver; then
-	  # if one of the older devices, fix the start script to execute in serveronly mode	
-	  if [ "$ARM" == "armv6l" ]; then	
-		  # fixup the start script 
+	  # if one of the older devices, fix the start script to execute in serveronly mode
+	  if [ "$ARM" == "armv6l" ]; then
+		  # fixup the start script
 		  sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < package.json 	>new_package.json
 		  if [ -s new_package.json ]; then
 		  	cp new_package.json package.json
@@ -312,7 +312,7 @@ if [ $doInstall == 1 ]; then
 		  	echo "package.json update for armv6l failed " >>$logfile
 		  fi
 		  curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
-		  chmod +x run-start.sh	
+		  chmod +x run-start.sh
 	  elif [ "$ARM" == "x86_64" -a "$OS" == 'buster' ]; then
 	  	cd fonts
 	  	   sed '/roboto-fontface/ c \    "roboto-fontface": "latest"' < package.json 	>new_package.json
@@ -323,24 +323,24 @@ if [ $doInstall == 1 ]; then
 		  fi
 	  	cd -
 	  fi
-	fi	
-    if [ ! -e css/custom.css ]; then 
+	fi
+    if [ ! -e css/custom.css ]; then
        touch css/custom.css
     fi
 	echo -e "\e[96mInstalling dependencies ...\e[90m" | tee -a $logfile
 	rm package-lock.json 2>/dev/null
-	npm_i_r=$(npm install $forced_arch --only=prod) 
+	npm_i_r=$(npm install $forced_arch --only=prod)
     npm_i_rc=$?
     if [ $newver == '2.11.0' ]; then
       # fixup missing eslint (in dev dependencies)
   	  npm install eslint >>$logfile
 	fi
-    if [ $npm_i_rc -eq 0 ]; then 
+    if [ $npm_i_rc -eq 0 ]; then
 		echo -e "\e[92mDependencies installation Done!\e[90m" | tee -a $logfile
 	else
-        if [ $(echo $npm_i_r | grep "CERT_NOT_YET_VALID" | wc -l) -ne 0 ]; then 
+        if [ $(echo $npm_i_r | grep "CERT_NOT_YET_VALID" | wc -l) -ne 0 ]; then
             echo "\e[91mSystem date/time is in the past, please correct \e[90m" | tee -a $logfile
-        fi 
+        fi
 		echo -e "\e[91mUnable to install dependencies! \e[90m" | tee -a $logfile
 		exit;
 	fi
@@ -352,8 +352,8 @@ if [ $doInstall == 1 ]; then
 	fi
 	# if this an armv6l device (pi 0/1)
 	# if [ $ARM == 'armv6l' ]; then
-	#	# if this is the updated release		
-	#	if ! verlt $(grep -i version package.json | awk -F\" '{ print $4 }')  2.10; then 
+	#	# if this is the updated release
+	#	if ! verlt $(grep -i version package.json | awk -F\" '{ print $4 }')  2.10; then
 	#		# replace the start command with the old one
 	#		grep -v start package.json  | sed '/"scripts": {/a \ \ \ \ "start":\ "bash run-start.sh",' >package.json
 	#	fi
@@ -473,7 +473,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 		# if the user is no pi, we have to fixup the pm2 json file
 		echo "configure the pm2 config file for MagicMirror" >>$logfile
 		# if the files we need aren't here, get them
-		if [ ! -e installers/pm2_MagicMirror.json ]; then 
+		if [ ! -e installers/pm2_MagicMirror.json ]; then
 			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/pm2_MagicMirror.json >installers/pm2_MagicMirror.json
 			curl -sl https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm.sh
 			chmod +x installers/mm.sh
@@ -595,7 +595,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 		if [ $(which gsettings | wc -l) == 1 ]; then
 			setting=$(gsettings get org.gnome.desktop.screensaver lock-enabled 2>/dev/null)
 			setting1=$(gsettings get org.gnome.desktop.session idle-delay 2>/dev/null)
-			if [ "$setting. $setting1." != '. .' ]; then			
+			if [ "$setting. $setting1." != '. .' ]; then
 				if [ "$setting $setting1" != 'false uint32 0' ]; then
 					echo "disable screensaver via gsettings was $setting and $setting1">> $logfile
 					gsettings set org.gnome.desktop.screensaver lock-enabled false
@@ -635,6 +635,16 @@ if [ $pm2setup -eq $true ]; then
 else
   rmessage="DISPLAY=:0 npm start"
 fi
+
+read -p "Would you like to install MMPM (MagicMirror Package Manager)? "
+choice="${choice:-Y}"
+if [[ $choice =~ ^[Yy]$ ]]; then
+  rm -rf /tmp/mmpm
+  git clone https://github.com/Bee-Mar/mmpm.git /tmp/mmpm || echo "Failed to clone the MMPM repo"
+  [ $? == 0 ] && cd /tmp/mmpm && make || echo "Failed to install MMPM"
+  rm -rf /tmp/mmpm
+fi
+
 echo -e "\e[92mWe're ready! Run \e[1m\e[97m$rmessage\e[0m\e[92m from the ~/MagicMirror directory to start your MagicMirror.\e[0m" | tee -a $logfile
 
 echo " "
