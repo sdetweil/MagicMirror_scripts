@@ -322,6 +322,9 @@ if [ $doInstall == 1 ]; then
 		  	echo "package.json update for x86 fontface completed ok" >>$logfile
 		  fi
 	  	cd -
+	  elif [ $mac == 'Darwin' ]; then 
+	  	   rm vendor/package-lock.json
+	  	   echo "erase vendor package-lock.json to allow later nan/fsevents install on mac" >>$logfile
 	  fi
 	fi	
     if [ ! -e css/custom.css ]; then 
