@@ -523,6 +523,8 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 		# tell pm2 to save that configuration, for start at boot
 		echo save MagicMirror pm2 config now  >>$logfile
 		$pm2cmd save
+		echo stop MagicMirror via pm2 now >>$logfile
+		$pm2cmd stop MagicMirror
 		pm2setup=$true
 fi
 # Disable Screensaver
@@ -535,7 +537,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 	  # get the current setting
 	  setting=$(defaults -currentHost read com.apple.screensaver idleTime)
 		# if its on
-		if [ $setting != 0 ] ; then
+		if [ "$setting" != 0 ] ; then
 		  # turn it off
 			echo disable screensaver via mac profile >> $logfile
 			defaults -currentHost write com.apple.screensaver idleTime 0
