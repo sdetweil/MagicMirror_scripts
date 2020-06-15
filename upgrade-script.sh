@@ -124,10 +124,10 @@ if [ -d ~/MagicMirror ]; then
 
 		# save custom.css
 		cd css
-			if [ -f custom.css ]; then 		
+			if [ -f custom.css ]; then
 				echo "saving custom.css" | tee -a $logfile
-				cp -p custom.css save_custom.css 
-			fi 
+				cp -p custom.css save_custom.css
+			fi
 		cd - >/dev/null
 		save_alias=$(alias git 2>/dev/null)
 		#lang=$(locale | egrep -e 'LANG | LC_ALL' | awk -F= '{print $2}')
@@ -147,14 +147,14 @@ if [ -d ~/MagicMirror ]; then
 		  # get the local and remote package.json versions
 			local_version=$(grep -m1 version package.json | awk -F\" '{print $4}')
 			remote_version=$(curl -s https://raw.githubusercontent.com/MichMich/MagicMirror/master/package.json | grep -m1 version | awk -F\" '{print $4}')
-			
+
 			# if on 2.9
-			if [ $local_version == '2.9.0' ]; then 
+			if [ $local_version == '2.9.0' ]; then
 			  # and the activemodule js file is loaded
 				if [ -f installers/dumpactivemodules.js ]; then
 				  # erase cause the fetch will pull another, and the merge will fail
 					rm installers/dumpactivemodules.js
-			  fi 
+			  fi
 			fi
 
 			# only change if they are different
@@ -268,15 +268,15 @@ if [ -d ~/MagicMirror ]; then
 									# fixup permissions on sandbox file if it exists
 									if [ -f node_modules/electron/dist/chrome-sandbox ]; then
 										 echo "fixing sandbox permissions" >>$logfile
-										 sudo chown root node_modules/electron/dist/chrome-sandbox 2>/dev/null										 
+										 sudo chown root node_modules/electron/dist/chrome-sandbox 2>/dev/null
 										 sudo chmod 4755 node_modules/electron/dist/chrome-sandbox 2>/dev/null
-									fi									
+									fi
 									# if this is v 2.11 or higher
 									newver=$(grep -m1 version package.json | awk -F\" '{print $4}')
 									if verlte "2.11.0" $newver; then
-									  # if one of the older devices, fix the start script to execute in serveronly mode	
-									  if [ "$arch" == "armv6l" ]; then	
-										  # fixup the start script 
+									  # if one of the older devices, fix the start script to execute in serveronly mode
+									  if [ "$arch" == "armv6l" ]; then
+										  # fixup the start script
 										  sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < package.json 	>new_package.json
 										  if [ -s new_package.json ]; then
 										  	cp new_package.json package.json
@@ -286,7 +286,9 @@ if [ -d ~/MagicMirror ]; then
 										  	echo "package.json update for armv6l failed " >>$logfile
 										  fi
 										  curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
-										  chmod +x run-start.sh		  
+										  chmod +x run-start.sh
+										  # add fix to disable chromium update checks for a year from time started
+										  sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null
 									  elif [ "$arch" == "x86_64" -a "$OS" == 'buster' ]; then
 									  	cd fonts
 									  	   sed '/roboto-fontface/ c \    "roboto-fontface": "latest"' < package.json 	>new_package.json
@@ -297,10 +299,10 @@ if [ -d ~/MagicMirror ]; then
 										  fi
 									  	cd -
 									  fi
-									fi		
+									fi
 									if [ $newver == '2.11.0' ]; then
-									   npm install eslint 
-									fi 								
+									   npm install eslint
+									fi
 								fi
 								# process updates for modules after base changed
 								cd modules
@@ -381,11 +383,11 @@ if [ -d ~/MagicMirror ]; then
 		# should be in MagicMirror base
 		cd css
 			# restore  custom.css
-			if [ -f save_custom.css ]; then 			
+			if [ -f save_custom.css ]; then
 				echo "restoring custom.css" | tee -a $logfile
-				cp -p save_custom.css custom.css 
+				cp -p save_custom.css custom.css
 				rm save_custom.css
-			fi 
+			fi
 		cd - >/dev/null
 		#if [ "$lang." != "en_US.UTF-8." ]; then
 		   if [ "$save_alias." != "." ]; then
@@ -417,7 +419,7 @@ if [ -d ~/MagicMirror ]; then
 			 if [ $set_username == $true ]; then
 			    git config --global --unset user.name >>/$logfile
 					git config --global --unset user.email >>/$logfile
-			 fi 
+			 fi
 		 fi
 	fi
 	# return to original folder

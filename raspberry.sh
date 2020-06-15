@@ -313,6 +313,8 @@ if [ $doInstall == 1 ]; then
 		  fi
 		  curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
 		  chmod +x run-start.sh
+		  # add fix to disable chromium update checks for a year from time started
+		  sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null
 	  elif [ "$ARM" == "x86_64" -a "$OS" == 'buster' ]; then
 	  	cd fonts
 	  	   sed '/roboto-fontface/ c \    "roboto-fontface": "latest"' < package.json 	>new_package.json
