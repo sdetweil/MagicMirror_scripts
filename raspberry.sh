@@ -82,12 +82,12 @@ echo the os is $(lsb_release -a 2>/dev/null) >> $logfile
 OS=$(lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
 # Check the Raspberry Pi version.
 if [ "$ARM" != "armv7l" ]; then
-  read -p "this appears not to be a Raspberry Pi 2 or 3, do you want to continue installation (y/N)?" choice
+  read -p "this appears not to be a Raspberry Pi 2, 3 or 4, do you want to continue installation (y/N)?" choice
 	choice="${choice:-N}"
 	if [[ $choice =~ ^[Nn]$ ]]; then
 	  echo user stopped install on $ARM hardware  >>$logfile
 		echo -e "\e[91mSorry, your Raspberry Pi is not supported."
-		echo -e "\e[91mPlease run MagicMirror on a Raspberry Pi 2 or 3."
+		echo -e "\e[91mPlease run MagicMirror on a Raspberry Pi 2, 3 or 4"
 		echo -e "\e[91mIf this is a Pi Zero, the setup will configure to run in server only mode wih a local browser."
 		exit;
 	fi
