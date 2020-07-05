@@ -273,7 +273,9 @@ if [ -d ~/MagicMirror ]; then
 									fi
 									# if this is v 2.11 or higher
 									newver=$(grep -m1 version package.json | awk -F\" '{print $4}')
-									if verlte "2.11.0" $newver; then
+									# no compound compare for strings, use not of reverse
+									# greater than or equal  means not less than
+									if [ ! "$newver" \< "2.11.0" ]; then
 									  # if one of the older devices, fix the start script to execute in serveronly mode
 									  if [ "$arch" == "armv6l" ]; then
 										  # fixup the start script
