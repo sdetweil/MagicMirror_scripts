@@ -636,58 +636,59 @@ else
   rmessage="DISPLAY=:0 npm start"
 fi
 
-if ! [ -x "$(command -v mmpm)" ]; then
-  read -p "Would you like to install MMPM (MagicMirror Package Manager)? "
-  choice="${choice:-Y}"
+read -p "Would you like to install MMPM (MagicMirror Package Manager)? "
+choice="${choice:-Y}"
 
-  if [[ $choice =~ ^[Yy]$ ]]; then
-    original_dir=$(pwd)
-    mmpm_target=/tmp/mmpm
-    repo="https://github.com/Bee-Mar/mmpm.git"
+if [[ $choice =~ ^[Yy]$ ]]; then
+  echo "User chose to install MMPM" >> $logfile
+  PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+  echo "Found Python3 $PYTHON_VERSION" >> $logfile
+
+  if [[ $PYTHON_VERSION >= 3.7 ]]; then
+    echo "Suitable version of Python3 ($PYTHON_VERSION) found"
+    echo "User has suitable version of Python3" >> $logfile
     proceed=1
-
-    echo "User chose to install MMPM" >> $logfile
-    rm -rf $mmpm_target # just a sanity check
-
-    echo "Attempting to clone $repo into $mmpm_target" >> $logfile
-    git clone $repo $mmpm_target
-
-    if [[ $? == 0 ]]; then
-      echo "Successfully cloned $repo" >> $logfile
-      cd $mmpm_target
-    else
-      proceed=0
-      echo "Failed to clone $repo" >> $logfile
-    fi
-
-    if [[ $? == 0 && $proceed == 1 ]]; then
-      echo "Changed directories into $mmpm_target" >> $logfile
-    else
-      proceed=0
-      echo "Failed to change directory into $mmpm_target" >> $logfile
-    fi
-
-    if [[ $? == 0 && $proceed == 1 ]]; then
-      echo "Beginning installation of MMPM" >> $logfile
-      make
-    else
-      proceed=0
-      echo "Aborting installation of MMPM" >> $logfile
-    fi
-
-    if [[ $? == 0 && $proceed == 1 ]]; then
-      echo "Successfully installed MMPM" >> $logfile
-    else
-      echo "Failed to install MMPM" >> $logfile
-    fi
-
-    cd $original_dir
-    rm -rf $mmpm_target
   else
-    echo "User chose not to install MMPM" >> $logfile
+    echo "ERROR: Your version of Python3 is not suitable. Upgrade to 3.7 or greater to install MMPM."
+    echo "The users' Python3 version is too old to install MMPM" >> $logfile
+    proceed=0
   fi
+
+  [[ $proceed ]] && PIP=$(command -v pip3 || command -v pip)
+
+  if [[ $proceed && $PIP ]];
+  then
+    echo "Found $($PIP -v) installed" >> $logfile
+    proceed=1
+  else
+    echo "ERROR: 'pip' does not appear to be installed. Install or add 'pip' to your PATH to install MMPM"
+    proceed=0
+  fi
+
+  [[ $proceed ]] && read -p "Would you like to install MMPM within a virtualenv? This is recommended."
+  [[ $proceed ]] && choice="${choice:-Y}"
+
+  if [[ $proceed && $choice =~ ^[Yy]$ ]]; then
+    $PIP install virtualenv >> $logfile
+    echo "Creating virtualenv at $HOME/mmpm-venv"
+    echo "Creating virtualenv at $HOME/mmpm-venv" >> $logfile
+    python3 -m venv ~/mmpm-venv
+    source ~/mmpm-venv/bin/activate
+  fi
+
+  if [[ $proceed ]]; then
+    $PIP install --upgrade --no-cache-dir mmpm
+    mmpm --migrate >> $logfile
+    mmpm install --gui
+  fi
+
+  if [[ $VIRTUAL_ENV ]]; then
+    echo "Deactivating virtualenv" >> $logfile
+    deactivate
+  fi
+
 else
-  echo "MMPM appears to be installed already, skipping user prompt" >> $logfile
+  echo "User chose not to install MMPM" >> $logfile
 fi
 
 echo -e "\e[92mWe're ready! Run \e[1m\e[97m$rmessage\e[0m\e[92m from the ~/MagicMirror directory to start your MagicMirror.\e[0m" | tee -a $logfile
