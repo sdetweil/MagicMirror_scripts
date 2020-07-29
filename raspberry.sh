@@ -313,6 +313,7 @@ if [ $doInstall == 1 ]; then
 		  fi
 		  curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
 		  chmod +x run-start.sh
+      
 		  # add fix to disable chromium update checks for a year from time started
 		  sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null
 	  elif [ "$ARM" == "x86_64" -a "$OS" == 'buster' ]; then
@@ -642,6 +643,62 @@ if [ $pm2setup -eq $true ]; then
 else
   rmessage="DISPLAY=:0 npm start"
 fi
+
+read -p "Would you like to install MMPM (MagicMirror Package Manager)? "
+choice="${choice:-Y}"
+
+if [[ $choice =~ ^[Yy]$ ]]; then
+  echo "User chose to install MMPM" >> $logfile
+  PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+  echo "Found Python3 $PYTHON_VERSION" >> $logfile
+
+  if [[ $PYTHON_VERSION >= 3.7 ]]; then
+    echo "Suitable version of Python3 ($PYTHON_VERSION) found"
+    echo "User has suitable version of Python3" >> $logfile
+    proceed=1
+  else
+    echo "ERROR: Your version of Python3 is not suitable. Upgrade to 3.7 or greater to install MMPM."
+    echo "The users' Python3 version is too old to install MMPM" >> $logfile
+    proceed=0
+  fi
+
+  [[ $proceed ]] && PIP=$(command -v pip3 || command -v pip)
+
+  if [[ $proceed && $PIP ]];
+  then
+    echo "Found $($PIP -v) installed" >> $logfile
+    proceed=1
+  else
+    echo "ERROR: 'pip' does not appear to be installed. Install or add 'pip' to your PATH to install MMPM"
+    proceed=0
+  fi
+
+  [[ $proceed ]] && read -p "Would you like to install MMPM within a virtualenv? This is recommended."
+  [[ $proceed ]] && choice="${choice:-Y}"
+
+  if [[ $proceed && $choice =~ ^[Yy]$ ]]; then
+    $PIP install virtualenv >> $logfile
+    echo "Creating virtualenv at $HOME/mmpm-venv"
+    echo "Creating virtualenv at $HOME/mmpm-venv" >> $logfile
+    python3 -m venv ~/mmpm-venv
+    source ~/mmpm-venv/bin/activate
+  fi
+
+  if [[ $proceed ]]; then
+    $PIP install --upgrade --no-cache-dir mmpm
+    mmpm --migrate >> $logfile
+    mmpm install --gui
+  fi
+
+  if [[ $VIRTUAL_ENV ]]; then
+    echo "Deactivating virtualenv" >> $logfile
+    deactivate
+  fi
+
+else
+  echo "User chose not to install MMPM" >> $logfile
+fi
+
 echo -e "\e[92mWe're ready! Run \e[1m\e[97m$rmessage\e[0m\e[92m from the ~/MagicMirror directory to start your MagicMirror.\e[0m" | tee -a $logfile
 
 echo " "
