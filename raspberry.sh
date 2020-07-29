@@ -82,12 +82,12 @@ echo the os is $(lsb_release -a 2>/dev/null) >> $logfile
 OS=$(lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
 # Check the Raspberry Pi version.
 if [ "$ARM" != "armv7l" ]; then
-  read -p "this appears not to be a Raspberry Pi 2 or 3, do you want to continue installation (y/N)?" choice
+  read -p "this appears not to be a Raspberry Pi 2, 3 or 4, do you want to continue installation (y/N)?" choice
 	choice="${choice:-N}"
 	if [[ $choice =~ ^[Nn]$ ]]; then
 	  echo user stopped install on $ARM hardware  >>$logfile
 		echo -e "\e[91mSorry, your Raspberry Pi is not supported."
-		echo -e "\e[91mPlease run MagicMirror on a Raspberry Pi 2 or 3."
+		echo -e "\e[91mPlease run MagicMirror on a Raspberry Pi 2, 3 or 4"
 		echo -e "\e[91mIf this is a Pi Zero, the setup will configure to run in server only mode wih a local browser."
 		exit;
 	fi
@@ -313,6 +313,9 @@ if [ $doInstall == 1 ]; then
 		  fi
 		  curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
 		  chmod +x run-start.sh
+      
+		  # add fix to disable chromium update checks for a year from time started
+		  sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null
 	  elif [ "$ARM" == "x86_64" -a "$OS" == 'buster' ]; then
 	  	cd fonts
 	  	   sed '/roboto-fontface/ c \    "roboto-fontface": "latest"' < package.json 	>new_package.json
@@ -322,6 +325,9 @@ if [ $doInstall == 1 ]; then
 		  	echo "package.json update for x86 fontface completed ok" >>$logfile
 		  fi
 	  	cd -
+	  elif [ $mac == 'Darwin' ]; then
+	  	   rm vendor/package-lock.json
+	  	   echo "erase vendor package-lock.json to allow later nan/fsevents install on mac" >>$logfile
 	  fi
 	fi
     if [ ! -e css/custom.css ]; then
@@ -520,6 +526,8 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 		# tell pm2 to save that configuration, for start at boot
 		echo save MagicMirror pm2 config now  >>$logfile
 		$pm2cmd save
+		echo stop MagicMirror via pm2 now >>$logfile
+		#$pm2cmd stop MagicMirror
 		pm2setup=$true
 fi
 # Disable Screensaver
@@ -532,7 +540,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 	  # get the current setting
 	  setting=$(defaults -currentHost read com.apple.screensaver idleTime)
 		# if its on
-		if [ $setting != 0 ] ; then
+		if [ "$setting" != 0 ] ; then
 		  # turn it off
 			echo disable screensaver via mac profile >> $logfile
 			defaults -currentHost write com.apple.screensaver idleTime 0
