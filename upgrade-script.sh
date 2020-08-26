@@ -47,7 +47,7 @@ if [ -d ~/MagicMirror ]; then
 		cd - >/dev/null
 	fi
 	logfile=$logdir/upgrade.log
-  echo the log will be $logfile
+ # echo the log will be $logfile
 	echo  >>$logfile
 	date +"Upgrade started - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 	echo system is $(uname -a) >> $logfile
@@ -313,12 +313,12 @@ if [ -d ~/MagicMirror ]; then
 										mtype=active
 										justloaded=false
 											# if we want just the modules listed in config.js now
-
-												 if [ ! -f ~/MagicMirror/installers/dumpactivemodules.js ]; then
-														echo downloading dumpactivemodules script >> $logfile
-														curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/dumpactivemodules.js> ~/MagicMirror/installers/dumpactivemodules.js
-														justloaded=true
-												 fi
+											# make sure we have the coe locally to get that info
+											if [ ! -f ~/MagicMirror/installers/dumpactivemodules.js ]; then
+												echo downloading dumpactivemodules script >> $logfile
+												curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/dumpactivemodules.js> ~/MagicMirror/installers/dumpactivemodules.js
+												justloaded=true
+											fi
 										modules=$(node ../installers/dumpactivemodules.js)
 										if [ $justloaded == true ]; then
 										   rm ~/MagicMirror/installers/dumpactivemodules.js

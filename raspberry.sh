@@ -292,7 +292,7 @@ if [ $doInstall == 1 ]; then
 	fi
 
 	cd ~/MagicMirror  || exit
-	if [ $(grep version package.json | awk -F: '{print $2}') == '"2.9.0",' -a $ARM == 'armv6l' ]; then
+	if [ $(grep version package.json | awk -F: '{print $2}') == '"2.11.0",' -a $ARM == 'x86_64' ]; then
 	    git fetch https://github.com/MichMich/MagicMirror.git develop >/dev/null 2>&1
 		git branch develop FETCH_HEAD > /dev/null 2>&1
 		git checkout develop > /dev/null 2>&1
@@ -311,8 +311,8 @@ if [ $doInstall == 1 ]; then
 		  else
 		  	echo "package.json update for armv6l failed " >>$logfile
 		  fi
-		  curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
-		  chmod +x run-start.sh
+		  #curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
+		  #chmod +x run-start.sh
 		  # add fix to disable chromium update checks for a year from time started
 		  sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null
 	  elif [ "$ARM" == "x86_64" -a "$OS" == 'buster' ]; then
