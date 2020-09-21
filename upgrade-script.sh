@@ -130,10 +130,35 @@ if [ -d ~/MagicMirror ]; then
 			fi
 		cd - >/dev/null
 		save_alias=$(alias git 2>/dev/null)
+        # get the current branch name
+		current_branch=$(git branch | grep \* | cut -d ' '  -f2)
+		if [ $current_branch != 'master' ]; then
+		   changes=$(LC_ALL=C git status | grep modified | awk -F: '{print $2}')
+		   if [ "$changes." != "." ]; then
+		      	# get the names of the files that are different locally
+				# split names into an array
+				diffs=($changes) # split to array $diffs
+
+				# if there are different files (array size greater than zero)
+				if [ ${#diffs[@]} -gt 0 ]; then
+					for file in "${diffs[@]}"
+					do
+						echo "restoring file $file before switch back to master branch" | tee -a $logfile
+						if [ $test_run == $false ]; then
+							#git checkout $file >/dev/null
+							:
+						fi
+					done
+				fi
+		   fi
+		   # return to master branch
+		   git checkout master >> $logfile
+		fi
+
 		#lang=$(locale | egrep -e 'LANG | LC_ALL' | awk -F= '{print $2}')
 		# make sure git respones are in english, so code works
 		#if [ "$lang." != "en_US.UTF-8." ]; then
-    #   echo not english or locale not set, set git alias >>$logfile
+    	#   echo not english or locale not set, set git alias >>$logfile
 		#	 alias git='LC_ALL=C git' >>$logfile
 		#fi
 		# get the git remote name
@@ -145,7 +170,7 @@ if [ -d ~/MagicMirror ]; then
 			echo remote name = $remote >>$logfile
 
 		  # get the local and remote package.json versions
-			local_version=$(grep -m1 version package.json | awk -F\" '{print $4}')
+			local_version=$(grep -m1 version package.json | awk -F\" '{print $4}' | awk -F-  '{print $1}')
 			remote_version=$(curl -s https://raw.githubusercontent.com/MichMich/MagicMirror/master/package.json | grep -m1 version | awk -F\" '{print $4}')
 
 			# if on 2.9
@@ -154,9 +179,12 @@ if [ -d ~/MagicMirror ]; then
 				if [ -f installers/dumpactivemodules.js ]; then
 				  # erase cause the fetch will pull another, and the merge will fail
 					rm installers/dumpactivemodules.js
-			  fi
+			    fi
 			fi
-
+			# check if current is less than remote, dont downlevel
+			$(verlte  "$local_version" "$remote_version") 
+			r=$? 
+			if [ "$r" == 0 ]; then
 			# only change if they are different
 			if [ "$local_version." != "$remote_version." -o $force == $true -o $test_run == $true ]; then
 				echo upgrading from version $local_version to $remote_version | tee -a $logfile
@@ -378,6 +406,9 @@ if [ -d ~/MagicMirror ]; then
 				fi
 			else
 			  echo "local version $local_version already same as master $remote_version" | tee -a $logfile
+			fi
+			else
+				echo "local version $local_version newer than remote version $remote_version, aborting update" | tee -a $logfile
 			fi
 		else
 		  echo "Unable to determine upstream git repository" | tee -a $logfile
