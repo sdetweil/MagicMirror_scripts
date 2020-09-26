@@ -286,6 +286,7 @@ if [ $doInstall == 1 ]; then
 		# replace faulty run-start.sh
 		curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >MagicMirror/run-start.sh
 		chmod +x MagicMirror/run-start.sh
+		sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null
 	else
 		echo -e "\e[91mUnable to clone MagicMirror. \e[90m" | tee -a $logfile
 		exit;
