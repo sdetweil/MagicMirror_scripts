@@ -28,7 +28,7 @@ no changes are made to the local repo or the working copy
 if you WANT to actually apply the changes, cut/paste this line into the terminal window on your device
 
 ````bash
-bash -c  "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/upgrade-script.sh)"
+bash -c  "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/upgrade-script.sh)" apply
 ````
 there is a log file (upgrade.log)  in the MagicMirror/installers folder…
 
