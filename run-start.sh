@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
   # use bash instead of sh
 [ -f ./untrack-css.sh ] && ./untrack-css.sh
 
@@ -30,7 +30,7 @@ else
   #check for macOS
   mac=$(uname)
   #
-  # if the user requested serveronly OR 
+  # if the user requested serveronly OR
   #    electron support for armv6l has been dropped OR
   #    system is in text mode
   #
@@ -39,9 +39,9 @@ else
     # if user explicitly configured to run server only (no ui local)
     # OR there is no xwindows running, so no support for browser graphics
     if [ "$serveronly." == "true." ] || [ "$xorg." == "." -a $mac != 'Darwin' ]; then
-      # start server mode, 
+      # start server mode,
       node serveronly
-    else 
+    else
       # start the server in the background
       # wait for server to be ready
       # need bash for this
@@ -51,7 +51,7 @@ else
       while read line; do
          case "$line" in
          *point\ your\ browser*)
-            echo $line 
+            echo $line
             break
             ;;
          *)
@@ -62,28 +62,28 @@ else
       done <&3
 
       # Close the file descriptor
-      #exec 3<&-	
+      #exec 3<&-
 
       # lets use chrome to display here now
       # get the server port address from the ready message
-      port=$(echo $line | awk -F\: '{print $4}')	
-      # start chromium 
+      port=$(echo $line | awk -F\: '{print $4}')
+      # start chromium
       echo "Starting chromium browser now, have patience, it takes a minute"
       # continue to spool stdout to console
       tee <&3 &
 			if [ $mac != 'Darwin' ]; then
-        if [ $(which chromium-browser) != '' ]; then
+        if [ "$(which chromium-browser)." != '.' ]; then
 				  chromium-browser -noerrdialogs -kiosk -start_maximized  --disable-infobars --app=http://localhost:$port  --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors 2>/dev/null
         else
           echo "Chromium_browser not installed"
         fi
 			else
 			  open -a "Google Chrome" http://localhost:$port --args -noerrdialogs -kiosk -start_maximized  --disable-infobars --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors 2>/dev/null
-			fi 
-      exit		  
-    fi 
-  else  
-    # we can use electron directly	
+			fi
+      exit
+    fi
+  else
+    # we can use electron directly
     node_modules/.bin/electron js/electron.js $1;
   fi
 fi
