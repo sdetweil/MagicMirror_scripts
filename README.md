@@ -13,7 +13,7 @@ bash -c  "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scri
 ````
 there is a log file, MagicMirror/install.log, created so we can be able to diagnose any problems
 
-# Update to next MagicMirror version from an existing MagicMirror installation 
+# Update to next MagicMirror version from an existing MagicMirror installation
 
 ## upgrade-script.sh will do the git pull and npm install, and refresh npm setup for any modules that might need it
 it should handle all the work…<br>

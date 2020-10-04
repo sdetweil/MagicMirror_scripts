@@ -333,14 +333,17 @@ if [ $doInstall == 1 ]; then
     if [ ! -e css/custom.css ]; then
        touch css/custom.css
     fi
+    if [ $newver == '2.13.0' ]; then
+      # fix downlevel node-ical
+      sed '/node-ical/ c \         "node-ical\"\:\"^0.12.1\",' < package.json >new_package.json
+      rm package.json
+      mv new_package.json package.json
+	fi
 	echo -e "\e[96mInstalling dependencies ...\e[90m" | tee -a $logfile
 	rm package-lock.json 2>/dev/null
 	npm_i_r=$(npm install $forced_arch --only=prod)
     npm_i_rc=$?
-    if [ $newver == '2.11.0' ]; then
-      # fixup missing eslint (in dev dependencies)
-  	  npm install eslint >>$logfile
-	fi
+
     if [ $npm_i_rc -eq 0 ]; then
 		echo -e "\e[92mDependencies installation Done!\e[90m" | tee -a $logfile
 	else

@@ -182,8 +182,8 @@ if [ -d ~/MagicMirror ]; then
 			    fi
 			fi
 			# check if current is less than remote, dont downlevel
-			$(verlte  "$local_version" "$remote_version") 
-			r=$? 
+			$(verlte  "$local_version" "$remote_version")
+			r=$?
 			if [ "$r" == 0 ]; then
 			# only change if they are different
 			if [ "$local_version." != "$remote_version." -o $force == $true -o $test_run == $true ]; then
@@ -289,6 +289,12 @@ if [ -d ~/MagicMirror ]; then
 									#	 echo forcing architecture armv7l >>$logfile
 									#	 forced_arch='--arch=armv7l'
 									#fi
+								    if [ $remote_version == '2.13.0' ]; then
+								      # fix downlevel node-ical
+								      sed '/node-ical/ c \         "node-ical\"\:\"^0.12.1\",' < package.json >new_package.json
+								      rm package.json
+								      mv new_package.json package.json
+									fi
 									echo "updating MagicMirror runtime, please wait" | tee -a $logfile
 									npm install $forced_arch --only=prod 2>&1 | tee -a $logfile
 									done_update=`date +"completed - %a %b %e %H:%M:%S %Z %Y"`
