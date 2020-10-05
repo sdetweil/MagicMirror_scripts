@@ -284,11 +284,21 @@ if [ -d ~/MagicMirror ]; then
 								if [ $doinstalls == $true ]; then
 								  # if this is a pi zero
 									echo processor architecture is $arch >> $logfile
-									#if [ "$arch" == "armv6l" ]; then
+									if [ "$arch" == "armv6l" ]; then
 									#   # force to look like pi 2
 									#	 echo forcing architecture armv7l >>$logfile
 									#	 forced_arch='--arch=armv7l'
-									#fi
+									  sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < package.json 	>new_package.json
+									  if [ -s new_package.json ]; then
+									  	cp new_package.json package.json
+									  	rm new_package.json
+									  	echo "package.json update for armv6l completed ok" >>$logfile
+									  else
+									  	echo "package.json update for armv6l failed " >>$logfile
+									  fi
+									  curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >MagicMirror/run-start.sh
+									  chmod +x MagicMirror/run-start.sh
+									fi
 								    if [ $remote_version == '2.13.0' ]; then
 								      # fix downlevel node-ical
 								      sed '/node-ical/ c \         "node-ical\"\:\"^0.12.1\",' < package.json >new_package.json
