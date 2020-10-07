@@ -199,7 +199,8 @@ if [ -d ~/MagicMirror ]; then
 					# need to get the current branch
 					current_branch=$(LC_ALL=C git branch | grep "*" | awk '{print $2}')
 					echo current branch = $current_branch >>$logfile
-
+					# find out if package,json has run-start enabled
+					fix_runstart=$(grep run-start package.json| wc -l)
 					LC_ALL=C git status 2>&1 >>$logfile
 
 					# get the names of the files that are different locally
@@ -286,7 +287,7 @@ if [ -d ~/MagicMirror ]; then
 								if [ $doinstalls == $true ]; then
 								  # if this is a pi zero
 									echo processor architecture is $arch >> $logfile
-									if [ "$arch" == "armv6l" ]; then
+									if [ "$arch" == "armv6l" -o $fix_runstart == $true ]; then
 									#   # force to look like pi 2
 									#	 echo forcing architecture armv7l >>$logfile
 									#	 forced_arch='--arch=armv7l'
