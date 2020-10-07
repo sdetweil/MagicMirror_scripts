@@ -235,6 +235,8 @@ if [ -d ~/MagicMirror ]; then
 							    git config --global user.name "upgrade_script"
 								  git config --global user.email "script@upgrade.com"
 							fi
+							echo "erasing lock files" >> $logfile
+							rm "*-lock.json" 2>/dev/null
 							git stash >>$logfile
 							stashed=$true
 						else
