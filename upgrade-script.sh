@@ -298,8 +298,10 @@ if [ -d ~/MagicMirror ]; then
 									  else
 									  	echo "package.json update for armv6l failed " >>$logfile
 									  fi
-									  curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >MagicMirror/run-start.sh
-									  chmod +x MagicMirror/run-start.sh
+									  if [ ! -e run-start.sh ]; then
+										curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
+									    chmod +x run-start.sh
+									  fi
 									fi
 								    if [ $remote_version == '2.13.0' ]; then
 								      # fix downlevel node-ical
