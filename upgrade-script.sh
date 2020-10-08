@@ -237,6 +237,7 @@ if [ -d ~/MagicMirror ]; then
 								  git config --global user.email "script@upgrade.com"
 							fi
 							echo "erasing lock files" >> $logfile
+							git reset HEAD package-lock.json >/dev/null
 							rm *-lock.json 2>/dev/null
 							rm  vendor/*-lock.json 2>/dev/null
 							rm  fonts/*-lock.json 2>/dev/null
