@@ -238,6 +238,8 @@ if [ -d ~/MagicMirror ]; then
 							fi
 							echo "erasing lock files" >> $logfile
 							rm *-lock.json 2>/dev/null
+							rm  vendor/*-lock.json 2>/dev/null
+							rm  fonts/*-lock.json 2>/dev/null
 							git stash >>$logfile
 							stashed=$true
 						else
