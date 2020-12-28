@@ -133,6 +133,7 @@ if [ -d ~/MagicMirror ]; then
         # get the current branch name
 		current_branch=$(git branch | grep \* | cut -d ' '  -f2)
 		if [ $current_branch != 'master' ]; then
+		   echo reverting to master branch from $current_branch, saving changed files | tee -a $logfile
 		   changes=$(LC_ALL=C git status | grep modified | awk -F: '{print $2}')
 		   if [ "$changes." != "." ]; then
 		      	# get the names of the files that are different locally
@@ -143,24 +144,30 @@ if [ -d ~/MagicMirror ]; then
 				if [ ${#diffs[@]} -gt 0 ]; then
 					for file in "${diffs[@]}"
 					do
-						echo "restoring file $file before switch back to master branch" | tee -a $logfile
+						f="$(trim "$file")"
 						if [ $test_run == $false ]; then
-							#git checkout $file >/dev/null
+							echo "saving file $f as $f.save before switch back to master branch" | tee -a $logfile
+							cp $f $f.save
+							echo "restoring file $f before switch back to master branch" | tee -a $logfile
+							git checkout $f >/dev/null
 							:
+						else
+							echo "would restore file $f before switch back to master branch" | tee -a $logfile
 						fi
 					done
 				fi
 		   fi
 		   # return to master branch
 		   git checkout master >> $logfile
-		fi
+		   r=$?
+		   if [ $r -ne 0 ]; then
+		   	  cd - >/dev/null
+		   	  echo unable to change back to master branch, stopping execution
+		   	  date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+		   	  exit
+		   fi
 
-		#lang=$(locale | egrep -e 'LANG | LC_ALL' | awk -F= '{print $2}')
-		# make sure git respones are in english, so code works
-		#if [ "$lang." != "en_US.UTF-8." ]; then
-    	#   echo not english or locale not set, set git alias >>$logfile
-		#	 alias git='LC_ALL=C git' >>$logfile
-		#fi
+		fi
 		# get the git remote name
 		remote=$(git remote -v 2>/dev/null | grep -i michmich | grep fetch | awk '{print $1}')
 
