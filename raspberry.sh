@@ -33,6 +33,21 @@ PM2_FILE=pm2_MagicMirror.json
 forced_arch=
 pm2setup=$false
 
+# Ask for unattended install flag -a (automated)
+automated=$false
+while getopts "ha" opt; do
+  case "$opt" in
+    h)
+        echo "If you use the flag '-a' then the installation will configure MM auto start and disable the screensaver."
+        exit 0
+        ;;
+    a)
+        echo -e "*** '-a' flag detected. Starting the installation with configured MM auto start and disabled screensaver. ***\n"
+	automated=$true
+	;;
+  esac
+done
+
 trim() {
     local var="$*"
     # remove leading whitespace characters
@@ -402,8 +417,14 @@ else
 fi
 
 # Use pm2 control like a service MagicMirror
-read -p "Do you want use pm2 for auto starting of your MagicMirror (y/N)?" choice
-choice="${choice:-N}"
+
+if [[ $automated -eq $false ]]; then
+  read -p "Do you want use pm2 for auto starting of your MagicMirror (y/N)?" choice
+  choice="${choice:-N}"
+else
+	choice="Y"
+fi
+
 if [[ $choice =~ ^[Yy]$ ]]; then
       echo install and setup pm2 | tee -a $logfile
  			# assume pm2 will be found on the path
@@ -535,8 +556,13 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 fi
 # Disable Screensaver
 
-read -p "Do you want to disable the screen saver? (y/N)?" choice
-choice="${choice:-Y}"
+if [[ $automated -eq $false ]]; then
+  read -p "Do you want to disable the screen saver? (y/N)?" choice
+  choice="${choice:-Y}"
+else
+	choice="Y"
+fi
+
 if [[ $choice =~ ^[Yy]$ ]]; then
   # if this is a mac
 	if [ $mac == 'Darwin' ]; then
