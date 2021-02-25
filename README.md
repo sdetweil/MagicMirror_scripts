@@ -11,7 +11,7 @@ to execute the install script, cut/paste this line into the terminal window on y
 ````bash
 bash -c  "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/raspberry.sh)"
 ````
-there is a log file, MagicMirror/install.log, created so we can be able to diagnose any problems
+there is a log file, ~/install.log, created so we can be able to diagnose any problems
 
 # Update to next MagicMirror version from an existing MagicMirror installation
 
