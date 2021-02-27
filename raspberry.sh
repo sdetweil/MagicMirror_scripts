@@ -302,20 +302,20 @@ if [ $doInstall == 1 ]; then
 	newver=$(grep -i version package.json | awk -F\" '{ print $4 }')
 	if verlte "2.11.0" $newver; then
 	  # if one of the older devices, fix the start script to execute in serveronly mode
-	  if [ "$ARM" == "armv6l" ]; then
+	  if [ "$ARM" == "armv6l" -o "$ARM" == "i686" ]; then
 		  # fixup the start script
 		  sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < package.json 	>new_package.json
 		  if [ -s new_package.json ]; then
 		  	cp new_package.json package.json
 		  	rm new_package.json
-		  	echo "package.json update for armv6l completed ok" >>$logfile
+		  	echo "package.json update for $ARM completed ok" >>$logfile
 		  else
-		  	echo "package.json update for armv6l failed " >>$logfile
+		  	echo "package.json update for $ARM failed " >>$logfile
 		  fi
 		  #curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
 		  #chmod +x run-start.sh
 		  # add fix to disable chromium update checks for a year from time started
-		  sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null
+		  # sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null
 	  elif [ "$ARM" == "x86_64" -a "$OS" == 'buster' ]; then
 	  	cd fonts
 	  	   sed '/roboto-fontface/ c \    "roboto-fontface": "latest"' < package.json 	>new_package.json
