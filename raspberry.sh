@@ -301,8 +301,12 @@ if [ $doInstall == 1 ]; then
 	# if this is v 2.11 or higher
 	newver=$(grep -i version package.json | awk -F\" '{ print $4 }')
 	if verlte "2.11.0" $newver; then
+	  el_installed=$true
+	  if [ ! -d node_modules/electron ]; then
+	    el_installed=$false
+	  fi
 	  # if one of the older devices, fix the start script to execute in serveronly mode
-	  if [ "$ARM" == "armv6l" -o "$ARM" == "i686" ]; then
+	  if [ "$ARM" == "armv6l" -o "$ARM" == "i686" -o $el_installed == $false ]; then
 		  # fixup the start script
 		  sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < package.json 	>new_package.json
 		  if [ -s new_package.json ]; then

@@ -29,12 +29,16 @@ else
   fi
   #check for macOS
   mac=$(uname)
+  el_installed=$true
+  if [ ! -d node_modules/electron ]; then
+    el_installed=$false
+  fi
   #
   # if the user requested serveronly OR
   #    electron support for armv6l has been dropped OR
   #    system is in text mode
   #
-  if [ "$serveronly." != "false." -o  "$arch" == "armv6l" -o "$arch" == "i686"  ] ||  [ "$xorg." == "." -a $mac != 'Darwin' ]; then
+  if [ "$serveronly." != "false." -o  "$arch" == "armv6l" -o "$arch" == "i686" -o $el_installed == $false  ] ||  [ "$xorg." == "." -a $mac != 'Darwin' ]; then
 
     # if user explicitly configured to run server only (no ui local)
     # OR there is no xwindows running, so no support for browser graphics
