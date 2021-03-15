@@ -41,6 +41,10 @@ else
   #
   if [ "$serveronly." != "false." -o  "$arch" == "armv6l" -o "$arch" == "i686" -o $el_installed == $false  ]  ||  [ "$xorg." == "." -a $mac != 'Darwin' ]; then
 
+      t=$(ps -ef | grep  "node serveronly" | grep -m1 -v color | awk '{print $2}')
+      if [ "$t." != '.' ]; then
+        sudo kill -9 $t >/dev/null 2>&1
+      fi
     # if user explicitly configured to run server only (no ui local)
     # OR there is no xwindows running, so no support for browser graphics
     if [ "$serveronly." == "true." ] || [ "$xorg." == "." -a $mac != 'Darwin' ]; then
@@ -78,10 +82,10 @@ else
       tee <&3 &
 			if [ $mac != 'Darwin' ]; then
         b="chromium"
-        if [ "$(which) $b." == ' .' ]; then
+        if [ $(which $b). == '.' ]; then
           b='chromium-browser'
         fi
-        if [ "$(which) $b." != ' .' ]; then
+        if [ $(which $b). != ' .' ]; then
 				  "$b" -noerrdialogs -kiosk -start_maximized  --disable-infobars --app=http://localhost:$port  --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors 2>/dev/null
         else
           echo "Chromium_browser not installed"
