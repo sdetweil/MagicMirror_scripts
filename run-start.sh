@@ -78,10 +78,10 @@ else
       tee <&3 &
 			if [ $mac != 'Darwin' ]; then
         b="chromium"
-        if [ "($which $b)." == '.' ]; then
+        if [ "($which) $b." == '.' ]; then
           b='chromium-browser'
         fi
-        if [ "$(which $b)." != '.' ]; then
+        if [ "$(which) $b." != '.' ]; then
 				  "$b" -noerrdialogs -kiosk -start_maximized  --disable-infobars --app=http://localhost:$port  --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors 2>/dev/null
         else
           echo "Chromium_browser not installed"
