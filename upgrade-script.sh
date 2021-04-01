@@ -404,7 +404,14 @@ if [ -d ~/MagicMirror ]; then
 												if [ $doinstalls == $true ]; then
 												     rm -rf node_modules 2>/dev/null
 													 rm package-lock.json 2>/dev/null
-													 npm install $forced_arch 2>&1| tee -a $logfile
+													 # check to see if the author created a rebuild process
+													 do_rebuild=$(grep "\"rebuild\"" package.json | wc -l)
+													 # if so, use it
+													 if [ $do_rebuild -ne 0 ]; then
+													 	npm rebuild 2>&1| tee -a $logfile
+													 else
+													 	npm install $forced_arch 2>&1| tee -a $logfile
+													 fi
 												else
 													echo skipped processing for $module, doing test run | tee -a $logfile
 												fi
