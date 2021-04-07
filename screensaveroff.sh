@@ -82,7 +82,7 @@ mac=$(uname -s)
 		if [ -e "/etc/lightdm/lightdm.conf" ]; then
 		  # if screen saver NOT already disabled?
 			if [ $(grep 'xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf | wc -l) == 0 ]; then
-			  echo install screensaver via lightdm.conf >> $logfile
+			  echo disable screensaver via lightdm.conf >> $logfile
 				sudo sed -i '/^\[Seat:\*\]/a xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf
 			else
 			  echo screensaver via lightdm already disabled >> $logfile
