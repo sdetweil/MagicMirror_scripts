@@ -26,7 +26,7 @@ doInstall=1
 true=1
 false=0
 # Define the tested version of Node.js.
-NODE_TESTED="v10.1.0"
+NODE_TESTED="v14.0.0"
 NPM_TESTED="V6.0.0"
 USER=`whoami`
 PM2_FILE=pm2_MagicMirror.json
