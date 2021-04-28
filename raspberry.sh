@@ -185,7 +185,7 @@ if $NODE_INSTALL; then
 	if [ $mac == 'Darwin' ]; then
 	  brew install node
 	else
-		NODE_STABLE_BRANCH="10.x"
+		NODE_STABLE_BRANCH="14.x"
 		# sudo apt-get install --only-upgrade libstdc++6
 		node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - )
 		echo Node release info = $node_info >> $logfile
