@@ -100,6 +100,10 @@ function verlt() { [ "$1" = "$2" ] && return 1 || verlte $1 $2 ;}
 
 # Update before first apt-get
 if [ $mac != 'Darwin' ]; then
+	# Installing helper tools
+	echo -e "\e[96mInstalling helper tools ...\e[90m" | tee -a $logfile
+	sudo apt-get --assume-yes install curl wget git build-essential unzip pv >>$logfile
+
 	echo -e "\e[96mUpdating packages ...\e[90m" | tee -a $logfile
 	upgrade=$false
 	update=$(sudo apt-get update 2>&1)
@@ -131,14 +135,10 @@ if [ $mac != 'Darwin' ]; then
 	fi
 	if [ $upgrade -eq $true ]; then
 	   echo "apt-get upgrade  started" >> $logfile
-	   upgrade_result=$(sudo apt-get --assume-yes upgrade  2>&1)
+	   upgrade_result=$(sudo apt-get --assume-yes upgrade 2>&1 | pv -l -p)
 		 upgrade_rc=$?
 		 echo apt upgrade result ="rc=$upgrade_rc $upgrade_result" >> $logfile
 	fi
-
-	# Installing helper tools
-	echo -e "\e[96mInstalling helper tools ...\e[90m" | tee -a $logfile
-	sudo apt-get --assume-yes install curl wget git build-essential unzip  >>$logfile
 fi
 
 # Check if we need to install or upgrade Node.js.
