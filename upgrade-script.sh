@@ -10,6 +10,7 @@ test_run=$true
 stashed=$false
 keyFile=package.json
 forced_arch=
+mfn=testmirror
 git_active_lock='./.git/index.lock'
 lf=$'\n'
 git_user_name=
@@ -35,14 +36,14 @@ if [ $mac == 'Darwin' ]; then
 else
 	cmd=readlink
 fi
-if [ -d ~/MagicMirror ]; then
+if [ -d ~/$mfn ]; then
 
 	# put the log where the script is located
 	logdir=$(dirname $($cmd -f "$0"))
 	# if the script was execute from the web
 	if [[ $logdir != *"MagicMirror/installers"* ]]; then
 		# use the MagicMirror/installers folder
-		cd ~/MagicMirror/installers >/dev/null
+		cd ~/$mfn/installers >/dev/null
 		logdir=$(pwd)
 		cd - >/dev/null
 	fi
@@ -120,7 +121,7 @@ if [ -d ~/MagicMirror ]; then
 	fi
 
 	# change to MagicMirror folder
-	cd ~/MagicMirror
+	cd ~/$mfn
 
 		# save custom.css
 		cd css
@@ -273,22 +274,49 @@ if [ -d ~/MagicMirror ]; then
 					# if there were no conflicts reported
 					if [ "$test_merge_output." == "." ]; then
 
-						if [ $test_run == $false ]; then
-							# go ahead and merge now
-							echo "executing merge, apply specified" >> $logfile
-							# get the text output of merge
-							merge_output=$(LC_ALL=C git merge $remote/$current_branch 2>&1)
-							# and its return code
-							merge_result=$?
-							# make any long line readable
-							merge_output=$(echo $merge_output | tr '|' '\n'| sed "s/create/\\${lf}create/g" | sed "s/mode\ change/\\${lf}mode\ change/g")
-							echo -e "merge result rc= $merge_result\n $merge_output">> $logfile
-						else
-						  echo "skipping merge, only test run" >> $logfile
-							merge_output=''
-							merge_result=0
-						fi
-
+						need_merge=true
+						# may have to loop here if untracked files inhibit merge
+						# new path will clean up those files
+						while [ $need_merge == true ]
+						do
+							if [ $test_run == $false ]; then
+								# go ahead and merge now
+								echo "executing merge, apply specified" >> $logfile
+								# get the text output of merge
+								merge_output=$(LC_ALL=C git merge $remote/$current_branch 2>&1)
+								# and its return code
+								merge_result=$?
+								# make any long line readable
+								merge_output=$(echo $merge_output | tr '|' '\n'| sed "s/create/\\${lf}create/g" | sed "s/mode\ change/\\${lf}mode\ change/g")
+								echo -e "merge result rc= $merge_result\n $merge_output">> $logfile
+							else
+							  	echo "skipping merge, only test run" >> $logfile
+								merge_output=''
+								merge_result=0
+							fi
+							# watch out for files in new release could be overlayed
+							# erase them..
+							if [ $merge_result == 1 ]; then
+								# and the problem is untracked would overwritten
+								if [[ "$merge_output" =~ 'would be overwritten by merge' ]]; then
+									echo "found unexpected untracked files present in new release, removing"  >>$logfile
+									filelist=$(echo $merge_output | awk -F: '{print $3}' | awk -FP '{print $1}'| tr -d '\t'| tr ' ' '\n')
+									files=($filelist)
+									for file in "${files[@]}"
+									do
+										echo "removing file " $file >> $logfile
+										rm $file >/dev/null
+									done
+									# and we will go merge again
+								else
+								  # some other merge problem
+								  need_merge=false
+								fi
+							else
+								# no error, end loop
+								need_merge=false
+							fi
+						done
 						# if no merge errors
 						if [ $merge_result == 0 ]; then
 							# some updates applied
@@ -373,14 +401,14 @@ if [ -d ~/MagicMirror ]; then
 										justloaded=false
 											# if we want just the modules listed in config.js now
 											# make sure we have the coe locally to get that info
-											if [ ! -f ~/MagicMirror/installers/dumpactivemodules.js ]; then
+											if [ ! -f ~/$mfn/installers/dumpactivemodules.js ]; then
 												echo downloading dumpactivemodules script >> $logfile
-												curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/dumpactivemodules.js> ~/MagicMirror/installers/dumpactivemodules.js
+												curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/dumpactivemodules.js> ~/$mfn/installers/dumpactivemodules.js
 												justloaded=true
 											fi
 										modules=$(node ../installers/dumpactivemodules.js)
 										if [ $justloaded == true ]; then
-										   rm ~/MagicMirror/installers/dumpactivemodules.js
+										   rm ~/$mfn/installers/dumpactivemodules.js
 										fi
 									else
 										# get the list of INSTALLED modules with  package.json files
