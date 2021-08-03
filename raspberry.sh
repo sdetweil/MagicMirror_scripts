@@ -268,7 +268,7 @@ if $NPM_INSTALL; then
 	fi
 	# update to the latest.
 	echo upgrading npm to latest >> $logfile
-	sudo npm i -g npm  >>$logfile
+	sudo npm i -g npm@6  >>$logfile
 	echo -e "\e[92mnpm installation Done! version=V$(npm -v)\e[0m" | tee -a $logfile
 fi
 
