@@ -1,14 +1,19 @@
 #!/bin/bash
-  # use bash instead of sh
+# use bash instead of sh
+# get the folder  for this file
+DIR=$(dirname "$0")
+# make sure we are running in that folder
+cd "$DIR" >/dev/null
+
+# check for the old untrack css script
 [ -f ./untrack-css.sh ] && ./untrack-css.sh
 
+# if running under docker
 if grep docker /proc/1/cgroup -qa; then
-  # if running in docker, only start electron
-
+  #  only start electron
   electron js/electron.js $1;
 else
   # not running in docker
-
   if [ -z "$DISPLAY" ]; then #If not set DISPLAY is SSH remote or tty
     export DISPLAY=:0 # Set by default display
   fi
@@ -39,7 +44,7 @@ else
   #    electron support for armv6l has been dropped OR
   #    system is in text mode
   #
-  if [ "$serveronly." != "false." -o  "$arch" == "armv6l" -o "$arch" == "i686" -o $el_installed == $false  ]  ||  [ "$xorg." == "." -a $mac != 'Darwin' ]; then
+  if [ "$serveronly." != "$false." -o  "$arch" == "armv6l" -o "$arch" == "i686" -o $el_installed == $false  ]  ||  [ "$xorg." == "." -a $mac != 'Darwin' ]; then
 
       t=$(ps -ef | grep  "node serveronly" | grep -m1 -v color | awk '{print $2}')
       if [ "$t." != '.' ]; then
@@ -47,7 +52,7 @@ else
       fi
     # if user explicitly configured to run server only (no ui local)
     # OR there is no xwindows running, so no support for browser graphics
-    if [ "$serveronly." == "true." ] || [ "$xorg." == "." -a $mac != 'Darwin' ]; then
+    if [ "$serveronly." == "$true." ] || [ "$xorg." == "." -a $mac != 'Darwin' ]; then
       # start server mode,
       node serveronly
     else

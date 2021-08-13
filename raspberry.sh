@@ -352,7 +352,8 @@ if [ $doInstall == 1 ]; then
 	rm package-lock.json 2>/dev/null
 	npm_i_r=$(npm install $forced_arch --only=prod)
     npm_i_rc=$?
-
+    # add the npm install messages to the logfile
+  	echo $npm_i_r >> $logfile
     if [ $npm_i_rc -eq 0 ]; then
 		echo -e "\e[92mDependencies installation Done!\e[90m" | tee -a $logfile
 	else
