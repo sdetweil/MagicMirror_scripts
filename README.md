@@ -6,7 +6,7 @@ these scripts can be used to automate installation of release upgrades.
 # Install MagicMirror
 
 ## raspberry.sh  is the installation script, upgraded from the core package
-to execute the install script, cut/paste this line into the terminal window on your device (I can't say PI, cause it works in a lot of other places too)
+to execute the install script, copy/paste this line into the terminal window on your device (I can't say PI, cause it works in a lot of other places too)
 
 ````bash
 bash -c  "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/raspberry.sh)"
@@ -30,7 +30,7 @@ bash -c  "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scri
 ````
 ## no changes are made to the local repo or the working copy
 
-## if you WANT to actually apply the changes, cut/paste this line into the terminal window on your device
+## if you WANT to actually apply the changes, copy/paste this line into the terminal window on your device
 
 ````bash
 bash -c  "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/upgrade-script.sh)" apply
@@ -43,12 +43,12 @@ there is a log file (upgrade.log)  in the MagicMirror/installers folder…
 
 ### turn off screen saver and setup pm2 to autostart MM on boot..
 
-screensaveroff.sh, cut/paste this line into the terminal window on your device
+screensaveroff.sh, copy/paste this line into the terminal window on your device
 
 ````bash
 bash -c "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/screensaveroff.sh)"
 ````
-fixuppm2.sh, cut/paste this line into the terminal window on your device
+fixuppm2.sh, copy/paste this line into the terminal window on your device
 
 ````bash
 bash -c "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/fixuppm2.sh)"
