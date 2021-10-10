@@ -23,7 +23,7 @@ it should handle all the work…<br>
 
 give it a try
 
-this works on Mac as well, cut/paste this line into the terminal window on your device
+this works on Mac as well, copy/paste this line into the terminal window on your device
 
 ````bash
 bash -c  "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/upgrade-script.sh)"
