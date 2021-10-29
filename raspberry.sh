@@ -81,15 +81,17 @@ echo installing on $ARM processor system >>$logfile
 echo the os is $(lsb_release -a 2>/dev/null) >> $logfile
 OS=$(lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
 # Check the Raspberry Pi version.
-if [ "$ARM" != "armv7l" ]; then
-  read -p "this appears not to be a Raspberry Pi 2, 3 or 4, do you want to continue installation (y/N)?" choice
-	choice="${choice:-N}"
-	if [[ $choice =~ ^[Nn]$ ]]; then
-	  echo user stopped install on $ARM hardware  >>$logfile
-		echo -e "\e[91mSorry, your Raspberry Pi is not supported."
-		echo -e "\e[91mPlease run MagicMirror on a Raspberry Pi 2, 3 or 4"
-		echo -e "\e[91mIf this is a Pi Zero, the setup will configure to run in server only mode wih a local browser."
-		exit;
+if [ 0 == 1 ]; then
+	if [ "$ARM" != "armv7l" ]; then
+	  read -p "this appears not to be a Raspberry Pi 2, 3 or 4, do you want to continue installation (y/N)?" choice
+		choice="${choice:-N}"
+		if [[ $choice =~ ^[Nn]$ ]]; then
+		  echo user stopped install on $ARM hardware  >>$logfile
+			echo -e "\e[91mSorry, your Raspberry Pi is not supported."
+			echo -e "\e[91mPlease run MagicMirror on a Raspberry Pi 2, 3 or 4"
+			echo -e "\e[91mIf this is a Pi Zero, the setup will configure to run in server only mode wih a local browser."
+			exit;
+		fi
 	fi
 fi
 
@@ -306,26 +308,10 @@ if [ $doInstall == 1 ]; then
 	# if this is v 2.11 or higher
 	newver=$(grep -i version package.json | awk -F\" '{ print $4 }')
 	if verlte "2.11.0" $newver; then
-	  el_installed=$true
-	  if [ ! -d node_modules/electron ]; then
-	    el_installed=$false
-	  fi
-	  # if one of the older devices, fix the start script to execute in serveronly mode
-	  if [ "$ARM" == "armv6l" -o "$ARM" == "i686" -o $el_installed == $false ]; then
-		  # fixup the start script
-		  sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < package.json 	>new_package.json
-		  if [ -s new_package.json ]; then
-		  	cp new_package.json package.json
-		  	rm new_package.json
-		  	echo "package.json update for $ARM completed ok" >>$logfile
-		  else
-		  	echo "package.json update for $ARM failed " >>$logfile
-		  fi
-		  #curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
-		  #chmod +x run-start.sh
-		  # add fix to disable chromium update checks for a year from time started
-		  # sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null
-	  elif [ "$ARM" == "x86_64" -a "$OS" == 'buster' ]; then
+
+	  # add fix to disable chromium update checks for a year from time started
+	  # sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null
+	  if [ "$ARM" == "x86_64" -a "$OS" == 'buster' ]; then
 	  	cd fonts
 	  	   sed '/roboto-fontface/ c \    "roboto-fontface": "latest"' < package.json 	>new_package.json
 	  	   if [ -s new_package.json ]; then
@@ -369,14 +355,25 @@ if [ $doInstall == 1 ]; then
 		 sudo chown root node_modules/electron/dist/chrome-sandbox 2>/dev/null
 		 sudo chmod 4755 node_modules/electron/dist/chrome-sandbox 2>/dev/null
 	fi
-	# if this an armv6l device (pi 0/1)
-	# if [ $ARM == 'armv6l' ]; then
-	#	# if this is the updated release
-	#	if ! verlt $(grep -i version package.json | awk -F\" '{ print $4 }')  2.10; then
-	#		# replace the start command with the old one
-	#		grep -v start package.json  | sed '/"scripts": {/a \ \ \ \ "start":\ "bash run-start.sh",' >package.json
-	#	fi
-	# fi
+	# assume electron installed ok
+	el_installed=$true
+	# if the folder isn't there, then we have problems
+	if [ ! -d node_modules/electron ]; then
+		el_installed=$false
+	fi
+	# if one of the older devices, fix the start script to execute in serveronly mode
+	if [ "$ARM" == "armv6l" -o "$ARM" == "i686" -o $el_installed == $false ]; then
+	  # fixup the start script
+	  sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < package.json 	>new_package.json
+	  if [ -s new_package.json ]; then
+	  	cp new_package.json package.json
+	  	rm new_package.json
+	  	echo "package.json update for $ARM oe Electron missing, completed ok" >>$logfile
+	  else
+	  	echo "package.json update for $ARM failed " >>$logfile
+	  fi
+	fi
+
 	# Use sample config for start MagicMirror
 	echo setting up initial config.js | tee -a $logfile
 	cp config/config.js.sample config/config.js
