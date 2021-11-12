@@ -93,7 +93,7 @@ if [ -d ~/MagicMirror ]; then
 				if [ $pm2_fails != 1 ]; then
 				   # uninstall it
 					 echo pm2 installed, but does not work, uninstalling >> $logfile
-				   sudo npm uninstall $up -g pm2
+				    npm uninstall $up -g pm2
 					 # force reinstall
 			     pm2_installed=
 				fi
@@ -102,7 +102,7 @@ if [ -d ~/MagicMirror ]; then
 		if [  "$pm2_installed." == "." ]; then
 			# install it.
 			echo pm2 not installed, installing >>$logfile
-			result=$(sudo npm install $up -g pm2)
+			result=$( npm install $up -g pm2)
 			# if this is a mac
 			if [ $mac == 'Darwin' ]; then
 				echo this is a mac, fixup for path >>$logfile

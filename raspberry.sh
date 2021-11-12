@@ -187,6 +187,9 @@ if $NODE_INSTALL; then
 	if [ $mac == 'Darwin' ]; then
 	  brew install node
 	else
+		if [ $OS == "bullseye" ]; then 
+			sudo chmod 666 /usr/share/doc/nodejs/api/embedding.json.gz
+		fi 
 		NODE_STABLE_BRANCH="14.x"
 		# sudo apt-get install --only-upgrade libstdc++6
 		node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - )
@@ -293,7 +296,7 @@ if [ $doInstall == 1 ]; then
 		# replace faulty run-start.sh
 		curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >MagicMirror/run-start.sh
 		chmod +x MagicMirror/run-start.sh
-		sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null
+		sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null 2>&1
 	else
 		echo -e "\e[91mUnable to clone MagicMirror. \e[90m" | tee -a $logfile
 		exit;
@@ -441,7 +444,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 			if [  "$pm2_installed." == "." ]; then
 				# install it.
 				echo pm2 not installed, installing >>$logfile
-				result=$(sudo npm install $up -g pm2 2>&1)
+				result=$(npm install $up -g pm2 2>&1)
 				echo pm2 install result $result >>$logfile
 				# if this is a mac
 				if [ $mac == 'Darwin' ]; then
