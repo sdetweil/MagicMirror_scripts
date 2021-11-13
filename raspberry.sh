@@ -148,10 +148,10 @@ if [ $OS = "bullseye" ]; then
 	if [ "$npm". != "." ]; then
 		echo installing correct version of node and npm, please wait | tee -a $logfile
 		nr=$(sudo npm install -g n)
-		sudo n i 14 | tee -a $logfile
+		sudo n i ${NODE_TESTED:1:2} | tee -a $logfile
 		PATH="$PATH"
 		nodev=$(node -v)
-		if [ "${nodev:0:3}" != 'V14' ]; then
+		if [ "${nodev:0:3}" != ${NODE_TESTED:0:3} ]; then
 			echo node failed to install, exiting | tee -a $logfile
 			exit
 		fi
@@ -432,8 +432,6 @@ if [[ $choice =~ ^[Yy]$ ]]; then
       echo install and setup pm2 | tee -a $logfile
  			# assume pm2 will be found on the path
 			pm2cmd=pm2
-			# check to see if already installed
-			pm2_installed=$(which $pm2cmd)
 			up=""
 			if [ $mac == 'Darwin' ]; then
 				 up="--unsafe-perm"
@@ -458,7 +456,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 			if [  "$pm2_installed." == "." ]; then
 				# install it.
 				echo pm2 not installed, installing >>$logfile
-				result=$(npm install $up -g pm2 2>&1)
+				result=$(sudo npm install $up -g pm2 2>&1)
 				echo pm2 install result $result >>$logfile
 				# if this is a mac
 				if [ $mac == 'Darwin' ]; then
