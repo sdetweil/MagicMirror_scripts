@@ -146,14 +146,19 @@ fi
 if [ $OS = "bullseye" ]; then
 	npm=$(which npm)
 	if [ "$npm". != "." ]; then
-		echo installing correct version of node and npm, please wait | tee -a $logfile
-		nr=$(sudo npm install -g n)
-		sudo n i ${NODE_TESTED:1:2} | tee -a $logfile
-		PATH="$PATH"
-		nodev=$(node -v)
-		if [ "${nodev:0:3}" != ${NODE_TESTED:0:3} ]; then
-			echo node failed to install, exiting | tee -a $logfile
-			exit
+		# check if node is already at the right level
+		# get node version
+		v=$(node -v)
+		if [ ${v:0:3} != ${NODE_TESTED:0:3} ]; then
+			echo -e "\e[96minstalling correct version of node and npm, please wait\e[90m" | tee -a $logfile
+			nr=$(sudo npm install -g n)
+			sudo n i ${NODE_TESTED:1:2} >> $logfile
+			PATH="$PATH"
+			nodev=$(node -v)
+			if [ "${nodev:0:3}" != ${NODE_TESTED:0:3} ]; then
+				echo node failed to install, exiting | tee -a $logfile
+				exit
+			fi
 		fi
 	fi
 else
@@ -299,7 +304,7 @@ if [ $doInstall == 1 ]; then
 		echo -e "To prevent overwriting, the installer will be aborted." | tee -a $logfile
 		echo -e "Please rename the \e[1m~/MagicMirror\e[0m\e[93m folder and try again.\e[0m" | tee -a $logfile
 		echo ""
-		echo -e "If you want to upgrade your installation run \e[1m\e[97mupgrade-script\e[0m from the ~/MagicMirror/installers directory." | tee -a $logfile
+		#echo -e "If you want to upgrade your installation run \e[1m\e[97mupgrade-script\e[0m from the ~/MagicMirror/installers directory." | tee -a $logfile
 		echo ""
 		exit;
 	fi
