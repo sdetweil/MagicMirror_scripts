@@ -143,13 +143,17 @@ if [ $mac != 'Darwin' ]; then
 		 echo apt upgrade result ="rc=$upgrade_rc $upgrade_result" >> $logfile
 	fi
 fi
+npminstalled=$false
 if [ $OS = "bullseye" ]; then
+	# is npm installed?
 	npm=$(which npm)
 	if [ "$npm". != "." ]; then
+		$npminstalled = $true
+		# yes
 		# check if node is already at the right level
 		# get node version
 		v=$(node -v)
-		if [ ${v:0:3} != ${NODE_TESTED:0:3} ]; then
+		if [ ${v:1:2} -lt ${NODE_TESTED:1:2} ]; then
 			echo -e "\e[96minstalling correct version of node and npm, please wait\e[90m" | tee -a $logfile
 			nr=$(sudo npm install -g n)
 			sudo n i ${NODE_TESTED:1:2} >> $logfile
@@ -161,7 +165,8 @@ if [ $OS = "bullseye" ]; then
 			fi
 		fi
 	fi
-else
+fi
+if [ $npminstalled == $false ]; then
 	# Check if we need to install or upgrade Node.js.
 	echo -e "\e[96mCheck current Node installation ...\e[0m" | tee -a $logfile
 	NODE_INSTALL=false
@@ -207,9 +212,11 @@ else
 		  brew install node
 		else
 			if [ $OS == "bullseye" ]; then
-				sudo chmod 666 /usr/share/doc/nodejs/api/embedding.json.gz
+				if [ -e /usr/share/doc/nodejs/api/embedding.json.gz ]; then
+					sudo chmod 666 /usr/share/doc/nodejs/api/embedding.json.gz
+				fi
 			fi
-			NODE_STABLE_BRANCH="14.x"
+			NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 			# sudo apt-get install --only-upgrade libstdc++6
 			node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - )
 			echo Node release info = $node_info >> $logfile
