@@ -320,7 +320,7 @@ if [ -d ~/$mfn ]; then
 
 		  # get the local and remote package.json versions
 			local_version=$(grep -m1 version package.json | awk -F\" '{print $4}' | awk -F-  '{print $1}')
-			remote_version=$(curl -s https://raw.githubusercontent.com/MichMich/MagicMirror/master/package.json | grep -m1 version | awk -F\" '{print $4}')
+			remote_version=$(curl -s https://raw.githubusercontent.com/MichMich/MagicMirror/master/package.json 2>/dev/null | grep -m1 version | awk -F\" '{print $4}')
 
 			# if on 2.9
 			if [ $local_version == '2.9.0' ]; then
