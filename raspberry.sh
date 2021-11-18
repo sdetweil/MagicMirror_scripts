@@ -148,7 +148,7 @@ if [ $OS = "bullseye" ]; then
 	# is npm installed?
 	npm=$(which npm)
 	if [ "$npm". != "." ]; then
-		$npminstalled = $true
+		npminstalled=$true
 		# yes
 		# check if node is already at the right level
 		# get node version
