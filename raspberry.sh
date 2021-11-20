@@ -110,17 +110,18 @@ if [ $mac != 'Darwin' ]; then
 	echo -e "\e[96mUpdating packages ...\e[90m" | tee -a $logfile
 	upgrade=$false
 	update=$(sudo apt-get update 2>&1)
-    # sudo apt-get update --allow-releaseinfo-change
-	echo $update >> $logfile
+	# save return code before any other command is issued
 	update_rc=$?
+	echo $update >> $logfile
     if [ $(echo $update | grep -i "is not valid yet" | wc -l) -ne 0 ]; then
        echo -e "\e[91mSystem date/time is in the past, please correct ...\e[90m" | tee -a $logfile
        exit 1
     fi
+    # if we had  a problem with update
 	if [ $update_rc -ne 0 ]; then
 
         echo -e "\e[91mUpdate failed, retrying installation ...\e[90m" | tee -a $logfile
-        if [ $(echo $update | grep -e "apt-secure" -e "oldStable" | wc -l) -eq 1 ]; then
+        if [ $(echo $update | grep -e "apt-secure" -e "oldstable" | wc -l) -eq 1 ]; then
 	        update=$(sudo apt-get update --allow-releaseinfo-change 2>&1)
 	        update_rc=$?
 	        echo $update >> $logfile
