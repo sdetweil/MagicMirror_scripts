@@ -110,8 +110,9 @@ if [ $mac != 'Darwin' ]; then
 	upgrade=$false
 	update=$(sudo apt-get update 2>&1)
     # sudo apt-get update --allow-releaseinfo-change
-	echo $update >> $logfile
 	update_rc=$?
+	echo $update >> $logfile
+
     if [ $(echo $update | grep -i "is not valid yet" | wc -l) -ne 0 ]; then
        echo -e "\e[91mSystem date/time is in the past, please correct ...\e[90m" | tee -a $logfile
        exit 1
