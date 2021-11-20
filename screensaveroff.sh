@@ -38,8 +38,8 @@ mac=$(uname -s)
 				 echo " $screen_saver_running disabled" >> $logfile
 			   ;;
 			 xscreensaver) echo 'xscreensaver running' | tee -a $logfile
-			   xsetting=$(grep -m1 'mode:' $HOME/.xscreensaver 2>/dev/null)
-				 if [ "$(echo $xsetting | awk '{print $2}')." != 'off.' ]; then
+			   xsetting=$(grep -m1 'mode:' ~/.xscreensaver )
+				 if [ $(echo $xsetting | awk '{print $2}') != 'off' ]; then
 					 sed -i "s/$xsetting/mode: off/" "$HOME/.xscreensaver"
 					 echo " xscreensaver set to off" >> $logfile
 				 else

@@ -24,7 +24,7 @@ else
 
   # get the config option, if any
   # only check non comment lines
-  serveronly=$(grep -v '^[[:blank:]]*//'  config/config.js | grep -i serveronly: | awk -F: '{print tolower($2)}' | tr -d ,\"\'\\r | sed -e 's/^[[:space:]]*//')
+  serveronly=$(grep -v '^[[:blank:]]*//' config/config.js | grep -i serveronly: | tr -d ',"'\''\r' | tr -d ' ' | awk -F/ '{print $1}'  |  awk -F: '{print $2}')
   # set default if not defined in config
   serveronly=${serveronly:-false}
   # check for xwindows running

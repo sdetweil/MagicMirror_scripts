@@ -120,7 +120,7 @@ if [ $mac != 'Darwin' ]; then
 	if [ $update_rc -ne 0 ]; then
 
         echo -e "\e[91mUpdate failed, retrying installation ...\e[90m" | tee -a $logfile
-        if [ $(echo $update | grep "apt-secure" | wc -l) -eq 1 ]; then
+        if [ $(echo $update | grep -e "apt-secure" -e "oldStable" | wc -l) -eq 1 ]; then
 	        update=$(sudo apt-get update --allow-releaseinfo-change 2>&1)
 	        update_rc=$?
 	        echo $update >> $logfile
