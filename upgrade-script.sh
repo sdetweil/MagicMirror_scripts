@@ -118,7 +118,7 @@ if [ -d ~/$mfn ]; then
 			if pgrep "node" > /dev/null; then
 				echo -e "\e[91mA Node process is currently running. Can't upgrade." | tee -a $logfile
 				echo "Please quit all Node processes and restart the installer." | tee -a $logfile
-				echo $(ps -ef | grep node | grep -v \-\-color) | tee -a $logfile
+				echo $(ps -ef | grep node | grep -v color) | tee -a $logfile
 				exit;
 			fi
 
