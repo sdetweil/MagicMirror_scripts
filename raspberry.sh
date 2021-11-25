@@ -147,7 +147,7 @@ fi
 npminstalled=$false
 if [ $OS = "bullseye" ]; then
 	# is npm installed?
-	echo "installing on bullseye' >>$logfile
+	echo "installing on bullseye" >>$logfile
 	npm=$(which npm)
 	if [ "$npm". != "." ]; then
 		npminstalled=$true
