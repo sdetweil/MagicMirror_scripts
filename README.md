@@ -62,3 +62,25 @@ fixuppm2.sh, copy/paste this line into the terminal window on your device
 ````bash
 bash -c "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/fixuppm2.sh)"
 ````
+
+## run script with automated answers
+
+For example, to use the above scripts in an Ansible environment, it may be useful to answer the question up front and then let the script do its work.
+
+* requirement is the `expect` package which you should find in most linux distributions
+  * example: `sudo apt install expect` for debian baste distributions
+
+```
+#!/usr/bin/expect -f
+
+set timeout -1
+spawn raspberry.sh
+
+expect "Do you want use pm2 for auto starting of your MagicMirror (y/N)?"
+send -- "Y\r"
+
+expect "Do you want to disable the screen saver? (y/N)?"
+send -- "Y\r"
+
+expect eof
+```
