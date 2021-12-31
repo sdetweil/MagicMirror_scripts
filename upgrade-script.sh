@@ -146,7 +146,7 @@ if [ -d ~/$mfn ]; then
 				node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - )
 				echo Node release info = $node_info >> $logfile
 				if [ "$(echo $node_info | grep "not currently supported")." == "." ]; then
-					sudo apt-get install -y nodejs
+					sudo apt-get install -y nodejs --allow-releaseinfo-change
 				else
 					echo node $NODE_STABLE_BRANCH version installer not available, doing manually >>$logfile
 					# no longer supported install
@@ -227,7 +227,7 @@ if [ -d ~/$mfn ]; then
 			fi
 			# update to the latest.
 			echo upgrading npm to latest >> $logfile
-			sudo npm i -g npm@6  >>$logfile
+			sudo npm i -g npm@6 --allow-releaseinfo-change >>$logfile
 			echo -e "\e[92mnpm installation Done! version=V$(npm -v)\e[0m" | tee -a $logfile
 		else
 			echo -e "\e[96mnpm upgrade defered, doing test run  ...\e[90m" | tee -a $logfile
