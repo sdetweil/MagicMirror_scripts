@@ -15,8 +15,9 @@ git_active_lock='./.git/index.lock'
 lf=$'\n'
 git_user_name=
 git_user_email=
-NODE_TESTED="v14.0.0"
-NPM_TESTED="V6.0.0"
+NODE_TESTED="v16.9.1"
+NPM_TESTED="V7.11.2"
+NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 known_list="request valid-url"
 
 
@@ -94,7 +95,6 @@ if [ -d ~/$mfn ]; then
 		echo doing test run = false | tee -a $logfile
 	fi
 
-
 	echo update log will be in $logfile
 
 	# Check if we need to install or upgrade Node.js.
@@ -141,12 +141,11 @@ if [ -d ~/$mfn ]; then
 			if [ $mac == 'Darwin' ]; then
 			  brew install node
 			else
-				NODE_STABLE_BRANCH="14.x"
 				# sudo apt-get install --only-upgrade libstdc++6
 				node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - )
 				echo Node release info = $node_info >> $logfile
 				if [ "$(echo $node_info | grep "not currently supported")." == "." ]; then
-					sudo apt-get install -y nodejs --allow-releaseinfo-change
+					sudo apt-get install -y nodejs
 				else
 					echo node $NODE_STABLE_BRANCH version installer not available, doing manually >>$logfile
 					# no longer supported install
@@ -227,7 +226,7 @@ if [ -d ~/$mfn ]; then
 			fi
 			# update to the latest.
 			echo upgrading npm to latest >> $logfile
-			sudo npm i -g npm@6 --allow-releaseinfo-change >>$logfile
+			sudo npm i -g npm@${NPM_TESTED:1:1}  >>$logfile
 			echo -e "\e[92mnpm installation Done! version=V$(npm -v)\e[0m" | tee -a $logfile
 		else
 			echo -e "\e[96mnpm upgrade defered, doing test run  ...\e[90m" | tee -a $logfile

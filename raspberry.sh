@@ -26,8 +26,9 @@ doInstall=1
 true=1
 false=0
 # Define the tested version of Node.js.
-NODE_TESTED="v14.0.0"
-NPM_TESTED="V6.0.0"
+NODE_TESTED="v16.9.1"
+NPM_TESTED="V7.11.2"
+NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 USER=`whoami`
 PM2_FILE=pm2_MagicMirror.json
 forced_arch=
@@ -41,6 +42,7 @@ trim() {
     var="${var%"${var##*[![:space:]]}"}"
     echo -n "$var"
 }
+beginswith() { case $2 in "$1"*) true;; *) false;; esac; }
 
 cd $HOME
 
@@ -104,19 +106,20 @@ function verlt() { [ "$1" = "$2" ] && return 1 || verlte $1 $2 ;}
 if [ $mac != 'Darwin' ]; then
 	# Installing helper tools
 	echo -e "\e[96mInstalling helper tools ...\e[90m" | tee -a $logfile
-	sudo apt-get --assume-yes install curl wget git build-essential unzip pv >>$logfile
+	sudo apt-get --assume-yes   install  curl wget git build-essential unzip pv >$logfile
 
 	echo -e "\e[96mUpdating packages ...\e[90m" | tee -a $logfile
 	upgrade=$false
-	update=$(sudo apt-get update 2>&1)
-    # sudo apt-get update --allow-releaseinfo-change
+	update=$(sudo apt-get update --allow-releaseinfo-change>&1)
+
+	# save return code before any other command is issued
 	update_rc=$?
 	echo $update >> $logfile
-
     if [ $(echo $update | grep -i "is not valid yet" | wc -l) -ne 0 ]; then
        echo -e "\e[91mSystem date/time is in the past, please correct ...\e[90m" | tee -a $logfile
        exit 1
     fi
+    # if we had  a problem with update
 	if [ $update_rc -ne 0 ]; then
 
         echo -e "\e[91mUpdate failed, retrying installation ...\e[90m" | tee -a $logfile
@@ -138,143 +141,175 @@ if [ $mac != 'Darwin' ]; then
 	fi
 	if [ $upgrade -eq $true ]; then
 	   echo "apt-get upgrade  started" >> $logfile
-	   upgrade_result=$(sudo apt-get --assume-yes upgrade 2>&1 | pv -l -p)
+	   upgrade_result=$(sudo apt-get --assume-yes upgrade  2>&1 | pv -l -p)
 		 upgrade_rc=$?
 		 echo apt upgrade result ="rc=$upgrade_rc $upgrade_result" >> $logfile
 	fi
 fi
 
-# Check if we need to install or upgrade Node.js.
-echo -e "\e[96mCheck current Node installation ...\e[0m" | tee -a $logfile
-NODE_INSTALL=false
-if command_exists node; then
-	echo -e "\e[0mNode currently installed. Checking version number." | tee -a $logfile
-	NODE_CURRENT=$(node -v)
-	if [ "$NODE_CURRENT." == "." ]; then
-	   NODE_CURRENT="V1.0.0"
-		 echo forcing low Node version  >> $logfile
-	fi
-	echo -e "\e[0mMinimum Node version: \e[1m$NODE_TESTED\e[0m" | tee -a $logfile
-	echo -e "\e[0mInstalled Node version: \e[1m$NODE_CURRENT\e[0m" | tee -a $logfile
-	if verlte $NODE_CURRENT $NODE_TESTED; then
-		echo -e "\e[96mNode should be upgraded.\e[0m" | tee -a $logfile
-		NODE_INSTALL=true
-
-		# Check if a node process is currenlty running.
-		# If so abort installation.
-		if pgrep "node" > /dev/null; then
-			echo -e "\e[91mA Node process is currently running. Can't upgrade." | tee -a $logfile
-			echo "Please quit all Node processes and restart the installer." | tee -a $logfile
-			echo $(ps -ef | grep node | grep -v \-\-color) | tee -a $logfile
-			exit;
-		fi
-
-	else
-		echo -e "\e[92mNo Node.js upgrade necessary.\e[0m" | tee -a $logfile
-	fi
-
-else
-	echo -e "\e[93mNode.js is not installed.\e[0m" | tee -a $logfile
-	NODE_INSTALL=true
-fi
-# Install or upgrade node if necessary.
-if $NODE_INSTALL; then
-
-	echo -e "\e[96mInstalling Node.js ...\e[90m" | tee -a $logfile
-
-	# Fetch the latest version of Node.js from the selected branch
-	# The NODE_STABLE_BRANCH variable will need to be manually adjusted when a new branch is released. (e.g. 7.x)
-	# Only tested (stable) versions are recommended as newer versions could break MagicMirror.
-	if [ $mac == 'Darwin' ]; then
-	  brew install node
-	else
-		NODE_STABLE_BRANCH="14.x"
-		# sudo apt-get install --only-upgrade libstdc++6
-		node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - )
-		echo Node release info = $node_info >> $logfile
-		if [ "$(echo $node_info | grep "not currently supported")." == "." ]; then
-			sudo apt-get install -y nodejs --allow-releaseinfo-change
-		else
-			echo node $NODE_STABLE_BRANCH version installer not available, doing manually >>$logfile
-			# no longer supported install
-			sudo apt-get install -y --only-upgrade libstdc++6 >> $logfile
-			# have to do it manually
-			ARM1=$ARM
-			node_vnum=$(echo $NODE_STABLE_BRANCH | awk -F. '{print $1}')
-			if [ $ARM == 'x86_64' ]; then
-				ARM1= x64
+npminstalled=$false
+if [ $OS = "bullseye" ]; then
+	# is npm installed?
+	echo "installing on bullseye" >>$logfile
+	npm=$(which npm)
+	if [ "$npm". != "." ]; then
+		npminstalled=$true
+		# yes
+		# check if node is already at the right level
+		# get node version
+		v=$(node -v)
+		if [ ${v:1:2} -lt ${NODE_TESTED:1:2} ]; then
+			echo -e "\e[96minstalling correct version of node and npm, please wait\e[90m" | tee -a $logfile
+			nr=$(sudo npm install -g n)
+			sudo n ${NODE_TESTED:1} >> $logfile
+			PATH="$PATH"
+			nodev=$(node -v)
+			if [ "${nodev:0:3}" != ${NODE_TESTED:0:3} ]; then
+				echo node failed to install, exiting | tee -a $logfile
+				exit
 			fi
-			# get the highest release number in the stable branch line for this processor architecture
-			node_ver=$(curl -sL https://nodejs.org/download/release/index.tab | grep $ARM1 | grep -m 1 v$node_vnum | awk '{print $1}')
-			echo "latest release in the $NODE_STABLE_BRANCH family for $ARM is $node_ver" >> $logfile
-			# download that file
-			curl -sL https://nodejs.org/download/release/v$node_ver/node-v$node_ver-linux-$ARM1.tar.gz >node_release-$node_ver.tar.gz
-			cd /usr/local
-			echo using release tar file = node_release-$node_ver.tar.gz >> $logfile
-			sudo tar --strip-components 1 -xzf  $HOME/node_release-$node_ver.tar.gz
-			cd - >/dev/null
-			rm ./node_release-$node_ver.tar.gz
 		fi
-		# get the new node version number
-		new_ver=$(node -v 2>&1)
-		# if there is a failure to get it due to a missing library
-		if [ $(echo $new_ver | grep "not found" | wc -l) -ne 0 ]; then
-		  #
-			sudo apt-get install -y --only-upgrade libstdc++6 >> $logfile
-		fi
-		echo node version is $(node -v 2>&1 >>$logfile)
 	fi
-	echo -e "\e[92mNode.js installation Done! version=$(node -v)\e[0m" | tee -a $logfile
 fi
-# Check if we need to install or upgrade npm.
-echo -e "\e[96mCheck current NPM installation ...\e[0m" | tee -a $logfile
-NPM_INSTALL=false
-if command_exists npm; then
-	echo -e "\e[0mNPM currently installed. Checking version number." | tee -a $logfile
-	NPM_CURRENT='V'$(npm -v)
-	echo -e "\e[0mMinimum npm version: \e[1m$NPM_TESTED\e[0m" | tee -a $logfile
-	echo -e "\e[0mInstalled npm version: \e[1m$NPM_CURRENT\e[0m" | tee -a $logfile
-	if verlte $NPM_CURRENT $NPM_TESTED; then
-		echo -e "\e[96mnpm should be upgraded.\e[0m" | tee -a $logfile
-		NPM_INSTALL=true
+if [ $npminstalled == $false ]; then
+	# Check if we need to install or upgrade Node.js.
+	echo -e "\e[96mCheck current Node installation ...\e[0m" | tee -a $logfile
+	NODE_INSTALL=false
+	if command_exists node; then
+		echo -e "\e[0mNode currently installed. Checking version number." | tee -a $logfile
+		NODE_CURRENT=$(node -v)
+		if [ "$NODE_CURRENT." == "." ]; then
+		   NODE_CURRENT="V1.0.0"
+			 echo forcing low Node version  >> $logfile
+		fi
+		echo -e "\e[0mMinimum Node version: \e[1m$NODE_TESTED\e[0m" | tee -a $logfile
+		echo -e "\e[0mInstalled Node version: \e[1m$NODE_CURRENT\e[0m" | tee -a $logfile
+		if verlte $NODE_CURRENT $NODE_TESTED; then
+			echo -e "\e[96mNode should be upgraded.\e[0m" | tee -a $logfile
+			NODE_INSTALL=true
 
-		# Check if a node process is currently running.
-		# If so abort installation.
-		if pgrep "npm" > /dev/null; then
-			echo -e "\e[91mA npm process is currently running. Can't upgrade." | tee -a $logfile
-			echo "Please quit all npm processes and restart the installer." | tee -a $logfile
-			exit;
+			# Check if a node process is currenlty running.
+			# If so abort installation.
+			node_running=$(pgrep "node")
+			if [ "$node_running." != "." ]; then
+				echo -e "\e[91mA Node process is currently running. Can't upgrade." | tee -a $logfile
+				echo "Please quit all Node processes and restart the installer." | tee -a $logfile
+				echo $(ps -ef | grep $node_running |  grep -v grep) | tee -a $logfile
+				exit;
+			fi
+
+		else
+			echo -e "\e[92mNo Node.js upgrade necessary.\e[0m" | tee -a $logfile
+		fi
+
+	else
+		echo -e "\e[93mNode.js is not installed.\e[0m" | tee -a $logfile
+		NODE_INSTALL=true
+	fi
+	# Install or upgrade node if necessary.
+	if $NODE_INSTALL; then
+
+		echo -e "\e[96mInstalling Node.js ...\e[90m" | tee -a $logfile
+
+		# Fetch the latest version of Node.js from the selected branch
+		# The NODE_STABLE_BRANCH variable will need to be manually adjusted when a new branch is released. (e.g. 7.x)
+		# Only tested (stable) versions are recommended as newer versions could break MagicMirror.
+		if [ $mac == 'Darwin' ]; then
+		  brew install node
+		else
+			if [ $OS == "bullseye" ]; then
+				if [ -e /usr/share/doc/nodejs/api/embedding.json.gz ]; then
+					sudo chmod 666 /usr/share/doc/nodejs/api/embedding.json.gz
+				fi
+			fi
+
+			# sudo apt-get install --only-upgrade libstdc++6
+			node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - )
+			echo Node release info = $node_info >> $logfile
+			sudo apt-get install -y nodejs
+			if [ "$(echo $node_info | grep "not currently supported")." == "." ]; then
+				sudo apt-get install -y nodejs
+			else
+				echo node $NODE_STABLE_BRANCH version installer not available, doing manually >>$logfile
+				# no longer supported install
+				sudo apt-get install -y --only-upgrade libstdc++6  >> $logfile
+				# have to do it manually
+				ARM1=$ARM
+				node_vnum=$(echo $NODE_STABLE_BRANCH | awk -F. '{print $1}')
+				if [ $ARM == 'x86_64' ]; then
+					ARM1= x64
+				fi
+				# get the highest release number in the stable branch line for this processor architecture
+				node_ver=$(curl -sL https://nodejs.org/download/release/index.tab | grep $ARM1 | grep -m 1 v$node_vnum | awk '{print $1}')
+				echo "latest release in the $NODE_STABLE_BRANCH family for $ARM is $node_ver" >> $logfile
+				# download that file
+				curl -sL https://nodejs.org/download/release/v$node_ver/node-v$node_ver-linux-$ARM1.tar.gz >node_release-$node_ver.tar.gz
+				cd /usr/local
+				echo using release tar file = node_release-$node_ver.tar.gz >> $logfile
+				sudo tar --strip-components 1 -xzf  $HOME/node_release-$node_ver.tar.gz
+				cd - >/dev/null
+				rm ./node_release-$node_ver.tar.gz
+			fi
+			# get the new node version number
+			new_ver=$(node -v 2>&1)
+			# if there is a failure to get it due to a missing library
+			if [ $(echo $new_ver | grep "not found" | wc -l) -ne 0 ]; then
+			  #
+				sudo apt-get install -y --only-upgrade libstdc++6  >> $logfile
+			fi
+			echo node version is $(node -v 2>&1) >>$logfile
+		fi
+		echo -e "\e[92mNode.js installation Done! version=$(node -v)\e[0m" | tee -a $logfile
+	fi
+	# Check if we need to install or upgrade npm.
+	echo -e "\e[96mCheck current NPM installation ...\e[0m" | tee -a $logfile
+	NPM_INSTALL=false
+	if command_exists npm; then
+		echo -e "\e[0mNPM currently installed. Checking version number." | tee -a $logfile
+		NPM_CURRENT='V'$(npm -v)
+		echo -e "\e[0mMinimum npm version: \e[1m$NPM_TESTED\e[0m" | tee -a $logfile
+		echo -e "\e[0mInstalled npm version: \e[1m$NPM_CURRENT\e[0m" | tee -a $logfile
+		if verlte $NPM_CURRENT $NPM_TESTED; then
+			echo -e "\e[96mnpm should be upgraded.\e[0m" | tee -a $logfile
+			NPM_INSTALL=true
+
+			# Check if a node process is currently running.
+			# If so abort installation.
+			if pgrep "npm" > /dev/null; then
+				echo -e "\e[91mA npm process is currently running. Can't upgrade." | tee -a $logfile
+				echo "Please quit all npm processes and restart the installer." | tee -a $logfile
+				exit;
+			fi
+		else
+			echo -e "\e[92mNo npm upgrade necessary.\e[0m" | tee -a $logfile
 		fi
 	else
-		echo -e "\e[92mNo npm upgrade necessary.\e[0m" | tee -a $logfile
+		echo -e "\e[93mnpm is not installed.\e[0m" | tee -a $logfile
+		NPM_INSTALL=true
 	fi
-else
-	echo -e "\e[93mnpm is not installed.\e[0m" | tee -a $logfile
-	NPM_INSTALL=true
-fi
 
-# Install or upgrade node if necessary.
-if $NPM_INSTALL; then
+	# Install or upgrade node if necessary.
+	if $NPM_INSTALL; then
 
-	echo -e "\e[96mInstalling npm ...\e[90m" | tee -a $logfile
+		echo -e "\e[96mInstalling npm ...\e[90m" | tee -a $logfile
 
-	# Fetch the latest version of npm from the selected branch
-	# The NODE_STABLE_BRANCH variable will need to be manually adjusted when a new branch is released. (e.g. 7.x)
-	# Only tested (stable) versions are recommended as newer versions could break MagicMirror.
+		# Fetch the latest version of npm from the selected branch
+		# The NODE_STABLE_BRANCH variable will need to be manually adjusted when a new branch is released. (e.g. 7.x)
+		# Only tested (stable) versions are recommended as newer versions could break MagicMirror.
 
-	#NODE_STABLE_BRANCH="9.x"
-	#curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash -
-  #
-	# if this is a mac, npm was installed with node
-	if [ $mac != 'Darwin' ]; then
-		sudo apt-get install -y npm >>$logfile
+		#NODE_STABLE_BRANCH="9.x"
+		#curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash -
+	  #
+		# if this is a mac, npm was installed with node
+		if [ $mac != 'Darwin' ]; then
+			sudo apt-get install -y npm  >>$logfile
+		fi
+		# update to the latest.
+		echo upgrading npm to latest >> $logfile
+		sudo npm i -g npm@${NPM_TESTED:1:1}  >>$logfile
+		echo -e "\e[92mnpm installation Done! version=V$(npm -v)\e[0m" | tee -a $logfile
 	fi
-	# update to the latest.
-	echo upgrading npm to latest >> $logfile
-	sudo npm i -g npm@6  --allow-releaseinfo-change >>$logfile
-	echo -e "\e[92mnpm installation Done! version=V$(npm -v)\e[0m" | tee -a $logfile
 fi
-
 # Install MagicMirror
 cd ~
 if [ $doInstall == 1 ]; then
@@ -283,7 +318,7 @@ if [ $doInstall == 1 ]; then
 		echo -e "To prevent overwriting, the installer will be aborted." | tee -a $logfile
 		echo -e "Please rename the \e[1m~/MagicMirror\e[0m\e[93m folder and try again.\e[0m" | tee -a $logfile
 		echo ""
-		echo -e "If you want to upgrade your installation run \e[1m\e[97mupgrade-script\e[0m from the ~/MagicMirror/installers directory." | tee -a $logfile
+		#echo -e "If you want to upgrade your installation run \e[1m\e[97mupgrade-script\e[0m from the ~/MagicMirror/installers directory." | tee -a $logfile
 		echo ""
 		exit;
 	fi
@@ -294,7 +329,7 @@ if [ $doInstall == 1 ]; then
 		# replace faulty run-start.sh
 		curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >MagicMirror/run-start.sh
 		chmod +x MagicMirror/run-start.sh
-		sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null
+		sudo touch /etc/chromium-browser/customizations/01-disable-update-check 2>/dev/null;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null 2>&1
 	else
 		echo -e "\e[91mUnable to clone MagicMirror. \e[90m" | tee -a $logfile
 		exit;
@@ -416,8 +451,6 @@ if [[ $choice =~ ^[Yy]$ ]]; then
       echo install and setup pm2 | tee -a $logfile
  			# assume pm2 will be found on the path
 			pm2cmd=pm2
-			# check to see if already installed
-			pm2_installed=$(which $pm2cmd)
 			up=""
 			if [ $mac == 'Darwin' ]; then
 				 up="--unsafe-perm"
