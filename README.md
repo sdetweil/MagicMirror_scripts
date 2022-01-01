@@ -8,14 +8,8 @@ these scripts can be used to automate installation of release upgrades.
 ## raspberry.sh  is the installation script, upgraded from the core package
 to execute the install script, copy/paste this line into the terminal window on your device (I can't say PI, cause it works in a lot of other places too)
 
-## if you are installing on the latest release bullseye, use this url (while we are testing) , it will also work on buster or any other system too
+the bullseye special version has been merged into the only version
 
-
-````bash
-bash  -c  "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/bullseye/raspberry.sh)"
-````
-
-otherwise, use this url 
 
 ````bash
 bash -c  "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/raspberry.sh)"
