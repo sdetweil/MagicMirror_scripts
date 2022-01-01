@@ -26,8 +26,9 @@ doInstall=1
 true=1
 false=0
 # Define the tested version of Node.js.
-NODE_TESTED="v14.0.0"
-NPM_TESTED="V6.0.0"
+NODE_TESTED="v16.9.1"
+NPM_TESTED="V7.11.2"
+NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 USER=`whoami`
 PM2_FILE=pm2_MagicMirror.json
 forced_arch=
@@ -105,7 +106,7 @@ function verlt() { [ "$1" = "$2" ] && return 1 || verlte $1 $2 ;}
 if [ $mac != 'Darwin' ]; then
 	# Installing helper tools
 	echo -e "\e[96mInstalling helper tools ...\e[90m" | tee -a $logfile
-	sudo apt-get --assume-yes install curl wget git build-essential unzip pv >>$logfile
+	sudo apt-get --assume-yes  --allow-releaseinfo-change install curl wget git build-essential unzip pv >>$logfile
 
 	echo -e "\e[96mUpdating packages ...\e[90m" | tee -a $logfile
 	upgrade=$false
@@ -139,7 +140,7 @@ if [ $mac != 'Darwin' ]; then
 	fi
 	if [ $upgrade -eq $true ]; then
 	   echo "apt-get upgrade  started" >> $logfile
-	   upgrade_result=$(sudo apt-get --assume-yes upgrade 2>&1 | pv -l -p)
+	   upgrade_result=$(sudo apt-get --assume-yes upgrade  --allow-releaseinfo-change 2>&1 | pv -l -p)
 		 upgrade_rc=$?
 		 echo apt upgrade result ="rc=$upgrade_rc $upgrade_result" >> $logfile
 	fi
@@ -158,7 +159,7 @@ if [ $OS = "bullseye" ]; then
 		if [ ${v:1:2} -lt ${NODE_TESTED:1:2} ]; then
 			echo -e "\e[96minstalling correct version of node and npm, please wait\e[90m" | tee -a $logfile
 			nr=$(sudo npm install -g n)
-			sudo n i ${NODE_TESTED:1:2} >> $logfile
+			sudo n ${NODE_TESTED:1} >> $logfile
 			PATH="$PATH"
 			nodev=$(node -v)
 			if [ "${nodev:0:3}" != ${NODE_TESTED:0:3} ]; then
@@ -218,16 +219,16 @@ if [ $npminstalled == $false ]; then
 					sudo chmod 666 /usr/share/doc/nodejs/api/embedding.json.gz
 				fi
 			fi
-			NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
+
 			# sudo apt-get install --only-upgrade libstdc++6
 			node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - )
 			echo Node release info = $node_info >> $logfile
 			if [ "$(echo $node_info | grep "not currently supported")." == "." ]; then
-				sudo apt-get install -y nodejs
+				sudo apt-get install -y nodejs --allow-releaseinfo-change
 			else
 				echo node $NODE_STABLE_BRANCH version installer not available, doing manually >>$logfile
 				# no longer supported install
-				sudo apt-get install -y --only-upgrade libstdc++6 >> $logfile
+				sudo apt-get install -y --only-upgrade libstdc++6 --allow-releaseinfo-change >> $logfile
 				# have to do it manually
 				ARM1=$ARM
 				node_vnum=$(echo $NODE_STABLE_BRANCH | awk -F. '{print $1}')
@@ -250,7 +251,7 @@ if [ $npminstalled == $false ]; then
 			# if there is a failure to get it due to a missing library
 			if [ $(echo $new_ver | grep "not found" | wc -l) -ne 0 ]; then
 			  #
-				sudo apt-get install -y --only-upgrade libstdc++6 >> $logfile
+				sudo apt-get install -y --only-upgrade libstdc++6 --allow-releaseinfo-change >> $logfile
 			fi
 			echo node version is $(node -v 2>&1 >>$logfile)
 		fi
@@ -297,11 +298,11 @@ if [ $npminstalled == $false ]; then
 	  #
 		# if this is a mac, npm was installed with node
 		if [ $mac != 'Darwin' ]; then
-			sudo apt-get install -y npm >>$logfile
+			sudo apt-get install -y npm --allow-releaseinfo-change >>$logfile
 		fi
 		# update to the latest.
 		echo upgrading npm to latest >> $logfile
-		sudo npm i -g npm@6  >>$logfile
+		sudo npm i -g npm@${NPM_TESTED:1:1}  >>$logfile
 		echo -e "\e[92mnpm installation Done! version=V$(npm -v)\e[0m" | tee -a $logfile
 	fi
 fi
