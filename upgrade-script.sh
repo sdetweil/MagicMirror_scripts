@@ -109,7 +109,7 @@ if [ -d ~/$mfn ]; then
 		fi
 		echo -e "\e[0mMinimum Node version: \e[1m$NODE_TESTED\e[0m" | tee -a $logfile
 		echo -e "\e[0mInstalled Node version: \e[1m$NODE_CURRENT\e[0m" | tee -a $logfile
-		if verlte $NODE_CURRENT $NODE_TESTED; then
+		if verlt $NODE_CURRENT $NODE_TESTED; then
 			echo -e "\e[96mNode should be upgraded.\e[0m" | tee -a $logfile
 			NODE_INSTALL=true
 
@@ -189,7 +189,7 @@ if [ -d ~/$mfn ]; then
 		NPM_CURRENT='V'$(npm -v)
 		echo -e "\e[0mMinimum npm version: \e[1m$NPM_TESTED\e[0m" | tee -a $logfile
 		echo -e "\e[0mInstalled npm version: \e[1m$NPM_CURRENT\e[0m" | tee -a $logfile
-		if verlte $NPM_CURRENT $NPM_TESTED; then
+		if verlt $NPM_CURRENT $NPM_TESTED; then
 			echo -e "\e[96mnpm should be upgraded.\e[0m" | tee -a $logfile
 			NPM_INSTALL=true
 
@@ -339,7 +339,7 @@ if [ -d ~/$mfn ]; then
 
 				# get the latest upgrade
 				echo fetching latest revisions | tee -a $logfile
-				LC_ALL=C git fetch $remote >/dev/null
+				LC_ALL=C git fetch $remote &>/dev/null
 				rc=$?
 				echo git fetch rc=$rc >>$logfile
 				if [ $rc -eq 0 ]; then
