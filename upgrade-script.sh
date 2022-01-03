@@ -115,7 +115,7 @@ if [ -d ~/$mfn ]; then
 
 			# Check if a node process is currenlty running.
 			# If so abort installation.
-			if pgrep "node" > /dev/null; then
+			if pidof "node" > /dev/null; then
 				echo -e "\e[91mA Node process is currently running. Can't upgrade." | tee -a $logfile
 				echo "Please quit all Node processes and restart the installer." | tee -a $logfile
 				echo $(ps -ef | grep node | grep -v color) | tee -a $logfile
@@ -195,7 +195,7 @@ if [ -d ~/$mfn ]; then
 
 			# Check if a node process is currently running.
 			# If so abort installation.
-			if pgrep "npm" > /dev/null; then
+			if pidof "npm" > /dev/null; then
 				echo -e "\e[91mA npm process is currently running. Can't upgrade." | tee -a $logfile
 				echo "Please quit all npm processes and restart the installer." | tee -a $logfile
 				exit;
