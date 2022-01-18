@@ -148,7 +148,7 @@ if [ $mac != 'Darwin' ]; then
 fi
 
 npminstalled=$false
-if [ $OS = "bullseye" ]; then
+if [ $OS = "bullseye" -a $ARM != "armv6l" ]; then
 	# is npm installed?
 	echo "installing on bullseye" >>$logfile
 	npm=$(which npm)
