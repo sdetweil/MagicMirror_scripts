@@ -152,15 +152,20 @@ if [ -d ~/$mfn ]; then
 					sudo apt-get install -y --only-upgrade libstdc++6 >> $logfile
 					# have to do it manually
 					ARM1=$ARM
-					node_vnum=$(echo $NODE_STABLE_BRANCH | awk -F. '{print $1}')
-					if [ $ARM == 'x86_64' ]; then
-						ARM1= x64
-					fi
-					# get the highest release number in the stable branch line for this processor architecture
-					node_ver=$(curl -sL https://nodejs.org/download/release/index.tab | grep $ARM1 | grep -m 1 v$node_vnum | awk '{print $1}')
-					echo "latest release in the $NODE_STABLE_BRANCH family for $ARM is $node_ver" >> $logfile
-					# download that file
-					curl -sL https://nodejs.org/download/release/v$node_ver/node-v$node_ver-linux-$ARM1.tar.gz >node_release-$node_ver.tar.gz
+	                                if [ $ARM == 'armv6l' ]; then 
+        	                                curl -sL https://unofficial-builds.nodejs.org/download/release/${NODE_TESTED}/node-${NODE_TESTED}-linux-armv6l.tar.gz >node_release-${NODE_TESTED}.tar.gz
+                	                        node_ver=$NODE_TESTED
+                        	        else
+						node_vnum=$(echo $NODE_STABLE_BRANCH | awk -F. '{print $1}')
+						if [ $ARM == 'x86_64' ]; then
+							ARM1= x64
+						fi
+						# get the highest release number in the stable branch line for this processor architecture
+						node_ver=$(curl -sL https://nodejs.org/download/release/index.tab | grep $ARM1 | grep -m 1 v$node_vnum | awk '{print $1}')
+						echo "latest release in the $NODE_STABLE_BRANCH family for $ARM is $node_ver" >> $logfile
+						# download that file
+						curl -sL https://nodejs.org/download/release/v$node_ver/node-v$node_ver-linux-$ARM1.tar.gz >node_release-$node_ver.tar.gz
+					fi 
 					cd /usr/local
 					echo using release tar file = node_release-$node_ver.tar.gz >> $logfile
 					sudo tar --strip-components 1 -xzf  $HOME/node_release-$node_ver.tar.gz
@@ -481,6 +486,12 @@ if [ -d ~/$mfn ]; then
 										curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
 									    chmod +x run-start.sh
 									  fi
+								          # on armv6l, new OS's have a bug in browser support
+								          # install older chromium if not present
+									  v=$(uname -r); v=${v:0:1}
+									  if [ "$(which chromium-browser)." == '.' -a ${v:0:1} -ne 4 ]; then 
+								                sudo apt install -y chromium-browser >>$logfile
+								          fi 
 									fi
 								    if [ $remote_version == '2.13.0' ]; then
 								      # fix downlevel node-ical

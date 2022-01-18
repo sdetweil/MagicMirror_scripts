@@ -222,7 +222,7 @@ if [ $npminstalled == $false ]; then
 					sudo chmod 666 /usr/share/doc/nodejs/api/embedding.json.gz
 				fi
 			fi
-
+			
 			# sudo apt-get install --only-upgrade libstdc++6
 			node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - )
 			echo Node release info = $node_info >> $logfile
@@ -235,15 +235,20 @@ if [ $npminstalled == $false ]; then
 				sudo apt-get install -y --only-upgrade libstdc++6  >> $logfile
 				# have to do it manually
 				ARM1=$ARM
-				node_vnum=$(echo $NODE_STABLE_BRANCH | awk -F. '{print $1}')
-				if [ $ARM == 'x86_64' ]; then
-					ARM1= x64
+				if [ $ARM == 'armv6l' ]; then 
+					curl -sL https://unofficial-builds.nodejs.org/download/release/${NODE_TESTED}/node-${NODE_TESTED}-linux-armv6l.tar.gz >node_release-${NODE_TESTED}.tar.gz
+					node_ver=$NODE_TESTED
+				else
+					node_vnum=$(echo $NODE_STABLE_BRANCH | awk -F. '{print $1}')
+					if [ $ARM == 'x86_64' ]; then
+						ARM1= x64
+					fi
+					# get the highest release number in the stable branch line for this processor architecture
+					node_ver=$(curl -sL https://nodejs.org/download/release/index.tab | grep $ARM1 | grep -m 1 v$node_vnum | awk '{print $1}')
+					echo "latest release in the $NODE_STABLE_BRANCH family for $ARM is $node_ver" >> $logfile
+					# download that file
+					curl -sL https://nodejs.org/download/release/v$node_ver/node-v$node_ver-linux-$ARM1.tar.gz >node_release-$node_ver.tar.gz
 				fi
-				# get the highest release number in the stable branch line for this processor architecture
-				node_ver=$(curl -sL https://nodejs.org/download/release/index.tab | grep $ARM1 | grep -m 1 v$node_vnum | awk '{print $1}')
-				echo "latest release in the $NODE_STABLE_BRANCH family for $ARM is $node_ver" >> $logfile
-				# download that file
-				curl -sL https://nodejs.org/download/release/v$node_ver/node-v$node_ver-linux-$ARM1.tar.gz >node_release-$node_ver.tar.gz
 				cd /usr/local
 				echo using release tar file = node_release-$node_ver.tar.gz >> $logfile
 				sudo tar --strip-components 1 -xzf  $HOME/node_release-$node_ver.tar.gz
@@ -408,6 +413,12 @@ if [ $doInstall == 1 ]; then
 	  else
 	  	echo "package.json update for $ARM failed " >>$logfile
 	  fi
+          # on armv6l, new OS's have a bug in browser support
+	  # install older chromium if not present
+          v=$(uname -r); v=${v:0:1}
+          if [ "$(which chromium-browser)." == '.' -a ${v:0:1} -ne 4 ]; then 
+		sudo apt install -y chromium-browser >>$logfile
+	  fi 
 	fi
 
 	# Use sample config for start MagicMirror

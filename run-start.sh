@@ -87,7 +87,7 @@ else
       tee <&3 &
 	if [ $mac != 'Darwin' ]; then
     	b="chromium"
-      if [ $(which $b). == '.' ]; then
+      if [ $(which $b). == '.' -o $arch == 'armv6l' ]; then
         b='chromium-browser'
       fi
     	if [ $(which $b). != '.' ]; then
