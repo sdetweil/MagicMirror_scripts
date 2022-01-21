@@ -83,7 +83,7 @@ echo installing on $ARM processor system >>$logfile
 lsb_info=$(lsb_release -a 2>/dev/null)
 echo the os is $lsb_info >> $logfile
 OS=$(echo $lsb_info  | grep name: | awk '{print $2}')
-if [ "$(echo $lsb_info | grep -i raspian)." != '.' ]; then
+if [ "$(echo $lsb_info | grep -i raspbian)." != '.' ]; then
 	# file only exists on raspian
 	ostype=$(cat /boot/issue.txt)
 	echo issue.txt info $ostype >>$logfile
