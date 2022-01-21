@@ -87,13 +87,22 @@ if [ "$(echo $lsb_info | grep -i raspbian)." != '.' ]; then
 	# file only exists on raspian
 	ostype=$(cat /boot/issue.txt)
 	echo issue.txt info $ostype >>$logfile
-	if [ "$(echo $ostype | grep stage4)." == '.' ]; then
-		echo wrong operating system type, need full desktop version | tee -a $logfile
-		date +"install completed - %a %b %e %H:%M:%S %Z %Y" >>$logfile
-		exit 1
-	fi
+	#if [ "$(echo $ostype | grep stage4)." == '.' ]; then
+	#	echo wrong operating system type, need full desktop version | tee -a $logfile
+	#	date +"install completed - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+	#	exit 1
+	#fi
+	# is system in grpahical mode
 	if [ $(cat  /etc/systemd/system/default.target | grep -i 'Graphical Interface' | wc -l) -ne 1 ]; then
-		echo system running in command line mode, need graphical desktop, see raspi-config | tee -a $logfile
+		# no
+		# is Xorg installed?
+		if [ "$(type Xorg)." == "." ]; then
+			# no
+			echo wrong operating system type, need full desktop version | tee -a $logfile
+		else
+			# yes, but running in text mode
+			echo system running in command line mode, need graphical desktop, see raspi-config | tee -a $logfile
+		fi
 		date +"install completed - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 		exit 2
 	fi
