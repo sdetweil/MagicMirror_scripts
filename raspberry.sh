@@ -104,7 +104,14 @@ if [ "$(echo $lsb_info | grep -i raspbian)." != '.' ]; then
 			echo system running in command line mode, need graphical desktop, see raspi-config | tee -a $logfile
 		fi
 		date +"install completed - %a %b %e %H:%M:%S %Z %Y" >>$logfile
-		exit 2
+		exit 1
+	else
+		# graphical mode, is X running?
+		if [ "$(pidof Xorg)." == "." ]; then
+			echo system running in command line mode, configured for graphical desktop, please reboot | tee -a $logfile
+			date +"install completed - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+			exit 2
+		fi
 	fi
 fi
 # Check the Raspberry Pi version.
