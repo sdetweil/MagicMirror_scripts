@@ -92,6 +92,11 @@ if [ "$(echo $lsb_info | grep -i raspian)." != '.' ]; then
 		date +"install completed - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 		exit 1
 	fi
+	if [ $(cat  /etc/systemd/system/default.target | grep -i 'Graphical Interface' | wc -l) -ne 1 ]; then
+		echo system running in command line mode, need graphical desktop, see raspi-config | tee -a $logfile
+		date +"install completed - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+		exit 2
+	fi
 fi
 # Check the Raspberry Pi version.
 if [ 0 == 1 ]; then
