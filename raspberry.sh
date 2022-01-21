@@ -80,8 +80,19 @@ echo install log being saved to $logfile
 date +"install starting  - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 ARM=$(uname -m)
 echo installing on $ARM processor system >>$logfile
-echo the os is $(lsb_release -a 2>/dev/null) >> $logfile
-OS=$(lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
+lsb_info=$(lsb_release -a 2>/dev/null)
+echo the os is $lsb_info >> $logfile
+OS=$(echo $lsb_info  | grep name: | awk '{print $2}')
+if [ "$(echo $lsb_info | grep -i raspian)." != '.' ]; then
+	# file only exists on raspian
+	ostype=$(cat /boot/issue.txt)
+	echo issue.txt info $ostype >>$logfile
+	if [ "$(echo $ostype | grep stage4)." == '.' ]; then
+		echo wrong operating system type, need full desktop version | tee -a $logfile
+		date +"install completed - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+		exit 1
+	fi
+fi
 # Check the Raspberry Pi version.
 if [ 0 == 1 ]; then
 	if [ "$ARM" != "armv7l" ]; then
@@ -409,14 +420,14 @@ if [ $doInstall == 1 ]; then
 	  if [ -s new_package.json ]; then
 	  	cp new_package.json package.json
 	  	rm new_package.json
-	  	echo "package.json update for $ARM oe Electron missing, completed ok" >>$logfile
+	  	echo "package.json update for $ARM or Electron missing, completed ok" >>$logfile
 	  else
 	  	echo "package.json update for $ARM failed " >>$logfile
 	  fi
           # on armv6l, new OS's have a bug in browser support
 	  # install older chromium if not present
-          v=$(uname -r); v=${v:0:1}
-          if [ "$(which chromium-browser)." == '.' -a ${v:0:1} -ne 4 ]; then 
+      v=$(uname -r); v=${v:0:1}
+      if [ "$(which chromium-browser)." == '.' -a ${v:0:1} -ne 4 ]; then
 		sudo apt install -y chromium-browser >>$logfile
 	  fi 
 	fi
