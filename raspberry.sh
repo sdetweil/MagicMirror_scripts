@@ -138,7 +138,7 @@ function verlt() { [ "$1" = "$2" ] && return 1 || verlte $1 $2 ;}
 if [ $mac != 'Darwin' ]; then
 	# Installing helper tools
 	echo -e "\e[96mInstalling helper tools ...\e[90m" | tee -a $logfile
-	sudo apt-get --assume-yes   install  curl wget git build-essential unzip pv >$logfile
+	sudo apt-get --assume-yes   install  curl wget git build-essential unzip pv >>$logfile
 
 	echo -e "\e[96mUpdating packages ...\e[90m" | tee -a $logfile
 	upgrade=$false

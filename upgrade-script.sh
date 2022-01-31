@@ -134,7 +134,7 @@ if [ -d ~/$mfn ]; then
 	if $NODE_INSTALL; then
 		if [ $doinstalls == $true ]; then
 			echo -e "\e[96mInstalling Node.js ...\e[90m" | tee -a $logfile
-                        sudo apt-get --allow-releaseinfo-change update >$logfile
+            sudo apt-get --allow-releaseinfo-change update >>$logfile
 			# Fetch the latest version of Node.js from the selected branch
 			# The NODE_STABLE_BRANCH variable will need to be manually adjusted when a new branch is released. (e.g. 7.x)
 			# Only tested (stable) versions are recommended as newer versions could break MagicMirror.
