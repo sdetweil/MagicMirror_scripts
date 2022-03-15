@@ -33,6 +33,7 @@ USER=`whoami`
 PM2_FILE=pm2_MagicMirror.json
 forced_arch=
 pm2setup=$false
+JustProd="only=prod"
 
 trim() {
     local var="$*"
@@ -216,16 +217,17 @@ if [ $npminstalled == $false ]; then
 		fi
 		echo -e "\e[0mMinimum Node version: \e[1m$NODE_TESTED\e[0m" | tee -a $logfile
 		echo -e "\e[0mInstalled Node version: \e[1m$NODE_CURRENT\e[0m" | tee -a $logfile
-		if verlte $NODE_CURRENT $NODE_TESTED; then
+		if verlt $NODE_CURRENT $NODE_TESTED; then
 			echo -e "\e[96mNode should be upgraded.\e[0m" | tee -a $logfile
 			NODE_INSTALL=true
 
 			# Check if a node process is currenlty running.
 			# If so abort installation.
-			node_running=$(pgrep "node")
+			node_running=$(ps -ef | grep -m1 "node" | awk '{print $2}')
 			if [ "$node_running." != "." ]; then
 				echo -e "\e[91mA Node process is currently running. Can't upgrade." | tee -a $logfile
 				echo "Please quit all Node processes and restart the installer." | tee -a $logfile
+				echo
 				echo $(ps -ef | grep $node_running |  grep -v grep) | tee -a $logfile
 				exit;
 			fi
@@ -344,8 +346,13 @@ if [ $npminstalled == $false ]; then
 		# update to the latest.
 		echo upgrading npm to latest >> $logfile
 		sudo npm i -g npm@${NPM_TESTED:1:1}  >>$logfile
-		echo -e "\e[92mnpm installation Done! version=V$(npm -v)\e[0m" | tee -a $logfile
+		NPM_CURRENT='V'$(npm -v)
+		echo -e "\e[92mnpm installation Done! version=$NPM_CURRENT\e[0m" | tee -a $logfile
 	fi
+fi
+# check for NPM v8 or higher, changed parms for prod only on npm install
+if [ ${NPM_CURRENT:1:1} -ge 8 ]; then
+	JustProd="omit=dev"
 fi
 # Install MagicMirror
 cd ~
@@ -408,8 +415,11 @@ if [ $doInstall == 1 ]; then
       mv new_package.json package.json
 	fi
 	echo -e "\e[96mInstalling dependencies ...\e[90m" | tee -a $logfile
+	if [ ${NPM_CURRENT:1:1} -ge 8 ]; then
+		JustProd="omit=dev"
+	fi
 	rm package-lock.json 2>/dev/null
-	npm_i_r=$(npm install $forced_arch --only=prod)
+	npm_i_r=$(npm install $forced_arch --$JustProd)
     npm_i_rc=$?
     # add the npm install messages to the logfile
   	echo $npm_i_r >> $logfile

@@ -19,6 +19,7 @@ NODE_TESTED="v16.9.1"
 NPM_TESTED="V7.11.2"
 NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 known_list="request valid-url"
+JustProd="only=prod"
 
 
 trim() {
@@ -118,6 +119,7 @@ if [ -d ~/$mfn ]; then
 			if pidof "node" > /dev/null; then
 				echo -e "\e[91mA Node process is currently running. Can't upgrade." | tee -a $logfile
 				echo "Please quit all Node processes and restart the installer." | tee -a $logfile
+				echo "running process(s) are"
 				echo $(ps -ef | grep node | grep -v color) | tee -a $logfile
 				exit;
 			fi
@@ -232,7 +234,8 @@ if [ -d ~/$mfn ]; then
 			# update to the latest.
 			echo upgrading npm to latest >> $logfile
 			sudo npm i -g npm@${NPM_TESTED:1:1}  >>$logfile
-			echo -e "\e[92mnpm installation Done! version=V$(npm -v)\e[0m" | tee -a $logfile
+			NPM_CURRENT='V'$(npm -v)
+			echo -e "\e[92mnpm installation Done! version=$NPM_CURRENT\e[0m" | tee -a $logfile
 		else
 			echo -e "\e[96mnpm upgrade defered, doing test run  ...\e[90m" | tee -a $logfile
 		fi
@@ -264,7 +267,9 @@ if [ -d ~/$mfn ]; then
 				fi
 		 fi
 	fi
-
+	if [ ${NPM_CURRENT:1:1} -ge 8 ]; then
+		JustProd="omit=dev"
+	fi
 	# change to MagicMirror folder
 	cd ~/$mfn
 
@@ -500,7 +505,7 @@ if [ -d ~/$mfn ]; then
 								      mv new_package.json package.json
 									fi
 									echo "updating MagicMirror runtime, please wait" | tee -a $logfile
-									npm install $forced_arch --only=prod 2>&1 | tee -a $logfile
+									npm install $forced_arch --$JustProd 2>&1 | tee -a $logfile
 									done_update=`date +"completed - %a %b %e %H:%M:%S %Z %Y"`
 									echo npm install $done_update on base >> $logfile
 									# fixup permissions on sandbox file if it exists
