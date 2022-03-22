@@ -223,12 +223,12 @@ if [ $npminstalled == $false ]; then
 
 			# Check if a node process is currenlty running.
 			# If so abort installation.
-			node_running=$(ps -ef | grep -m1 "node" | awk '{print $2}')
+			node_running=$(ps -ef | grep -v color | grep "node " )
 			if [ "$node_running." != "." ]; then
 				echo -e "\e[91mA Node process is currently running. Can't upgrade." | tee -a $logfile
 				echo "Please quit all Node processes and restart the installer." | tee -a $logfile
 				echo
-				echo $(ps -ef | grep $node_running |  grep -v grep) | tee -a $logfile
+				echo $node_running | tee -a $logfile
 				exit;
 			fi
 
@@ -350,10 +350,7 @@ if [ $npminstalled == $false ]; then
 		echo -e "\e[92mnpm installation Done! version=$NPM_CURRENT\e[0m" | tee -a $logfile
 	fi
 fi
-# check for NPM v8 or higher, changed parms for prod only on npm install
-if [ ${NPM_CURRENT:1:1} -ge 8 ]; then
-	JustProd="omit=dev"
-fi
+
 # Install MagicMirror
 cd ~
 if [ $doInstall == 1 ]; then
@@ -415,6 +412,7 @@ if [ $doInstall == 1 ]; then
       mv new_package.json package.json
 	fi
 	echo -e "\e[96mInstalling dependencies ...\e[90m" | tee -a $logfile
+	# check for NPM v8 or higher, changed parms for prod only on npm install
 	if [ ${NPM_CURRENT:1:1} -ge 8 ]; then
 		JustProd="omit=dev"
 	fi

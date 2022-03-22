@@ -114,13 +114,14 @@ if [ -d ~/$mfn ]; then
 			echo -e "\e[96mNode should be upgraded.\e[0m" | tee -a $logfile
 			NODE_INSTALL=true
 
-			# Check if a node process is currenlty running.
+			# Check if a node process is currently running.
 			# If so abort installation.
-			if pidof "node" > /dev/null; then
+			node_running=$(ps -ef | grep "node " | grep -v color)
+			if [ "$node_running." != "." ]; then
 				echo -e "\e[91mA Node process is currently running. Can't upgrade." | tee -a $logfile
-				echo "Please quit all Node processes and restart the installer." | tee -a $logfile
+				echo "Please quit all Node processes and restart the update." | tee -a $logfile
 				echo "running process(s) are"
-				echo $(ps -ef | grep node | grep -v color) | tee -a $logfile
+				echo $node_running | tee -a $logfile
 				exit;
 			fi
 
