@@ -116,7 +116,7 @@ if [ -d ~/$mfn ]; then
 
 			# Check if a node process is currently running.
 			# If so abort installation.
-			node_running=$(ps -ef | grep "node " | grep -v color)
+			node_running=$(ps -ef | grep "node " | grep -v grep)
 			if [ "$node_running." != "." ]; then
 				echo -e "\e[91mA Node process is currently running. Can't upgrade." | tee -a $logfile
 				echo "Please quit all Node processes and restart the update." | tee -a $logfile
@@ -249,7 +249,7 @@ if [ -d ~/$mfn ]; then
 	# if the git lock file exists and git is not running
 	if [ -f git_active_lock ]; then
 		 # check to see if git is actually running
-		 git_running=`ps -ef | grep git | grep -v color | grep -v 'grep git' | wc -l`
+		 git_running=`ps -ef | grep git | grep -v grep | grep -v 'grep git' | wc -l`
 		 # if not running
 		 if [ git_running == $false ]; then
 				# clean up the dangling lock file
