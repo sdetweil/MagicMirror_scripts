@@ -223,7 +223,7 @@ if [ $npminstalled == $false ]; then
 
 			# Check if a node process is currenlty running.
 			# If so abort installation.
-			node_running=$(ps -ef | grep -v color | grep "node " )
+			node_running=$(ps -ef | grep node | grep -v grep)
 			if [ "$node_running." != "." ]; then
 				echo -e "\e[91mA Node process is currently running. Can't upgrade." | tee -a $logfile
 				echo "Please quit all Node processes and restart the installer." | tee -a $logfile
