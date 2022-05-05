@@ -85,27 +85,39 @@ else
       echo "Starting chromium browser now, have patience, it takes a minute"
       # continue to spool stdout to console
       tee <&3 &
-	if [ $mac != 'Darwin' ]; then
-    	b="chromium"
-      if [ $(which $b). == '.' -o $arch == 'armv6l' ]; then
-        b='chromium-browser'
-      fi
-    	if [ $(which $b). != '.' ]; then
-        "$b" -noerrdialogs -kiosk -start_maximized  --disable-infobars --app=http://localhost:$port  --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors 2>/dev/null
+      if [ "$external_browser." == "." ]; then
+      	if [ $mac != 'Darwin' ]; then
+          	b="chromium"
+            if [ $(which $b). == '.' -o $arch == 'armv6l' ]; then
+              b='chromium-browser'
+            fi
+          	if [ $(which $b). != '.' ]; then
+              "$b" -noerrdialogs -kiosk -start_maximized  --disable-infobars --app=http://localhost:$port  --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors 2>/dev/null
+            else
+              echo "Chromium_browser not installed"
+              # if we can't start chrome,
+              # get the server process id
+              ns=$(ps -ef | grep  "node serveronly" | grep -m1 -v color | awk '{print $2}')
+              # if we have the process id
+              if [ "$ns". != "." ]; then
+                  # kill server for restart
+                  sudo kill -9 $ns >/dev/null
+              fi
+          	fi
+      	else
+      	  open -a "Google Chrome" http://localhost:$port --args -noerrdialogs -kiosk -start_maximized  --disable-infobars --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors 2>/dev/null
+      	fi
       else
-        echo "Chromium_browser not installed"
-        # if we can't start chrome,
-        # get the server process id
-        ns=$(ps -ef | grep  "node serveronly" | grep -m1 -v color | awk '{print $2}')
-        # if we have the process id
-        if [ "$ns". != "." ]; then
-            # kill server for restart
-            sudo kill -9 $ns >/dev/null
+        if [ "$(which $external_browser)." !=  "." ]; then
+          if [ "$external_browser" == "midori" ]; then
+            "$external_browser" --app=http://localhost:$port -e Fullscreen  2&>/dev/null
+          else
+            echo "don't know how to launch $external_browser"
+          fi
+        else
+          echo "couldn't locate $external_browser from the command shell,. check the PATH environment variable"
         fi
-    	fi
-	else
-	  open -a "Google Chrome" http://localhost:$port --args -noerrdialogs -kiosk -start_maximized  --disable-infobars --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors 2>/dev/null
-	fi
+      fi
       exit
     fi
   else
