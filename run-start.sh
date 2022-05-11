@@ -108,7 +108,7 @@ else
               b='chromium-browser'
             fi
           	if [ $(which $b). != '.' ]; then
-              rm -rf ~/.config/$b 2>/dev/null
+              rm -rf ~/.config/chromium 2>/dev/null
               r=/temp/$RANDOM
               #mkdir $r 2>/dev/null
               "$b" -noerrdialogs -kiosk -start_maximized  --disable-infobars --app=http://localhost:$port  --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors --user-data-dir=$r 2>/dev/null
