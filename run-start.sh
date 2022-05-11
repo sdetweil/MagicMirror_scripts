@@ -28,11 +28,27 @@ else
   # set default if not defined in config
   serveronly=${serveronly:-false}
   # check for xwindows running
-  xorg=$(pgrep Xorg)
-  if [ "$xorg." == "." ]; then
-     # check for x on Lubuntu
-     xorg=$(pgrep X)
-  fi
+  while [ 1 -eq 1 ];
+  do
+    xorg=$(pgrep Xorg)
+    if [ "$xorg." == "." ]; then
+       # check for x on Lubuntu
+       xorg=$(pgrep X)
+    fi
+    # if user set wait_for_x to some value (ANY value)
+    if [ "$wait_for_x." != "." ]; then
+      if [ "$xorg." != "." ]; then
+        # then break from loop
+        break;
+      else
+        # sleep for 1 second
+        sleep 1
+      fi
+    else
+      # exit loop, not waiting, default
+      break;
+    fi
+  done
   #check for macOS
   mac=$(uname)
   el_installed=$true
@@ -92,7 +108,11 @@ else
               b='chromium-browser'
             fi
           	if [ $(which $b). != '.' ]; then
-              "$b" -noerrdialogs -kiosk -start_maximized  --disable-infobars --app=http://localhost:$port  --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors 2>/dev/null
+              rm -rf ~/.config/$b 2>/dev/null
+              r=/temp/$RANDOM
+              #mkdir $r 2>/dev/null
+              "$b" -noerrdialogs -kiosk -start_maximized  --disable-infobars --app=http://localhost:$port  --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors --user-data-dir=$r 2>/dev/null
+              rm -rf $r 2>/dev/null
             else
               echo "Chromium_browser not installed"
               # if we can't start chrome,
