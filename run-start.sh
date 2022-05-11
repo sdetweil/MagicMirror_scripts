@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 # use bash instead of sh
 # get the folder  for this file
 DIR=$(dirname "$0")
@@ -31,6 +31,7 @@ else
   while [ 1 -eq 1 ];
   do
     xorg=$(pgrep Xorg)
+
     if [ "$xorg." == "." ]; then
        # check for x on Lubuntu
        xorg=$(pgrep X)
@@ -60,7 +61,7 @@ else
   #    electron support for armv6l has been dropped OR
   #    system is in text mode
   #
-  if [ "$serveronly." != "$false." -o  "$arch" == "armv6l" -o "$arch" == "i686" -o $el_installed == $false  ]  ||  [ "$xorg." == "." -a $mac != 'Darwin' ]; then
+  if [ "$serveronly." != "$false." -o  "$arch" == "armv6l" -o "$arch" == "i686" -o $el_installed == $false  ]  ||  [ "$xorg." == "." -a $mac != 'Darwin' -a "$wait_for_x." != "." ]; then
 
       t=$(ps -ef | grep  "node serveronly" | grep -m1 -v color | awk '{print $2}')
       if [ "$t." != '.' ]; then
@@ -68,7 +69,7 @@ else
       fi
     # if user explicitly configured to run server only (no ui local)
     # OR there is no xwindows running, so no support for browser graphics
-    if [ "$serveronly." == "$true." ] || [ "$xorg." == "." -a $mac != 'Darwin' ]; then
+    if [ "$serveronly." == "$true." ] || [ "$xorg." == "." -a $mac != 'Darwin' -a "$wait_for_x." != "." ]; then
       # start server mode,
       node serveronly
     else
@@ -108,11 +109,10 @@ else
               b='chromium-browser'
             fi
           	if [ $(which $b). != '.' ]; then
-              rm -rf ~/.config/chromium 2>/dev/null
-              r=/temp/$RANDOM
-              #mkdir $r 2>/dev/null
-              "$b" -noerrdialogs -kiosk -start_maximized  --disable-infobars --app=http://localhost:$port  --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors --user-data-dir=$r 2>/dev/null
-              rm -rf $r 2>/dev/null
+              rm -rf ~/.config/$b 2>/dev/null
+              r=$(mktemp -d "${TMPDIR:-/tmp}"/tmp.XXXXXXXX)
+              "$b" -noerrdialogs -kiosk -start_maximized --new-window --site-per-process --no-zygote --no-sandbox --disable-infobars --app=http://localhost:$port  --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors --user-data-dir=$r 2>/dev/null
+              rm -rf $r >/dev/null
             else
               echo "Chromium_browser not installed"
               # if we can't start chrome,
@@ -121,7 +121,7 @@ else
               # if we have the process id
               if [ "$ns". != "." ]; then
                   # kill server for restart
-                  sudo kill -9 $ns >/dev/null
+                  sudo kill -9 $ns >/dev/null 2>&1
               fi
           	fi
       	else
@@ -130,7 +130,7 @@ else
       else
         if [ "$(which $external_browser)." !=  "." ]; then
           if [ "$external_browser" == "midori" ]; then
-            "$external_browser" --app=http://localhost:$port -e Fullscreen  2&>/dev/null
+            "$external_browser" --app=http://localhost:$port -e Fullscreen  >/dev/null 2>&1
           else
             echo "don't know how to launch $external_browser"
           fi
