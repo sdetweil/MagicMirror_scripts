@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 # use bash instead of sh
 # get the folder  for this file
 DIR=$(dirname "$0")
