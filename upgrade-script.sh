@@ -269,7 +269,7 @@ if [ -d ~/$mfn ]; then
 		 fi
 	fi
 	if [ ${NPM_CURRENT:1:1} -ge 8 ]; then
-		JustProd="$JustProd --omit=dev --no-audit --no-fund --no-update-notifier"
+		JustProd="--only=prod --omit=dev --no-audit --no-fund --no-update-notifier"
 	fi
 	# change to MagicMirror folder
 	cd ~/$mfn
@@ -647,7 +647,7 @@ if [ -d ~/$mfn ]; then
 													 if [ $do_rebuild -ne 0 ]; then
 													 	npm rebuild 2>&1| tee -a $logfile
 													 else
-													 	npm install $forced_arch 2>&1| tee -a $logfile
+													 	npm install $forced_arch $JustProd 2>&1| tee -a $logfile
 													 fi
 												else
 													echo skipped processing for $module, doing test run | tee -a $logfile
