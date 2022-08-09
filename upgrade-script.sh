@@ -269,7 +269,7 @@ if [ -d ~/$mfn ]; then
 		 fi
 	fi
 	if [ ${NPM_CURRENT:1:1} -ge 8 ]; then
-		JustProd="--only=prod --omit=dev --no-audit --no-fund --no-update-notifier"
+		JustProd="--omit=dev --no-audit --no-fund --no-update-notifier"
 	fi
 	# change to MagicMirror folder
 	cd ~/$mfn
