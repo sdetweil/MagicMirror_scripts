@@ -414,7 +414,7 @@ if [ $doInstall == 1 ]; then
 	echo -e "\e[96mInstalling dependencies ...\e[90m" | tee -a $logfile
 	# check for NPM v8 or higher, changed parms for prod only on npm install
 	if [ ${NPM_CURRENT:1:1} -ge 8 ]; then
-		JustProd="-- omit=dev --no-audit --no-fund --no-update-notifier"
+		JustProd="--omit=dev --no-audit --no-fund --no-update-notifier"
 	fi
 	rm package-lock.json 2>/dev/null
 	npm_i_r=$(npm install $forced_arch $JustProd)
