@@ -19,7 +19,7 @@ NODE_TESTED="v16.9.1"
 NPM_TESTED="V7.11.2"
 NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 known_list="request valid-url"
-JustProd=--only=prod
+JustProd="--only=prod"
 
 
 trim() {
@@ -269,7 +269,7 @@ if [ -d ~/$mfn ]; then
 		 fi
 	fi
 	if [ ${NPM_CURRENT:1:1} -ge 8 ]; then
-		JustProd=--\ omit=dev\ --no-audit\ --no-fund\ --no-update-notifier
+		JustProd="--omit=dev --no-audit --no-fund --no-update-notifier"
 	fi
 	# change to MagicMirror folder
 	cd ~/$mfn
@@ -506,7 +506,7 @@ if [ -d ~/$mfn ]; then
 								      mv new_package.json package.json
 									fi
 									echo "updating MagicMirror runtime, please wait" | tee -a $logfile
-									npm install  $forced_arch $JustProd 2>&1 | tee -a $logfile
+									npm install $forced_arch $JustProd 2>&1 | tee -a $logfile
 									done_update=`date +"completed - %a %b %e %H:%M:%S %Z %Y"`
 									echo npm install $done_update on base >> $logfile
 									# fixup permissions on sandbox file if it exists
