@@ -50,7 +50,7 @@ screensaveroff.sh, copy/paste this line into the terminal window on your device
 ````bash
 bash -c "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/screensaveroff.sh)"
 ````
-### add using pm2 to autostart MagiveMirror at bootup
+### add using pm2 to autostart MagicMirror at bootup
 
 fixuppm2.sh, copy/paste this line into the terminal window on your device
 
