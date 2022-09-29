@@ -130,7 +130,7 @@ else
       else
         if [ "$(which $external_browser)." !=  "." ]; then
           if [ "$external_browser" == "midori" ]; then
-            "$external_browser" --app=http://localhost:$port -e Fullscreen  >/dev/null 2>&1
+            "$external_browser" http://localhost:$port -e Fullscreen Navigationbar  >/dev/null 2>&1
           else
             echo "don't know how to launch $external_browser"
           fi
