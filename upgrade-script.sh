@@ -506,7 +506,7 @@ if [ -d ~/$mfn ]; then
 								      mv new_package.json package.json
 									fi
 									echo "updating MagicMirror runtime, please wait" | tee -a $logfile
-									npm install $forced_arch $JustProd 2>&1 | tee -a $logfile
+									npm  $forced_arch $JustProd install 2>&1 | tee -a $logfile
 									done_update=`date +"completed - %a %b %e %H:%M:%S %Z %Y"`
 									echo npm install $done_update on base >> $logfile
 									# fixup permissions on sandbox file if it exists
@@ -647,7 +647,7 @@ if [ -d ~/$mfn ]; then
 													 if [ $do_rebuild -ne 0 ]; then
 													 	npm rebuild 2>&1| tee -a $logfile
 													 else
-													 	npm install $forced_arch $JustProd 2>&1| tee -a $logfile
+													 	npm  $forced_arch $JustProd install 2>&1| tee -a $logfile
 													 fi
 												else
 													echo skipped processing for $module, doing test run | tee -a $logfile

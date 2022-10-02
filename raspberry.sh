@@ -417,7 +417,7 @@ if [ $doInstall == 1 ]; then
 		JustProd="--omit=dev --no-audit --no-fund --no-update-notifier"
 	fi
 	rm package-lock.json 2>/dev/null
-	npm_i_r=$(npm install $forced_arch $JustProd)
+	npm_i_r=$(npm  $forced_arch $JustProd install)
     npm_i_rc=$?
     # add the npm install messages to the logfile
   	echo $npm_i_r >> $logfile
@@ -526,7 +526,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 			if [  "$pm2_installed." == "." ]; then
 				# install it.
 				echo pm2 not installed, installing >>$logfile
-				result=$(sudo npm install $up $JustProd -g pm2 2>&1)
+				result=$(sudo npm  $up $JustProd install -g pm2 2>&1)
 				echo pm2 install result $result >>$logfile
 				# if this is a mac
 				if [ $mac == 'Darwin' ]; then
