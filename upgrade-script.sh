@@ -269,7 +269,7 @@ if [ -d ~/$mfn ]; then
 		 fi
 	fi
 	if [ ${NPM_CURRENT:1:1} -ge 8 ]; then
-		JustProd="--omit=dev --no-audit --no-fund --no-update-notifier"
+		JustProd='--no-audit --no-fund --no-update-notifier --omit=dev'
 	fi
 	# change to MagicMirror folder
 	cd ~/$mfn
@@ -506,6 +506,7 @@ if [ -d ~/$mfn ]; then
 								      mv new_package.json package.json
 									fi
 									echo "updating MagicMirror runtime, please wait" | tee -a $logfile
+									echo npm  $forced_arch $JustProd install
 									npm  $forced_arch $JustProd install 2>&1 | tee -a $logfile
 									done_update=`date +"completed - %a %b %e %H:%M:%S %Z %Y"`
 									echo npm install $done_update on base >> $logfile
