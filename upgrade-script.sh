@@ -1,4 +1,4 @@
-i#!/bin/bash
+#!/bin/bash
 # only DO npm installs when flag is set to  1
 # test when set to 0
 true=1
@@ -269,7 +269,7 @@ if [ -d ~/$mfn ]; then
 		 fi
 	fi
 	if [ ${NPM_CURRENT:1:1} -ge 8 ]; then
-		JustProd=--no-audit --no-fund --no-update-notifier --omit=dev
+		JustProd="--no-audit --no-fund --no-update-notifier --omit=dev"
 	fi
 	# change to MagicMirror folder
 	cd ~/$mfn
