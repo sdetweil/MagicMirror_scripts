@@ -507,6 +507,7 @@ if [ -d ~/$mfn ]; then
 									fi
 									echo "updating MagicMirror runtime, please wait" | tee -a $logfile
 									#echo npm  $forced_arch $JustProd install
+									rm -rf node_modules 2>/dev/null
 									npm  $forced_arch $JustProd --omit=dev install 2>&1 | tee -a $logfile
 									done_update=`date +"completed - %a %b %e %H:%M:%S %Z %Y"`
 									echo npm install $done_update on base >> $logfile
