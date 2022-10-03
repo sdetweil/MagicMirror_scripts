@@ -417,7 +417,7 @@ if [ $doInstall == 1 ]; then
 		JustProd="--no-audit --no-fund --no-update-notifier" 
 	fi
 	rm package-lock.json 2>/dev/null
-	npm_i_r=$(npm  $forced_arch $ --omit=dev install)
+	npm_i_r=$(npm  $forced_arch $Justprod --omit=dev install)
     npm_i_rc=$?
     # add the npm install messages to the logfile
   	echo $npm_i_r >> $logfile
