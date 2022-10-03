@@ -592,7 +592,7 @@ if [ -d ~/$mfn ]; then
 														echo -e ' \n\t 'require for $require in module $mod not found in package.json package.json for module $mod
 														if [ $doinstalls == $true ]; then
 															echo installing $require for module $mod | tee -a $logfile
-															npm install $require %JustProd --save >>$logfile
+															npm install $require $JustProd --save >>$logfile
 														else
 															echo -e ' \n\t\t ' bypass installing $require for module $mod , doing test run  | tee -a $logfile
 														fi
