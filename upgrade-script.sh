@@ -564,7 +564,7 @@ if [ -d ~/$mfn ]; then
 									for  mod in "${mods[@]}"
 									do
 										# get the require statements from the node helper
-										requires=($(grep -e "require(" $mod/node_helper.js | awk -F '[()]' '{print $2}' | tr -d '"' | tr -d "'"))
+										requires=($(egrep -v "^(//|/\*| \*)" $mod/node_helper.js | grep -e "require("  | awk -F '[()]' '{print $2}' | tr -d '"' | tr -d "'"))
 										# loop thru the requires
 										for require in "${requires[@]}"
 										do
