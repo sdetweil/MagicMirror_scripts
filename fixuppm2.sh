@@ -124,10 +124,10 @@ if [ -d ~/MagicMirror ]; then
 		v=$($pm2cmd startup | tail -n 1)
 		if [ $mac != 'Darwin' ]; then
 			# check to see if we can get the OS package name (Ubuntu)
-			if [ $(which lsb_release| wc -l) >0 ]; then
+			if [ $(which lsb_release| wc -l) -gt 0 ]; then
 				# fix command
 				# if ubuntu 18.04, pm2 startup gets something wrong
-				if [ $(lsb_release  -r | grep -m1 18.04 | wc -l) > 0 ]; then
+				if [ $(lsb_release  -r | grep -m1 18.04 | wc -l) -gt 0 ]; then
 					 v=$(echo $v | sed 's/\/bin/\/bin:\/bin/')
 				fi
 			fi
