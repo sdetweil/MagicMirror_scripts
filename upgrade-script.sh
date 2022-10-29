@@ -38,6 +38,9 @@ mac=$(uname -s)
 # get the processor architecture
 arch=$(uname -m)
 if [ $mac == 'Darwin' ]; then
+    if [ "$(which greadlink)." == "." ]; then 
+	  brew install coreutils
+	fi
 	cmd=greadlink
 else
 	cmd=readlink

@@ -528,8 +528,9 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 				echo pm2 not installed, installing >>$logfile
 				result=$(sudo npm  $up $JustProd install -g pm2 2>&1)
 				echo pm2 install result $result >>$logfile
+				pm2cmd=pm2
 				# if this is a mac
-				if [ $mac == 'Darwin' ]; then
+				if [ $mac == 'Darwin1' ]; then
 					echo "this is a mac, fixup for path" >>$logfile
 					# get the location of pm2 install
 					# parse the npm install output to get the command
@@ -554,11 +555,11 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 			fi
 			echo "startup command = $v" >>$logfile
 			# execute the command returned
-            $v 2>&1 >>$logfile
+            $v 2>&1 >>$logfile 2>&1
 			echo "pm2 startup command done" >>$logfile
 			# is this is mac
 			# need to fix pm2 startup, only on catalina
-			if [ $mac == 'Darwin' ]; then
+			if [ $mac == 'Darwin1' ]; then
                 if [ $(sw_vers -productVersion | head -c 6) == '10.15.' ]; then
 					# only do if the faulty tag is present (pm2 may fix this, before the script is fixed)
 					if [ $(grep -m 1 UserName /Users/$USER/Library/LaunchAgents/pm2.$USER.plist | wc -l) -eq 1 ]; then
@@ -605,7 +606,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 			# if this is a mac
 			if [ $mac == 'Darwin' ]; then
 				 # copy the path file to the system paths list
-				 sudo cp ./pm2path /etc/paths.d
+				 #sudo cp ./pm2path /etc/paths.d
 				 # change the name of the home path for mac
 				 sed 's/home/Users/g' $PM2_FILE > pm2_MagicMirror_new1.json
 				 # make sure to use the updated file
