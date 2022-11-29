@@ -251,7 +251,7 @@ if [ $npminstalled == $false ]; then
 		if [ $mac == 'Darwin' ]; then
 		  brew install node
 		else
-			if [ $OS == "bullseye" ]; then
+			if [ $OS == 'bullseye' ]; then
 				if [ -e /usr/share/doc/nodejs/api/embedding.json.gz ]; then
 					sudo chmod 666 /usr/share/doc/nodejs/api/embedding.json.gz
 				fi
