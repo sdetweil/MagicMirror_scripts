@@ -1,6 +1,6 @@
 # MagicMirror² installation and setup scripts
 
-These scripts can be used to automate installation of release upgrades.
+These scripts can be used to automate installation and release upgrades.
 
 ## Install MagicMirror²
 
