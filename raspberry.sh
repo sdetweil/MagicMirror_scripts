@@ -315,7 +315,7 @@ if [ $npminstalled == $false ]; then
 			# Check if a node process is currently running.
 			# If so abort installation.
 			if pgrep "npm" > /dev/null; then
-				echo -e "\e[91mA npm process is currently running. Can't upgrade." | tee -a $logfile
+				echo -e "\e[91mA npm process is currently running. Can\'t upgrade." | tee -a $logfile
 				echo "Please quit all npm processes and restart the installer." | tee -a $logfile
 				exit;
 			fi
@@ -349,6 +349,8 @@ if [ $npminstalled == $false ]; then
 		NPM_CURRENT='V'$(npm -v)
 		echo -e "\e[92mnpm installation Done! version=$NPM_CURRENT\e[0m" | tee -a $logfile
 	fi
+else
+		NPM_CURRENT='V'$(npm -v)
 fi
 
 # Install MagicMirror
