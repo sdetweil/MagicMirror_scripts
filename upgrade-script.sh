@@ -649,7 +649,25 @@ if [ -d ~/$mfn ]; then
 													 if [ $do_rebuild -ne 0 ]; then
 													 	npm rebuild 2>&1| tee -a $logfile
 													 else
+													 	# does the package,json have a devDependencies section?
+													 	dev=$(grep devDependencies package.json)
+													 	# ye s
+													 	if [ "$dev". != "." ]; then
+													 		# change it to something else
+													 	  	sed '/devDependencies/ c \  \"devxDependencies\": {' <package.json  >new_package.json
+ 															# save the original package.json
+ 															mv package.json save_package.json
+ 															# move the modified into place
+ 															mv new_package.json package.json
+													 	fi
 													 	npm  $forced_arch $JustProd install 2>&1| tee -a $logfile
+													 	# if the sved original exists
+													 	if [ -e save_package.json ]; then
+													 	    # erase the current one 
+													 		rm package.json 2>/dev/null
+													 		# move the saved file back 
+													 		mv save_package.json package.json
+													 	fi
 													 fi
 												else
 													echo skipped processing for $module, doing test run | tee -a $logfile
