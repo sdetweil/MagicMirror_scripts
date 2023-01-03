@@ -1,67 +1,71 @@
-# MagicMirror_scripts
-Magic Mirror installation and setup scripts
+# MagicMirror² installation and setup scripts
 
-these scripts can be used to automate installation of release upgrades.
+These scripts can be used to automate installation and release upgrades.
 
-# Install MagicMirror
+## Install MagicMirror²
 
-## raspberry.sh  is the installation script, upgraded from the core package
-to execute the install script, copy/paste this line into the terminal window on your device (I can't say PI, cause it works in a lot of other places too)
+`raspberry.sh` is the installation script, upgraded from the core package.
 
+To execute the install script, copy/paste this line into the terminal window on your device (I can't say PI, cause it works in a lot of other places too).
 
-````bash
+```bash
 bash -c  "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/raspberry.sh)"
-````
-there is a log file, ~/install.log, created so we can be able to diagnose any problems
+```
 
-# Update to next MagicMirror version (once every 90 days, Jan 1, Apr 1, July 1, Oct 1) from an existing MagicMirror installation
+There is a log file, ~/install.log, created so we can be able to diagnose any problems.
 
-## upgrade-script.sh will do the git pull and npm install, and refresh npm setup for any modules that might need it
-it should handle all the work…<br>
+## Upgrade to next MagicMirror version from an existing installation
 
-#### and give you a trial run of all that, only applying changes if u request them
+New versions are released once every 90 days (Jan 1, Apr 1, July 1, Oct 1).
 
+`upgrade-script.sh` will do the `git pull` and `npm install`, and refresh npm setup for any modules that might need it
+it should handle all the work…
 
-give it a try
+and give you a trial run of all that, only applying changes if you request them.
 
-this works on Mac as well, copy/paste this line into the terminal window on your device
+Give it a try!
 
-````bash
+This works on Mac as well, copy/paste the following line into the terminal window on your device:
+
+```bash
 bash -c  "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/upgrade-script.sh)"
-````
-## no changes are made to the local repo or the working copy
+```
+No changes are made to the local repo or the working copy.
 
-## if you WANT to actually apply the changes, copy/paste this line into the terminal window on your device
+If you WANT to actually apply the changes, copy/paste this line into the terminal window on your device:
 
-````bash
+```bash
 bash -c  "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/upgrade-script.sh)" apply
-````
-there is a log file (upgrade.log)  in the MagicMirror/installers folder…
+```
+There is a log file (`upgrade.log`)  in the `MagicMirror/installers` folder.
 
-# additional scripts that may be useful
+## Additional scripts that may be useful
 
-## the install has two sections of additional support.
-## I have provided those separately here too, in case u need to run one separately, or changed your mind after install
+The install has two sections of additional support.
 
-### turn off screen saver and setup pm2 to autostart MM on boot..
+I have provided those separately here too, in case you need to run one separately, or changed your mind after install.
 
-screensaveroff.sh, copy/paste this line into the terminal window on your device
+### Turn off screen saver and setup pm2 to autostart MM on boot.
 
-````bash
+`screensaveroff.sh`, copy/paste this line into the terminal window on your device:
+
+```bash
 bash -c "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/screensaveroff.sh)"
-````
-### add using pm2 to autostart MagicMirror at bootup
+```
+### Add using pm2 to autostart MagicMirror at bootup
 
-fixuppm2.sh, copy/paste this line into the terminal window on your device
+`fixuppm2.sh`, copy/paste this line into the terminal window on your device:
 
-````bash
+```bash
 bash -c "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/fixuppm2.sh)"
-````
+```
 
 ## Switch to the Midori browser
+
 Especially low powered devices like the Pi Zero W might struggle running MagicMirror with the Chromium browser. A simpler browser like Midori might be a good alternative in this case. To switch to using the Midori browser change the `MagicMirror/installers/mm.sh` file to include the `external_browser` variable like:
-````bash
+
+```bash
 cd ~/MagicMirror
 export external_browser=midori
 DISPLAY=:0 npm start
-````bash
+```

@@ -83,7 +83,7 @@ ARM=$(uname -m)
 echo installing on $ARM processor system >>$logfile
 lsb_info=$(lsb_release -a 2>/dev/null)
 echo the os is $lsb_info >> $logfile
-OS=$(echo $lsb_info  | grep name: | awk '{print $2}')
+OS=$(echo $lsb_info  | awk -F: '{print $NF}' | awk '{print $1}')
 if [ "$(echo $lsb_info | grep -i raspbian)." != '.' ]; then
 	# file only exists on raspian
 	ostype=$(cat /boot/issue.txt)
@@ -251,7 +251,7 @@ if [ $npminstalled == $false ]; then
 		if [ $mac == 'Darwin' ]; then
 		  brew install node
 		else
-			if [ $OS == "bullseye" ]; then
+			if [ $OS == 'bullseye' ]; then
 				if [ -e /usr/share/doc/nodejs/api/embedding.json.gz ]; then
 					sudo chmod 666 /usr/share/doc/nodejs/api/embedding.json.gz
 				fi
@@ -315,7 +315,7 @@ if [ $npminstalled == $false ]; then
 			# Check if a node process is currently running.
 			# If so abort installation.
 			if pgrep "npm" > /dev/null; then
-				echo -e "\e[91mA npm process is currently running. Can't upgrade." | tee -a $logfile
+				echo -e "\e[91mA npm process is currently running. Can\'t upgrade." | tee -a $logfile
 				echo "Please quit all npm processes and restart the installer." | tee -a $logfile
 				exit;
 			fi
@@ -349,6 +349,8 @@ if [ $npminstalled == $false ]; then
 		NPM_CURRENT='V'$(npm -v)
 		echo -e "\e[92mnpm installation Done! version=$NPM_CURRENT\e[0m" | tee -a $logfile
 	fi
+else
+		NPM_CURRENT='V'$(npm -v)
 fi
 
 # Install MagicMirror
@@ -528,8 +530,9 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 				echo pm2 not installed, installing >>$logfile
 				result=$(sudo npm  $up $JustProd install -g pm2 2>&1)
 				echo pm2 install result $result >>$logfile
+				pm2cmd=pm2
 				# if this is a mac
-				if [ $mac == 'Darwin' ]; then
+				if [ $mac == 'Darwin1' ]; then
 					echo "this is a mac, fixup for path" >>$logfile
 					# get the location of pm2 install
 					# parse the npm install output to get the command
@@ -554,11 +557,11 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 			fi
 			echo "startup command = $v" >>$logfile
 			# execute the command returned
-            $v 2>&1 >>$logfile
+            $v 2>&1 >>$logfile 2>&1
 			echo "pm2 startup command done" >>$logfile
 			# is this is mac
 			# need to fix pm2 startup, only on catalina
-			if [ $mac == 'Darwin' ]; then
+			if [ $mac == 'Darwin1' ]; then
                 if [ $(sw_vers -productVersion | head -c 6) == '10.15.' ]; then
 					# only do if the faulty tag is present (pm2 may fix this, before the script is fixed)
 					if [ $(grep -m 1 UserName /Users/$USER/Library/LaunchAgents/pm2.$USER.plist | wc -l) -eq 1 ]; then
@@ -605,7 +608,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 			# if this is a mac
 			if [ $mac == 'Darwin' ]; then
 				 # copy the path file to the system paths list
-				 sudo cp ./pm2path /etc/paths.d
+				 #sudo cp ./pm2path /etc/paths.d
 				 # change the name of the home path for mac
 				 sed 's/home/Users/g' $PM2_FILE > pm2_MagicMirror_new1.json
 				 # make sure to use the updated file
