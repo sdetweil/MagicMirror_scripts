@@ -661,7 +661,7 @@ if [ -d ~/$mfn ]; then
 													 	# ye s
 													 	if [ "$dev". != "." ]; then
 													 		# change it to something else
-													 	  	sed '/devDependencies/ c \  \"devxDependencies\": {' <package.json  >new_package.json
+													 	  	sed 's/\"devDependencies\":/\"devxDependencies\":/' <package.json  >new_package.json
  															# save the original package.json
  															mv package.json save_package.json
  															# move the modified into place
