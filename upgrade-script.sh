@@ -65,8 +65,14 @@ if [ -d ~/$mfn ]; then
 	if [ $mac == 'Darwin' ]; then
 		echo the os is $(system_profiler SPSoftwareDataType | grep -i "system version" | awk -F: '{ print $2 }') >> $logfile
 	else
-		echo the os is $(lsb_release -a) >> $logfile
+		echo the os is $(lsb_release -a 2>/dev/null)  >> $logfile
 		OS=$(lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
+		if [ ${OS,,} == 'stretch' ]; then
+			echo
+			echo 'the latest MagicMirror version, 2.22 (Jan 1 2023) or above, will not run on Raspian Stretch'
+			echo
+			exit 1
+		fi
 	fi
 
 	# because of how its executed from the web, p0 gets overlayed with parm
