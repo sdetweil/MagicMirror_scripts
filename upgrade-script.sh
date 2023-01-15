@@ -69,7 +69,7 @@ if [ -d ~/$mfn ]; then
 		OS=$(lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
 		if [ ${OS,,} == 'stretch' ]; then
 			echo
-			echo 'the latest MagicMirror version, 2.22 (Jan 1 2023) or above, will not run on Raspian Stretch'
+			echo 'the latest MagicMirror version, 2.22 (Jan 1 2023) or above, will not run on Raspian Stretch' | tee -a $logfile
 			echo
 			exit 1
 		fi
