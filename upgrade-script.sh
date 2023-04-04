@@ -18,7 +18,7 @@ git_user_email=
 NODE_TESTED="v16.13.1"
 NPM_TESTED="V7.11.2"
 NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
-known_list="request valid-url"
+known_list="request valid-url jsdom"
 JustProd="--only=prod"
 
 
