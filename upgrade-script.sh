@@ -406,9 +406,9 @@ if [ -d ~/$mfn ]; then
 							fi
 							echo "erasing lock files" >> $logfile
 							git reset HEAD package-lock.json >/dev/null
-							rm *-lock.json 2>/dev/null
-							rm  vendor/*-lock.json 2>/dev/null
-							rm  fonts/*-lock.json 2>/dev/null
+							sudo rm *-lock.json 2>/dev/null
+							sudo rm  vendor/*-lock.json 2>/dev/null
+							sudo rm  fonts/*-lock.json 2>/dev/null
 							git stash >>$logfile
 							stashed=$true
 						else
@@ -655,7 +655,7 @@ if [ -d ~/$mfn ]; then
 												# process its dependencies
 												if [ $doinstalls == $true ]; then
 												     rm -rf node_modules 2>/dev/null
-													 rm package-lock.json 2>/dev/null
+													 sudo rm package-lock.json 2>/dev/null
 													 # check to see if the author created a rebuild process
 													 do_rebuild=$(grep "\"rebuild\"" package.json | wc -l)
 													 # if so, use it
