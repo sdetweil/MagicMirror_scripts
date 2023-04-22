@@ -71,12 +71,14 @@ if [ -d ~/$mfn ]; then
 			echo
 			echo 'the latest MagicMirror version, 2.22 (Jan 1 2023) or above, will not run on Raspian Stretch' | tee -a $logfile
 			echo
+			date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 			exit 1
 		else
 			if [ ${OS,,} == 'bullseye' -a $arch == 'armv6l' ]; then
 				echo
 				echo 'the latest MagicMirror version, 2.23 (April 4 2023) or above, will not run on Raspian Bullseye, due to browser limitations' | tee -a $logfile
 				echo
+				date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 				exit 2
 			fi
 		fi
@@ -201,6 +203,36 @@ if [ -d ~/$mfn ]; then
 				echo node version is $(node -v 2>&1 >>$logfile)
 			fi
 			echo -e "\e[92mNode.js installation Done! version=$(node -v)\e[0m" | tee -a $logfile
+			# if pm2 is installed
+			if [ "$(which pm2)." != "." ]; then
+				pm2_npmjs_version=$(npm view pm2 version)
+				pm2_current_version=$(npm list -g --depth=0 | grep -i pm2 | awk -F@ '{print $2}')
+				echo pm2 installed, checking version $pm2_current_version vs $pm2_npmjs_version >> $logfile
+				if [ 1 -o  ${pm2_npmjs_version:0:1} == ${pm2_current_version:0:1} -a $pm2_current_version != $pm2_npmjs_version ]; then
+					# if pm2 is managing MagicMirror,, then update
+					if [ $(pm2 ls -m | grep "\-\-" | grep -i magicmirror | wc -l) -eq 1 ]; then
+						apps_defined=$(pm2 ls -m | grep "\-\-" | wc -l)
+						echo pm2 same major version, so updating >> $logfile
+						sudo npm install pm2@latest -g 2>&1 >> $logfile
+						pm2 update 2>&1 >>$logfile
+						rc=$?
+						if [ $rc -eq 0 ]; then
+							apps_defined_after_update=$(pm2 ls -m | grep "\-\-" | wc -l)
+							if [ $apps_defined != $apps_defined_after_update ]; then
+								echo rerunning pm2 update , after app count incorrect >> $logfile
+								pm2 update 2>&1 >>$logfile
+							fi
+							echo pm2 update completed >> $logfile
+						else
+							echo pm2 update failed, rc=$rc | tee -a $logfile
+						fi
+					else
+						echo not managing pm2 >>$logfile
+					fi
+				else
+					echo no pm2 required >>$logfile
+				fi
+			fi
 		else
 			echo -e "\e[92mNode.js upgrade defered, doing test run\e[0m" | tee -a $logfile
 		fi
