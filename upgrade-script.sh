@@ -173,10 +173,10 @@ if [ -d ~/$mfn ]; then
 					sudo apt-get install -y --only-upgrade libstdc++6 >> $logfile
 					# have to do it manually
 					ARM1=$ARM
-	                                if [ $ARM == 'armv6l' ]; then 
-        	                                curl -sL https://unofficial-builds.nodejs.org/download/release/${NODE_TESTED}/node-${NODE_TESTED}-linux-armv6l.tar.gz >node_release-${NODE_TESTED}.tar.gz
-                	                        node_ver=$NODE_TESTED
-                        	        else
+                    if [ $ARM == 'armv6l' ]; then
+                            curl -sL https://unofficial-builds.nodejs.org/download/release/${NODE_TESTED}/node-${NODE_TESTED}-linux-armv6l.tar.gz >node_release-${NODE_TESTED}.tar.gz
+                            node_ver=$NODE_TESTED
+                    else
 						node_vnum=$(echo $NODE_STABLE_BRANCH | awk -F. '{print $1}')
 						if [ $ARM == 'x86_64' ]; then
 							ARM1= x64
