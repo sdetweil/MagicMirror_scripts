@@ -18,8 +18,8 @@ There is a log file, ~/install.log, created so we can be able to diagnose any pr
 
 A new MagicMirror version is released once every 90 days (Jan 1, Apr 1, July 1, Oct 1).
 
-`upgrade-script.sh` will do the `git pull` and `npm install`, and refresh npm setup for any modules that might need it
-it should handle all the work…
+`upgrade-script.sh` will do the `git pull` and `npm install`, and refresh npm setup for any modules that might need it.
+The script should handle all the work…
 
 and give you a trial run of all that, only applying changes if you request them.
 
