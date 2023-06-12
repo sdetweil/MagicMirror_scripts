@@ -191,16 +191,22 @@ if [ $OS = "bullseye" -a $ARM != "armv6l" ]; then
 		# check if node is already at the right level
 		# get node version
 		v=$(node -v)
-		if [ ${v:1:2} -lt ${NODE_TESTED:1:2} ]; then
-			echo -e "\e[96minstalling correct version of node and npm, please wait\e[90m" | tee -a $logfile
-			nr=$(sudo npm install -g n)
-			sudo n ${NODE_TESTED:1} >> $logfile
-			PATH="$PATH"
-			nodev=$(node -v)
-			if [ "${nodev:0:3}" != ${NODE_TESTED:0:3} ]; then
-				echo node failed to install, exiting | tee -a $logfile
-				exit
+		if [ "$v." != "." ]; then
+			if [ ${v:1:2} -lt ${NODE_TESTED:1:2} ]; then
+				echo -e "\e[96minstalling correct version of node and npm, please wait\e[90m" | tee -a $logfile
+				nr=$(sudo npm install -g n)
+				sudo n ${NODE_TESTED:1} >> $logfile
+				PATH="$PATH"
+				nodev=$(node -v)
+				if [ "${nodev:0:3}" != ${NODE_TESTED:0:3} ]; then
+					echo node failed to install, exiting | tee -a $logfile
+					exit
+				fi
 			fi
+		else
+			echo -e "\e[92mnode failed to execute, please check the error message and resolve before trying again\e[0m" | tee -a $logfile
+			date +"install aborted - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+			exit 2
 		fi
 	fi
 fi
