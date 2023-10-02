@@ -67,7 +67,7 @@ if [ -d ~/$mfn ]; then
 	else
 		echo the os is $(lsb_release -a 2>/dev/null)  >> $logfile
 		OS=$(lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
-		if [ $OS ==  "buster"]; then
+		if [ $OS ==  "buster" ]; then
 			echo upgrade on buster is broken, ending install
 			exit 4
 		fi

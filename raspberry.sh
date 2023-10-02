@@ -84,7 +84,7 @@ echo installing on $ARM processor system >>$logfile
 lsb_info=$(lsb_release -a 2>/dev/null)
 echo the os is $lsb_info >> $logfile
 OS=$(echo $lsb_info  | awk -F: '{print $NF}' | awk '{print $1}')
-if [ $OS ==  "buster"]; then
+if [ $OS ==  "buster" ]; then
 	echo install on buster is broken, ending install
 	exit 4
 fi
