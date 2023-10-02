@@ -181,6 +181,10 @@ if [ $mac != 'Darwin' ]; then
 fi
 
 npminstalled=$false
+if [ $OS = "buster" ]; then
+	NODE_TESTED="v18.18.0" # "v16.13.1"
+	NPM_TESTED="V9.8.1" # "V7.11.2"
+fi
 if [ $OS = "bullseye" -a $ARM != "armv6l" ]; then
 	# is npm installed?
 	echo "installing on bullseye" >>$logfile

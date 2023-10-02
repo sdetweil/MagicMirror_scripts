@@ -81,6 +81,10 @@ if [ -d ~/$mfn ]; then
 				date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 				exit 2
 			fi
+			if [ ${OS,,} == 'buster'  ]; then
+				NODE_TESTED="v18.18.0" # "v16.13.1"
+				NPM_TESTED="V9.8.1" # "V7.11.2"
+			fi
 		fi
 	fi
 
