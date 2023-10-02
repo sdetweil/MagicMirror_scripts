@@ -67,6 +67,10 @@ if [ -d ~/$mfn ]; then
 	else
 		echo the os is $(lsb_release -a 2>/dev/null)  >> $logfile
 		OS=$(lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
+		if [ $OS ==  "buster"]; then
+			echo upgrade on buster is broken, ending install
+			exit 4
+		fi
 		if [ ${OS,,} == 'stretch' ]; then
 			echo
 			echo 'the latest MagicMirror version, 2.22 (Jan 1 2023) or above, will not run on Raspian Stretch' | tee -a $logfile
