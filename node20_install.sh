@@ -1,4 +1,11 @@
 #!/bin/bash
+
+OS=$(lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
+if [ $OS == "buster" ]; then
+	echo install or upgrade on buster is broken, ending node update script
+	exit 4
+fi
+
 sudo apt-get update
 sudo apt-get install -y ca-certificates curl gnupg
 sudo mkdir -p /etc/apt/keyrings
