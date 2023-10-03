@@ -84,32 +84,22 @@ echo installing on $ARM processor system >>$logfile
 lsb_info=$(lsb_release -a 2>/dev/null)
 echo the os is $lsb_info >> $logfile
 OS=$(echo $lsb_info  | awk -F: '{print $NF}' | awk '{print $1}')
-if [ $OS == "buster" ]; then
-	echo install on buster is broken, ending install
-	exit 4
-fi
+#if [ $OS == "buster" ]; then
+#	echo install on buster is broken, ending install
+#	exit 4
+#fi
+NODE_MAJOR=20
+sudo apt-get purge nodejs -y &&\
+sudo rm -r /etc/apt/sources.list.d/nodesource.list &&\
+sudo rm -r /etc/apt/keyrings/nodesource.gpg
 if [ $OS = "buster" ]; then
 	NODE_TESTED="v18.18.0" # "v16.13.1"
 	NPM_TESTED="V9.8.1" # "V7.11.2"
-	sudo apt-get purge nodejs -y &&\
-	sudo rm -r /etc/apt/sources.list.d/nodesource.list &&\
-	sudo rm -r /etc/apt/keyrings/nodesource.gpg
-
 	NODE_MAJOR=18
 	#OS=$(lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
 	#if [ $OS == "buster" ]; then
 	#	NODE_MAJOR=18
 	#fi
-
-	sudo apt-get update
-	sudo apt-get install -y ca-certificates curl gnupg
-	sudo mkdir -p /etc/apt/keyrings
-	curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-
-	echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
-
-	sudo apt-get update
-	sudo apt-get install nodejs -y
 fi
 if [ "$(echo $lsb_info | grep -i raspbian)." != '.' ]; then
 	# file only exists on raspian
@@ -208,6 +198,16 @@ if [ $mac != 'Darwin' ]; then
 fi
 
 npminstalled=$false
+
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl gnupg
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+
+sudo apt-get update
+sudo apt-get install nodejs -y
 
 if [ $OS = "bullseye" -a $ARM != "armv6l" ]; then
 	# is npm installed?
