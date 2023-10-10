@@ -88,10 +88,7 @@ OS=$(echo $lsb_info  | awk -F: '{print $NF}' | awk '{print $1}')
 #	echo install on buster is broken, ending install
 #	exit 4
 #fi
-NODE_MAJOR=20
-sudo apt-get purge nodejs -y &&\
-sudo rm -r /etc/apt/sources.list.d/nodesource.list &&\
-sudo rm -r /etc/apt/keyrings/nodesource.gpg
+
 if [ $OS = "buster" ]; then
 	NODE_TESTED="v18.18.0" # "v16.13.1"
 	NPM_TESTED="V9.8.1" # "V7.11.2"
@@ -193,26 +190,63 @@ if [ $mac != 'Darwin' ]; then
 	   echo "apt-get upgrade  started" >> $logfile
 	   upgrade_result=$(sudo apt-get --assume-yes upgrade  2>&1 | pv -l -p)
 		 upgrade_rc=$?
-		 echo apt upgrade result ="rc=$upgrade_rc $upgrade_result" >> $logfile
+		 echo apt-get upgrade result ="rc=$upgrade_rc $upgrade_result" >> $logfile
 	fi
 fi
 
+
 npminstalled=$false
-arch=
-t=$(uname -m)
-if [ $t == "aarch64" ]; then
-	arch="arch=arm64"
+# check for node installed
+nv=$(node -v 2>/dev/null)
+# if not
+if [ "$nv." == "." ]; then
+	echo node not installed, trying via apt-get >>$logfile
+	# install the default
+	sudo apt-get update >/dev/null
+	ni=$(sudo apt-get install nodejs -y 2>&1)
+	# log it
+	echo $ni >>$logfile
+	# if npm not installed
+	echo npm not installed, trying via apt-get >>$logfile
+	if [ "$(npm -v 2>/dev/null)." == "." ]; then
+		echo npm installed now, install n >>$logfile
+		# install it too
+		ni=$(sudo apt-get install npm -y 2>&1)
+		echo $ni >>$logfile
+		npminstalled=$true
+	fi
 fi
-sudo apt-get update
-sudo apt-get install -y ca-certificates curl gnupg
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+# if n is not installed
+NODE_MAJOR=20
+# if n is not installed
+if [ "$(which n)." == "." ]; then
+	# install it globally
+	sudo npm i n -g  >>$logfile 2>&1
 
-echo "deb [$arch signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+	#sudo apt-get purge nodejs -y &&\
+	#sudo rm -r /etc/apt/sources.list.d/nodesource.list &&\
+	#sudo rm -r /etc/apt/keyrings/nodesource.gpg
 
-sudo apt-get update
-sudo apt-get install nodejs -y
+fi
+arch=
+# if n is not installed
+if [ 0 == 1 ]; then
+	if [ "$(which n)." == "." ]; then
+		t=$(dpkg --print-architecture)
+		if [ $t == "arm64" ]; then
+			arch="arch=arm64"
+		fi
+		sudo apt-get update
+		sudo apt-get install -y ca-certificates curl gnupg
+		sudo mkdir -p /etc/apt/keyrings
+		curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
 
+		echo "deb [$arch signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+
+		sudo apt-get update
+		sudo apt-get install nodejs -y
+	fi
+fi
 if [ $OS = "bullseye" -a $ARM != "armv6l" ]; then
 	# is npm installed?
 	echo "installing on bullseye" >>$logfile
@@ -226,7 +260,7 @@ if [ $OS = "bullseye" -a $ARM != "armv6l" ]; then
 		if [ "$v." != "." ]; then
 			if [ ${v:1:2} -lt ${NODE_TESTED:1:2} ]; then
 				echo -e "\e[96minstalling correct version of node and npm, please wait\e[90m" | tee -a $logfile
-				nr=$(sudo npm install -g n)
+				#nr=$(sudo npm install -g n)
 				sudo n ${NODE_TESTED:1} >> $logfile
 				PATH="$PATH"
 				nodev=$(node -v)
@@ -390,7 +424,7 @@ if [ $npminstalled == $false ]; then
 else
 		NPM_CURRENT='V'$(npm -v)
 fi
-
+#exit
 # Install MagicMirror
 cd ~
 if [ $doInstall == 1 ]; then
@@ -497,7 +531,7 @@ if [ $doInstall == 1 ]; then
 	  # install older chromium if not present
       v=$(uname -r); v=${v:0:1}
       if [ "$(which chromium-browser)." == '.' -a ${v:0:1} -ne 4 ]; then
-		sudo apt install -y chromium-browser >>$logfile
+		sudo apt-get install -y chromium-browser >>$logfile
 	  fi 
 	fi
 
