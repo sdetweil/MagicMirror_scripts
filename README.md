@@ -2,16 +2,6 @@
 
 These scripts can be used to automate installation and release upgrades.
 
-
-### Warning  Node 20 requires some special install.. run this (copy/paste) before doing mm install or upgrade
-(you don't need to run this script separately anymore, this function has been added to both install and upgrade
-buster will get node 18)
-this will fix the "primordials is not defined" problem too. (if you run upgrade-script again with force instead of apply it will fix primordials too)
-this script now (2pm central oct 2) correctly installs node , including on buster..
-
-```bash
-bash -c  "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/node20_install.sh)"
-```
 ## Install MagicMirror²
 
 `raspberry.sh` is the installation script, upgraded from the core package.
