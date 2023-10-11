@@ -184,6 +184,7 @@ if [ $mac != 'Darwin' ]; then
 		upgrade=$true
 	fi
 	if [ $upgrade -eq $true ]; then
+	   sudo apt-get install pv -y >>$logfile
 	   echo "apt-get upgrade  started" >> $logfile
 	   upgrade_result=$(sudo apt-get --assume-yes upgrade  2>&1 | pv -l -p)
 		 upgrade_rc=$?
@@ -191,7 +192,7 @@ if [ $mac != 'Darwin' ]; then
 	fi
 	# Installing helper tools
 	echo -e "\e[96mInstalling helper tools ...\e[90m" | tee -a $logfile
-	sudo apt-get --assume-yes   install  curl wget git build-essential unzip pv >>$logfile
+	sudo apt-get --assume-yes   install  curl wget git build-essential unzip >>$logfile
 fi
 
 
@@ -247,7 +248,9 @@ if [ 0 == 1 ]; then
 		sudo apt-get install nodejs -y
 	fi
 fi
-if [ $OS = "bullseye" -a $ARM != "armv6l" ]; then
+#if [ 
+# ($OS == "bullseye" -o $OS == "bookworm") -a 
+if [ $ARM != "armv6l" ]; then
 	# is npm installed?
 	echo "installing on bullseye" >>$logfile
 	npm=$(which npm)
