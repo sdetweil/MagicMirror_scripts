@@ -122,7 +122,7 @@ if [ "$(echo $lsb_info | grep -i raspbian)." != '.' ]; then
 		exit 1
 	else
 		# graphical mode, is X running?
-		if [ "$(pidof Xorg)." == "." ]; then
+		if [ "$(pidof Xorg)." == "." -a "$(pidof wayfire)." == "." ]; then
 			echo system running in command line mode, configured for graphical desktop, please reboot | tee -a $logfile
 			date +"install completed - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 			exit 2
