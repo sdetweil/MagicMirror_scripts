@@ -252,7 +252,7 @@ fi
 # ($OS == "bullseye" -o $OS == "bookworm") -a 
 if [ $ARM != "armv6l" ]; then
 	# is npm installed?
-	echo "installing on bullseye" >>$logfile
+	echo "installing on $OS" >>$logfile
 	npm=$(which npm)
 	if [ "$npm". != "." ]; then
 		npminstalled=$true
