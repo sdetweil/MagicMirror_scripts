@@ -113,7 +113,7 @@ if [ -d ~/$mfn ]; then
 			if [ "$nv." == "." ]; then
 				echo node not installed, trying via apt-get >>$logfile
 				# install the default
-				sudo apt-get update >/dev/null
+				sudo apt-get update -y >/dev/null
 				ni=$(sudo apt-get install nodejs -y 2>&1)
 				# log it
 				echo $ni >>$logfile

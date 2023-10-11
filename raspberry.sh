@@ -100,8 +100,8 @@ if [ $OS = "buster" ]; then
 fi
 if [ "$(echo $lsb_info | grep -i raspbian)." != '.' ]; then
 	# file only exists on raspian
-	ostype=$(cat /boot/issue.txt)
-	echo issue.txt info $ostype >>$logfile
+	#ostype=$(cat /boot/issue.txt)
+	#echo issue.txt info $ostype >>$logfile
 	#if [ "$(echo $ostype | grep stage4)." == '.' ]; then
 	#	echo wrong operating system type, need full desktop version | tee -a $logfile
 	#	date +"install completed - %a %b %e %H:%M:%S %Z %Y" >>$logfile
@@ -151,9 +151,6 @@ function verlt() { [ "$1" = "$2" ] && return 1 || verlte $1 $2 ;}
 
 # Update before first apt-get
 if [ $mac != 'Darwin' ]; then
-	# Installing helper tools
-	echo -e "\e[96mInstalling helper tools ...\e[90m" | tee -a $logfile
-	sudo apt-get --assume-yes   install  curl wget git build-essential unzip pv >>$logfile
 
 	echo -e "\e[96mUpdating packages ...\e[90m" | tee -a $logfile
 	upgrade=$false
@@ -192,6 +189,9 @@ if [ $mac != 'Darwin' ]; then
 		 upgrade_rc=$?
 		 echo apt-get upgrade result ="rc=$upgrade_rc $upgrade_result" >> $logfile
 	fi
+	# Installing helper tools
+	echo -e "\e[96mInstalling helper tools ...\e[90m" | tee -a $logfile
+	sudo apt-get --assume-yes   install  curl wget git build-essential unzip pv >>$logfile
 fi
 
 
