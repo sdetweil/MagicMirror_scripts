@@ -18,6 +18,7 @@ git_user_email=
 NODE_TESTED="v20.8.0" # "v16.13.1"
 NPM_TESTED="V10.1.0" # "V7.11.2"
 NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
+NODE_INSTALL=false
 known_list="request valid-url jsdom"
 JustProd="--only=prod"
 
@@ -45,6 +46,7 @@ if [ $mac == 'Darwin' ]; then
 else
 	cmd=readlink
 fi
+# if the MagicMirror folder exists
 if [ -d ~/$mfn ]; then
 
 	# put the log where the script is located
@@ -71,9 +73,12 @@ if [ -d ~/$mfn ]; then
 		#	echo upgrade on buster is broken, ending install
 		#	exit 4
 		#fi
-		sudo apt-get purge nodejs -y &&\
-		sudo rm -r /etc/apt/sources.list.d/nodesource.list &&\
-		sudo rm -r /etc/apt/keyrings/nodesource.gpg
+		# if n is not installed
+		#if [ "$(which n)." == "." ]; then
+		#	sudo apt-get purge nodejs -y &&\
+		#	sudo rm -r /etc/apt/sources.list.d/nodesource.list &&\
+		#	sudo rm -r /etc/apt/keyrings/nodesource.gpg
+		#fi
 		NODE_MAJOR=20
 		if [ $OS = "buster" ]; then
 			NODE_TESTED="v18.18.0" # "v16.13.1"
@@ -102,19 +107,66 @@ if [ -d ~/$mfn ]; then
 				date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 				exit 2
 			fi
-			nodearch=
-			if [ $arch == "aarch64" ]; then
-				nodearch="arch=arm64"
+			# check for node installed
+			nv=$(node -v 2>/dev/null)
+			# if not
+			if [ "$nv." == "." ]; then
+				echo node not installed, trying via apt-get >>$logfile
+				# install the default
+				sudo apt-get update -y >/dev/null
+				ni=$(sudo apt-get install nodejs -y 2>&1)
+				# log it
+				echo $ni >>$logfile
+				# if npm not installed
+				echo npm not installed, trying via apt-get >>$logfile
+				if [ "$(npm -v 2>/dev/null)." == "." ]; then
+					echo npm NOT installed now, install now >>$logfile
+					# install it too
+					ni=$(sudo apt-get install npm -y 2>&1)
+					echo $ni >>$logfile
+					npminstalled=$true
+				fi
 			fi
-			sudo apt-get update
-			sudo apt-get install -y ca-certificates curl gnupg
-			sudo mkdir -p /etc/apt/keyrings
-			curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+			# if n is not installed
+			NODE_MAJOR=20
+			# if n is not installed
+			if [ "$(which n)." == "." ]; then
+				# install it globally
+				sudo npm i n -g  >>$logfile 2>&1
 
-			echo "deb [$nodearch  signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+				#sudo apt-get purge nodejs -y &&\
+				#sudo rm -r /etc/apt/sources.list.d/nodesource.list &&\
+				#sudo rm -r /etc/apt/keyrings/nodesource.gpg
 
-			sudo apt-get update
-			sudo apt-get install nodejs -y
+			fi
+			# if n is installed
+			if [ "$(which n)." != "." ]; then
+				# use it to upgrade node
+				NODE_CURRENT=$(node -v)
+				# if needed
+				if verlt $NODE_CURRENT $NODE_TESTED; then
+					sudo n $NODE_TESTED >>$logfile
+					PATH=$PATH
+					NODE_INSTALL=false
+				fi
+			fi
+			if [ 0 == 1 ]; then
+				# n is not installed, do manual install
+				nodearch=
+				t=$(dpkg --print-architecture)
+				if [ $t == "arm64" ]; then
+					nodearch="arch=arm64"
+				fi
+				sudo apt-get update
+				sudo apt-get install -y ca-certificates curl gnupg
+				sudo mkdir -p /etc/apt/keyrings
+				curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+
+				echo "deb [$nodearch  signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+
+				sudo apt-get update
+				sudo apt-get install nodejs -y
+			fi
 		fi
 	fi
 
@@ -152,7 +204,7 @@ if [ -d ~/$mfn ]; then
 
 	# Check if we need to install or upgrade Node.js.
 	echo -e "\e[96mCheck current Node installation ...\e[0m" | tee -a $logfile
-	NODE_INSTALL=false
+
 	if command_exists node; then
 		echo -e "\e[0mNode currently installed. Checking version number." | tee -a $logfile
 		NODE_CURRENT=$(node -v)
@@ -316,7 +368,7 @@ if [ -d ~/$mfn ]; then
 			fi
 			# update to the latest.
 			echo upgrading npm to latest >> $logfile
-			sudo npm i -g npm@${NPM_TESTED:1:1}  >>$logfile
+			sudo npm i -g npm@${NPM_TESTED:1:2}  >>$logfile
 			NPM_CURRENT='V'$(npm -v)
 			echo -e "\e[92mnpm installation Done! version=$NPM_CURRENT\e[0m" | tee -a $logfile
 		else
@@ -350,7 +402,7 @@ if [ -d ~/$mfn ]; then
 				fi
 		 fi
 	fi
-	if [ ${NPM_CURRENT:1:1} -ge 8 ]; then
+	if [ ${NPM_CURRENT:1:2} -ge 8 ]; then
 		JustProd="--no-audit --no-fund --no-update-notifier" 
 	fi
 	# change to MagicMirror folder
@@ -578,7 +630,7 @@ if [ -d ~/$mfn ]; then
 								          # install older chromium if not present
 									  v=$(uname -r); v=${v:0:1}
 									  if [ "$(which chromium-browser)." == '.' -a ${v:0:1} -ne 4 ]; then 
-								                sudo apt install -y chromium-browser >>$logfile
+								                sudo apt-get install -y chromium-browser >>$logfile
 								          fi 
 									fi
 								    if [ $remote_version == '2.13.0' ]; then
@@ -590,7 +642,7 @@ if [ -d ~/$mfn ]; then
 									echo "updating MagicMirror runtime, please wait" | tee -a $logfile
 									#echo npm  $forced_arch $JustProd install
 									rm -rf node_modules 2>/dev/null
-									if [ ${NPM_CURRENT:1:1} -ge 8 ]; then
+									if [ ${NPM_CURRENT:1:2} -ge 8 ]; then
 										npm  $forced_arch $JustProd --omit=dev install 2>&1 | tee -a $logfile
 									else
 										npm  $forced_arch $JustProd install 2>&1 | tee -a $logfile

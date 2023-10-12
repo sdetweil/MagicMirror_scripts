@@ -88,10 +88,7 @@ OS=$(echo $lsb_info  | awk -F: '{print $NF}' | awk '{print $1}')
 #	echo install on buster is broken, ending install
 #	exit 4
 #fi
-NODE_MAJOR=20
-sudo apt-get purge nodejs -y &&\
-sudo rm -r /etc/apt/sources.list.d/nodesource.list &&\
-sudo rm -r /etc/apt/keyrings/nodesource.gpg
+
 if [ $OS = "buster" ]; then
 	NODE_TESTED="v18.18.0" # "v16.13.1"
 	NPM_TESTED="V9.8.1" # "V7.11.2"
@@ -103,8 +100,8 @@ if [ $OS = "buster" ]; then
 fi
 if [ "$(echo $lsb_info | grep -i raspbian)." != '.' ]; then
 	# file only exists on raspian
-	ostype=$(cat /boot/issue.txt)
-	echo issue.txt info $ostype >>$logfile
+	#ostype=$(cat /boot/issue.txt)
+	#echo issue.txt info $ostype >>$logfile
 	#if [ "$(echo $ostype | grep stage4)." == '.' ]; then
 	#	echo wrong operating system type, need full desktop version | tee -a $logfile
 	#	date +"install completed - %a %b %e %H:%M:%S %Z %Y" >>$logfile
@@ -125,7 +122,7 @@ if [ "$(echo $lsb_info | grep -i raspbian)." != '.' ]; then
 		exit 1
 	else
 		# graphical mode, is X running?
-		if [ "$(pidof Xorg)." == "." ]; then
+		if [ "$(pidof Xorg)." == "." -a "$(pidof wayfire)." == "." ]; then
 			echo system running in command line mode, configured for graphical desktop, please reboot | tee -a $logfile
 			date +"install completed - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 			exit 2
@@ -154,9 +151,6 @@ function verlt() { [ "$1" = "$2" ] && return 1 || verlte $1 $2 ;}
 
 # Update before first apt-get
 if [ $mac != 'Darwin' ]; then
-	# Installing helper tools
-	echo -e "\e[96mInstalling helper tools ...\e[90m" | tee -a $logfile
-	sudo apt-get --assume-yes   install  curl wget git build-essential unzip pv >>$logfile
 
 	echo -e "\e[96mUpdating packages ...\e[90m" | tee -a $logfile
 	upgrade=$false
@@ -190,32 +184,75 @@ if [ $mac != 'Darwin' ]; then
 		upgrade=$true
 	fi
 	if [ $upgrade -eq $true ]; then
+	   sudo apt-get install pv -y >>$logfile
 	   echo "apt-get upgrade  started" >> $logfile
 	   upgrade_result=$(sudo apt-get --assume-yes upgrade  2>&1 | pv -l -p)
 		 upgrade_rc=$?
-		 echo apt upgrade result ="rc=$upgrade_rc $upgrade_result" >> $logfile
+		 echo apt-get upgrade result ="rc=$upgrade_rc $upgrade_result" >> $logfile
 	fi
+	# Installing helper tools
+	echo -e "\e[96mInstalling helper tools ...\e[90m" | tee -a $logfile
+	sudo apt-get --assume-yes   install  curl wget git build-essential unzip >>$logfile
 fi
+
 
 npminstalled=$false
-arch=
-t=$(uname -m)
-if [ $t == "aarch64" ]; then
-	arch="arch=arm64"
+# check for node installed
+nv=$(node -v 2>/dev/null)
+# if not
+if [ "$nv." == "." ]; then
+	echo node not installed, trying via apt-get >>$logfile
+	# install the default
+	sudo apt-get update >/dev/null
+	ni=$(sudo apt-get install nodejs -y 2>&1)
+	# log it
+	echo $ni >>$logfile
+	# if npm not installed
+	echo npm not installed, trying via apt-get >>$logfile
+	if [ "$(npm -v 2>/dev/null)." == "." ]; then
+		echo npm installed now, install n >>$logfile
+		# install it too
+		ni=$(sudo apt-get install npm -y 2>&1)
+		echo $ni >>$logfile
+		npminstalled=$true
+	fi
 fi
-sudo apt-get update
-sudo apt-get install -y ca-certificates curl gnupg
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+# if n is not installed
+NODE_MAJOR=20
+# if n is not installed
+if [ "$(which n)." == "." ]; then
+	# install it globally
+	sudo npm i n -g  >>$logfile 2>&1
 
-echo "deb [$arch signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+	#sudo apt-get purge nodejs -y &&\
+	#sudo rm -r /etc/apt/sources.list.d/nodesource.list &&\
+	#sudo rm -r /etc/apt/keyrings/nodesource.gpg
 
-sudo apt-get update
-sudo apt-get install nodejs -y
+fi
+arch=
+# if n is not installed
+if [ 0 == 1 ]; then
+	if [ "$(which n)." == "." ]; then
+		t=$(dpkg --print-architecture)
+		if [ $t == "arm64" ]; then
+			arch="arch=arm64"
+		fi
+		sudo apt-get update
+		sudo apt-get install -y ca-certificates curl gnupg
+		sudo mkdir -p /etc/apt/keyrings
+		curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
 
-if [ $OS = "bullseye" -a $ARM != "armv6l" ]; then
+		echo "deb [$arch signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+
+		sudo apt-get update
+		sudo apt-get install nodejs -y
+	fi
+fi
+#if [ 
+# ($OS == "bullseye" -o $OS == "bookworm") -a 
+if [ $ARM != "armv6l" ]; then
 	# is npm installed?
-	echo "installing on bullseye" >>$logfile
+	echo "installing on $OS" >>$logfile
 	npm=$(which npm)
 	if [ "$npm". != "." ]; then
 		npminstalled=$true
@@ -226,8 +263,12 @@ if [ $OS = "bullseye" -a $ARM != "armv6l" ]; then
 		if [ "$v." != "." ]; then
 			if [ ${v:1:2} -lt ${NODE_TESTED:1:2} ]; then
 				echo -e "\e[96minstalling correct version of node and npm, please wait\e[90m" | tee -a $logfile
-				nr=$(sudo npm install -g n)
-				sudo n ${NODE_TESTED:1} >> $logfile
+				#nr=$(sudo npm install -g n)
+				t=$(dpkg --print-architecture| grep armhf)
+				if [ "$t." != "." ]; then
+					t="--arch armv7l"
+				fi 
+				sudo n ${NODE_TESTED:1} $t  >> $logfile
 				PATH="$PATH"
 				nodev=$(node -v)
 				if [ "${nodev:0:3}" != ${NODE_TESTED:0:3} ]; then
@@ -390,7 +431,7 @@ if [ $npminstalled == $false ]; then
 else
 		NPM_CURRENT='V'$(npm -v)
 fi
-
+#exit
 # Install MagicMirror
 cd ~
 if [ $doInstall == 1 ]; then
@@ -453,7 +494,7 @@ if [ $doInstall == 1 ]; then
 	fi
 	echo -e "\e[96mInstalling dependencies ...\e[90m" | tee -a $logfile
 	# check for NPM v8 or higher, changed parms for prod only on npm install
-	if [ ${NPM_CURRENT:1:1} -ge 8 ]; then
+	if [ ${NPM_CURRENT:1:2} -ge 8 ]; then
 		JustProd="--no-audit --no-fund --no-update-notifier" 
 	fi
 	rm package-lock.json 2>/dev/null
@@ -497,7 +538,7 @@ if [ $doInstall == 1 ]; then
 	  # install older chromium if not present
       v=$(uname -r); v=${v:0:1}
       if [ "$(which chromium-browser)." == '.' -a ${v:0:1} -ne 4 ]; then
-		sudo apt install -y chromium-browser >>$logfile
+		sudo apt-get install -y chromium-browser >>$logfile
 	  fi 
 	fi
 
@@ -533,6 +574,113 @@ if command_exists plymouth; then
 	fi
 else
 	echo -e "\e[93mplymouth is not installed.\e[0m" | tee -a $logfile
+fi
+# Disable Screensaver
+
+read -p "Do you want to disable the screen saver? (y/N)?" choice
+choice="${choice:-Y}"
+if [[ $choice =~ ^[Yy]$ ]]; then
+  # if this is a mac
+	if [ $mac == 'Darwin' ]; then
+	  # get the current setting
+	  setting=$(defaults -currentHost read com.apple.screensaver idleTime)
+		# if its on
+		if [ "$setting" != 0 ] ; then
+		  # turn it off
+			echo disable screensaver via mac profile >> $logfile
+			defaults -currentHost write com.apple.screensaver idleTime 0
+		else
+			echo mac profile screen saver already disabled >> $logfile
+		fi
+	else
+	  # find out if some screen saver running
+
+		# get just the running processes and args
+		# just want the program name (1st token)
+		# find the 1st with 'saver' in it (should only be one)
+		# parse with path char, get the last field ( the actual pgm name)
+
+	  screen_saver_running=$(ps -A -o args | awk '{print $1}' | grep -m1 [s]aver | awk -F\/ '{print $NF}');
+
+		# if we found something
+		if [ "$screen_saver_running." != "." ]; then
+		  # some screensaver running
+			case "$screen_saver_running" in
+			 mate-screensaver) echo 'mate screen saver' >>$logfile
+						gsettings set org.mate.screensaver lock-enabled false	 2>/dev/null
+						gsettings set org.mate.screensaver idle-activation-enabled false	 2>/dev/null
+						gsettings set org.mate.screensaver lock_delay 0	 2>/dev/null
+				 echo " $screen_saver_running disabled" >> $logfile
+				 DISPLAY=:0  mate-screensaver  >/dev/null 2>&1 &
+				 ;;
+			 gnome-screensaver) echo 'gnome screen saver' >>$logfile
+			   gnome_screensaver-command -d >/dev/null 2>&1
+				 echo " $screen_saver_running disabled" >> $logfile
+			   ;;
+			 xscreensaver) echo 'xscreensaver running' | tee -a $logfile
+			   xsetting=$(grep -m1 'mode:' ~/.xscreensaver )
+				 if [ $(echo $xsetting | awk '{print $2}') != 'off' ]; then
+					 sed -i "s/$xsetting/mode: off/" "$HOME/.xscreensaver"
+					 echo " xscreensaver set to off" >> $logfile
+				 else
+				   echo " xscreensaver already disabled" >> $logfile
+				 fi
+			   ;;
+			 gsd-screensaver | gsd-screensaver-proxy)
+					setting=$(gsettings get org.gnome.desktop.screensaver lock-enabled 2>/dev/null)
+					setting1=$(gsettings get org.gnome.desktop.session idle-delay 2>/dev/null)
+					if [ "$setting. $setting1." != '. .' ]; then
+						if [ "$setting $setting1" != 'false uint32 0' ]; then
+							echo "disable screensaver via gsettings was $setting and $setting1" >> $logfile
+							gsettings set org.gnome.desktop.screensaver lock-enabled false
+							gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
+							gsettings set org.gnome.desktop.session idle-delay 0
+						else
+							echo "gsettings screen saver already disabled" >> $logfile
+						fi
+					fi
+					;;
+			 *) echo "some other screensaver $screen_saver_running" found | tee -a $logfile
+			    echo "please configure it manually" | tee -a $logfile
+			   ;;
+		  esac
+		fi
+		if [ $(which gsettings | wc -l) == 1 ]; then
+			setting=$(gsettings get org.gnome.desktop.screensaver lock-enabled 2>/dev/null)
+			setting1=$(gsettings get org.gnome.desktop.session idle-delay 2>/dev/null)
+			if [ "$setting. $setting1." != '. .' ]; then
+				if [ "$setting $setting1" != 'false uint32 0' ]; then
+					echo "disable screensaver via gsettings was $setting and $setting1">> $logfile
+					gsettings set org.gnome.desktop.screensaver lock-enabled false
+					gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
+					gsettings set org.gnome.desktop.session idle-delay 0
+				else
+					echo "gsettings screen saver already disabled" >> $logfile
+				fi
+			fi
+		fi
+		if [ -e "/etc/lightdm/lightdm.conf" ]; then
+		  # if screen saver NOT already disabled?
+			if [ $(grep 'xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf | wc -l) == 0 ]; then
+			  echo "disable screensaver via lightdm.conf" >> $logfile
+				sudo sed -i '/^\[Seat:/a xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf
+			else
+			  echo "screensaver via lightdm already disabled" >> $logfile
+			fi
+		fi
+		if [ -d "/etc/xdg/lxsession/LXDE-pi" ]; then
+		  currently_set=$(grep -m1 '\-dpms' /etc/xdg/lxsession/LXDE-pi/autostart)
+			if [ "$currently_set." == "." ]; then
+				echo "disable screensaver via lxsession" >> $logfile
+				# turn it off for the future
+				sudo su -c "echo -e '@xset s noblank\n@xset s off\n@xset -dpms' >> /etc/xdg/lxsession/LXDE-pi/autostart"
+				# turn it off now
+				export DISPLAY=:0; xset s noblank;xset s off;xset -dpms
+			else
+			  echo "lxsession screen saver already disabled" >> $logfile
+			fi
+		fi
+	fi
 fi
 
 # Use pm2 control like a service MagicMirror
@@ -666,113 +814,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 		#$pm2cmd stop MagicMirror
 		pm2setup=$true
 fi
-# Disable Screensaver
 
-read -p "Do you want to disable the screen saver? (y/N)?" choice
-choice="${choice:-Y}"
-if [[ $choice =~ ^[Yy]$ ]]; then
-  # if this is a mac
-	if [ $mac == 'Darwin' ]; then
-	  # get the current setting
-	  setting=$(defaults -currentHost read com.apple.screensaver idleTime)
-		# if its on
-		if [ "$setting" != 0 ] ; then
-		  # turn it off
-			echo disable screensaver via mac profile >> $logfile
-			defaults -currentHost write com.apple.screensaver idleTime 0
-		else
-			echo mac profile screen saver already disabled >> $logfile
-		fi
-	else
-	  # find out if some screen saver running
-
-		# get just the running processes and args
-		# just want the program name (1st token)
-		# find the 1st with 'saver' in it (should only be one)
-		# parse with path char, get the last field ( the actual pgm name)
-
-	  screen_saver_running=$(ps -A -o args | awk '{print $1}' | grep -m1 [s]aver | awk -F\/ '{print $NF}');
-
-		# if we found something
-		if [ "$screen_saver_running." != "." ]; then
-		  # some screensaver running
-			case "$screen_saver_running" in
-			 mate-screensaver) echo 'mate screen saver' >>$logfile
-						gsettings set org.mate.screensaver lock-enabled false	 2>/dev/null
-						gsettings set org.mate.screensaver idle-activation-enabled false	 2>/dev/null
-						gsettings set org.mate.screensaver lock_delay 0	 2>/dev/null
-				 echo " $screen_saver_running disabled" >> $logfile
-				 DISPLAY=:0  mate-screensaver  >/dev/null 2>&1 &
-				 ;;
-			 gnome-screensaver) echo 'gnome screen saver' >>$logfile
-			   gnome_screensaver-command -d >/dev/null 2>&1
-				 echo " $screen_saver_running disabled" >> $logfile
-			   ;;
-			 xscreensaver) echo 'xscreensaver running' | tee -a $logfile
-			   xsetting=$(grep -m1 'mode:' ~/.xscreensaver )
-				 if [ $(echo $xsetting | awk '{print $2}') != 'off' ]; then
-					 sed -i "s/$xsetting/mode: off/" "$HOME/.xscreensaver"
-					 echo " xscreensaver set to off" >> $logfile
-				 else
-				   echo " xscreensaver already disabled" >> $logfile
-				 fi
-			   ;;
-			 gsd-screensaver | gsd-screensaver-proxy)
-					setting=$(gsettings get org.gnome.desktop.screensaver lock-enabled 2>/dev/null)
-					setting1=$(gsettings get org.gnome.desktop.session idle-delay 2>/dev/null)
-					if [ "$setting. $setting1." != '. .' ]; then
-						if [ "$setting $setting1" != 'false uint32 0' ]; then
-							echo "disable screensaver via gsettings was $setting and $setting1" >> $logfile
-							gsettings set org.gnome.desktop.screensaver lock-enabled false
-							gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
-							gsettings set org.gnome.desktop.session idle-delay 0
-						else
-							echo "gsettings screen saver already disabled" >> $logfile
-						fi
-					fi
-					;;
-			 *) echo "some other screensaver $screen_saver_running" found | tee -a $logfile
-			    echo "please configure it manually" | tee -a $logfile
-			   ;;
-		  esac
-		fi
-		if [ $(which gsettings | wc -l) == 1 ]; then
-			setting=$(gsettings get org.gnome.desktop.screensaver lock-enabled 2>/dev/null)
-			setting1=$(gsettings get org.gnome.desktop.session idle-delay 2>/dev/null)
-			if [ "$setting. $setting1." != '. .' ]; then
-				if [ "$setting $setting1" != 'false uint32 0' ]; then
-					echo "disable screensaver via gsettings was $setting and $setting1">> $logfile
-					gsettings set org.gnome.desktop.screensaver lock-enabled false
-					gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
-					gsettings set org.gnome.desktop.session idle-delay 0
-				else
-					echo "gsettings screen saver already disabled" >> $logfile
-				fi
-			fi
-		fi
-		if [ -e "/etc/lightdm/lightdm.conf" ]; then
-		  # if screen saver NOT already disabled?
-			if [ $(grep 'xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf | wc -l) == 0 ]; then
-			  echo "disable screensaver via lightdm.conf" >> $logfile
-				sudo sed -i '/^\[Seat:/a xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf
-			else
-			  echo "screensaver via lightdm already disabled" >> $logfile
-			fi
-		fi
-		if [ -d "/etc/xdg/lxsession/LXDE-pi" ]; then
-		  currently_set=$(grep -m1 '\-dpms' /etc/xdg/lxsession/LXDE-pi/autostart)
-			if [ "$currently_set." == "." ]; then
-				echo "disable screensaver via lxsession" >> $logfile
-				# turn it off for the future
-				sudo su -c "echo -e '@xset s noblank\n@xset s off\n@xset -dpms' >> /etc/xdg/lxsession/LXDE-pi/autostart"
-				# turn it off now
-				export DISPLAY=:0; xset s noblank;xset s off;xset -dpms
-			else
-			  echo "lxsession screen saver already disabled" >> $logfile
-			fi
-		fi
-	fi
-fi
 echo " "
 if [ $pm2setup -eq $true ]; then
 	rmessage="pm2 start MagicMirror"
