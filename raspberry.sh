@@ -264,7 +264,11 @@ if [ $ARM != "armv6l" ]; then
 			if [ ${v:1:2} -lt ${NODE_TESTED:1:2} ]; then
 				echo -e "\e[96minstalling correct version of node and npm, please wait\e[90m" | tee -a $logfile
 				#nr=$(sudo npm install -g n)
-				sudo n ${NODE_TESTED:1} >> $logfile
+				t=$(dpkg --print-architecture| grep armhf)
+				if [ "$t." != "." ]; then
+					t="--arch armv7l"
+				fi 
+				sudo n ${NODE_TESTED:1} $t  >> $logfile
 				PATH="$PATH"
 				nodev=$(node -v)
 				if [ "${nodev:0:3}" != ${NODE_TESTED:0:3} ]; then
