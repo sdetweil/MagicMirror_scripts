@@ -1,8 +1,5 @@
 # MagicMirror² installation and setup scripts
 
-#  WARNING
-#      Raspberry PI 0w (armv6l) are no longer supported by nodejs, these scripts will abort on those devices
-#  WARNING
 
 These scripts can be used to automate installation and release upgrades.
 
