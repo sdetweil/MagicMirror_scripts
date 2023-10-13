@@ -38,6 +38,8 @@ function verlt() { [ "$1" = "$2" ] && return 1 || verlte $1 $2 ;}
 mac=$(uname -s)
 # get the processor architecture
 arch=$(uname -m)
+
+
 if [ $mac == 'Darwin' ]; then
     if [ "$(which greadlink)." == "." ]; then 
 	  brew install coreutils
@@ -63,6 +65,11 @@ if [ -d ~/$mfn ]; then
 	echo  >>$logfile
 	date +"Upgrade started - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 	echo system is $(uname -a) >> $logfile
+	if [ $arch == "armv6l" ]; then
+		echo -e "nodejs version required for MagicMirror is no longer available for armv6l (pi0w) devices\nupgrade aborted" | tee -a $logfile
+		date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+		exit 3
+	fi
 	OS=.
 	if [ $mac == 'Darwin' ]; then
 		echo the os is $(system_profiler SPSoftwareDataType | grep -i "system version" | awk -F: '{ print $2 }') >> $logfile

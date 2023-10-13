@@ -88,6 +88,11 @@ OS=$(echo $lsb_info  | awk -F: '{print $NF}' | awk '{print $1}')
 #	echo install on buster is broken, ending install
 #	exit 4
 #fi
+if [ $ARM == "armv6l" ]; then
+	echo -e "nodejs version required for MagicMirror is no longer available for armv6l (pi0w) devices\ninstallation aborted" | tee -a $logfile
+	date +"install ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+	exit 3
+fi
 
 if [ $OS = "buster" ]; then
 	NODE_TESTED="v18.18.0" # "v16.13.1"
