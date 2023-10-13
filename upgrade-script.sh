@@ -65,7 +65,7 @@ if [ -d ~/$mfn ]; then
 	echo  >>$logfile
 	date +"Upgrade started - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 	echo system is $(uname -a) >> $logfile
-	if [ $arch == "armv6l" ]; then
+	if [ $arch == "armv6ll" ]; then
 		echo -e "nodejs version required for MagicMirror is no longer available for armv6l (pi0w) devices\nupgrade aborted" | tee -a $logfile
 		date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 		exit 3
@@ -90,13 +90,13 @@ if [ -d ~/$mfn ]; then
 		if [ $OS = "buster" ]; then
 			NODE_TESTED="v18.18.0" # "v16.13.1"
 			NPM_TESTED="V9.8.1" # "V7.11.2"
-
-
+			NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 			NODE_MAJOR=18
 			#OS=$(lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
 			#if [ $OS == "buster" ]; then
 			#	NODE_MAJOR=18
 			#fi
+			:
 		fi
 
 
@@ -114,65 +114,45 @@ if [ -d ~/$mfn ]; then
 				date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 				exit 2
 			fi
-			# check for node installed
-			nv=$(node -v 2>/dev/null)
-			# if not
-			if [ "$nv." == "." ]; then
-				echo node not installed, trying via apt-get >>$logfile
-				# install the default
-				sudo apt-get update -y >/dev/null
-				ni=$(sudo apt-get install nodejs -y 2>&1)
-				# log it
-				echo $ni >>$logfile
-				# if npm not installed
-				echo npm not installed, trying via apt-get >>$logfile
-				if [ "$(npm -v 2>/dev/null)." == "." ]; then
-					echo npm NOT installed now, install now >>$logfile
-					# install it too
-					ni=$(sudo apt-get install npm -y 2>&1)
+			if [ $ARM != 'armv6l' ]; then
+				# check for node installed
+				nv=$(node -v 2>/dev/null)
+				# if not
+				if [ "$nv." == "." ]; then
+					echo node not installed, trying via apt-get >>$logfile
+					# install the default
+					sudo apt-get update -y >/dev/null
+					ni=$(sudo apt-get install nodejs -y 2>&1)
+					# log it
 					echo $ni >>$logfile
-					npminstalled=$true
+					# if npm not installed
+					echo npm not installed, trying via apt-get >>$logfile
+					if [ "$(npm -v 2>/dev/null)." == "." ]; then
+						echo npm NOT installed now, install now >>$logfile
+						# install it too
+						ni=$(sudo apt-get install npm -y 2>&1)
+						echo $ni >>$logfile
+						npminstalled=$true
+					fi
 				fi
-			fi
-			# if n is not installed
-			NODE_MAJOR=20
-			# if n is not installed
-			if [ "$(which n)." == "." ]; then
-				# install it globally
-				sudo npm i n -g  >>$logfile 2>&1
-
-				#sudo apt-get purge nodejs -y &&\
-				#sudo rm -r /etc/apt/sources.list.d/nodesource.list &&\
-				#sudo rm -r /etc/apt/keyrings/nodesource.gpg
-
-			fi
-			# if n is installed
-			if [ "$(which n)." != "." ]; then
-				# use it to upgrade node
-				NODE_CURRENT=$(node -v)
-				# if needed
-				if verlt $NODE_CURRENT $NODE_TESTED; then
-					sudo n $NODE_TESTED >>$logfile
-					PATH=$PATH
-					NODE_INSTALL=false
+				# if n is not installed
+				NODE_MAJOR=20
+				# if n is not installed
+				if [ "$(which n)." == "." ]; then
+					# install it globally
+					sudo npm i n -g  >>$logfile 2>&1
 				fi
-			fi
-			if [ 0 == 1 ]; then
-				# n is not installed, do manual install
-				nodearch=
-				t=$(dpkg --print-architecture)
-				if [ $t == "arm64" ]; then
-					nodearch="arch=arm64"
+				# if n is installed
+				if [ "$(which n)." != "." ]; then
+					# use it to upgrade node
+					NODE_CURRENT=$(node -v)
+					# if needed
+					if verlt $NODE_CURRENT $NODE_TESTED; then
+						sudo n $NODE_TESTED >>$logfile
+						PATH=$PATH
+						NODE_INSTALL=false
+					fi
 				fi
-				sudo apt-get update
-				sudo apt-get install -y ca-certificates curl gnupg
-				sudo mkdir -p /etc/apt/keyrings
-				curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-
-				echo "deb [$nodearch  signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
-
-				sudo apt-get update
-				sudo apt-get install nodejs -y
 			fi
 		fi
 	fi
@@ -267,6 +247,14 @@ if [ -d ~/$mfn ]; then
 					# have to do it manually
 					ARM1=$ARM
                     if [ $ARM == 'armv6l' ]; then
+                    		export NODE_OPTIONS="--max-old-space-size=1024"
+							if [ $(free -m | grep Swap | awk '{print $2}') -lt 512 ]; then
+								echo "increasing swap space" >>$logfile
+								sudo dphys-swapfile swapoff
+								sudo nano /etc/dphys-swapfile
+								sudo dphys-swapfile setup
+								sudo dphys-swapfile swapon
+							fi
                             curl -sL https://unofficial-builds.nodejs.org/download/release/${NODE_TESTED}/node-${NODE_TESTED}-linux-armv6l.tar.gz >node_release-${NODE_TESTED}.tar.gz
                             node_ver=$NODE_TESTED
                     else
