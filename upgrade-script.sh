@@ -251,7 +251,8 @@ if [ -d ~/$mfn ]; then
 							if [ $(free -m | grep Swap | awk '{print $2}') -lt 512 ]; then
 								echo "increasing swap space" >>$logfile
 								sudo dphys-swapfile swapoff
-								sudo nano /etc/dphys-swapfile
+								sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile
+								#sudo nano /etc/dphys-swapfile
 								sudo dphys-swapfile setup
 								sudo dphys-swapfile swapon
 							fi
