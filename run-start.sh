@@ -99,10 +99,12 @@ else
       # get the server port address from the ready message
       port=$(echo $line | awk -F\: '{print $4}')
       # start chromium
-      echo "Starting chromium browser now, have patience, it takes a minute"
+      # echo "Starting chromium browser now, have patience, it takes a minute"
       # continue to spool stdout to console
       tee <&3 &
       if [ "$external_browser." == "." ]; then
+        # start chromium
+        echo "Starting chromium browser now, have patience, it takes a minute"
       	if [ $mac != 'Darwin' ]; then
           	b="chromium"
             if [ $(which $b). == '.' -o $arch == 'armv6l' ]; then
@@ -130,7 +132,9 @@ else
       else
         if [ "$(which $external_browser)." !=  "." ]; then
           if [ "$external_browser" == "midori" ]; then
-            "$external_browser" http://localhost:$port -e Fullscreen Navigationbar  >/dev/null 2>&1
+            # start chromium
+            echo "Starting $external_browser  browser now, have patience, it takes a minute"
+            "$external_browser" http://localhost:$port -e Fullscreen -e Navigationbar  >/dev/null 2>&1
           else
             echo "don't know how to launch $external_browser"
           fi
