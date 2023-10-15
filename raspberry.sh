@@ -188,6 +188,19 @@ if [ $mac != 'Darwin' ]; then
 	sudo apt-get --assume-yes   install  curl wget git build-essential unzip >>$logfile
 fi
 
+if [ $(free -m | grep Mem | awk '{print $2}') -eq 512 ]; then 
+	echo " this should be a raspberry pi 02w" >>$logfile
+	export NODE_OPTIONS="--max-old-space-size=1024"
+	# if the swap space is small
+	if [ $(free -m | grep Swap | awk '{print $2}') -lt 512 ]; then 
+		echo "increasing swap space" >>$logfile
+		sudo dphys-swapfile swapoff >>$logfile
+		sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile
+		#sudo nano /etc/dphys-swapfile
+		sudo dphys-swapfile setup >>$logfile
+		sudo dphys-swapfile swapon >>$logfile
+	fi 
+fi
 
 npminstalled=$false
 
