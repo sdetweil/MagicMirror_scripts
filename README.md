@@ -46,7 +46,7 @@ The install has two sections of additional support.
 
 I have provided those separately here too, in case you need to run one separately, or changed your mind after install.
 
-### Turn off screen saver and setup pm2 to autostart MM on boot.
+### Turn off screen saver 
 
 `screensaveroff.sh`, copy/paste this line into the terminal window on your device:
 
