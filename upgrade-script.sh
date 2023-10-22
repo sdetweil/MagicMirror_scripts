@@ -245,8 +245,8 @@ if [ -d ~/$mfn ]; then
 					# no longer supported install
 					sudo apt-get install -y --only-upgrade libstdc++6 >> $logfile
 					# have to do it manually
-					ARM1=$ARM
-                    if [ $ARM == 'armv6l' ]; then
+					ARM1=$arch
+                    if [ $arch == 'armv6l' ]; then
                     		export NODE_OPTIONS="--max-old-space-size=1024"
 							if [ $(free -m | grep Swap | awk '{print $2}') -lt 512 ]; then
 								echo "increasing swap space" >>$logfile
@@ -260,12 +260,12 @@ if [ -d ~/$mfn ]; then
                             node_ver=$NODE_TESTED
                     else
 						node_vnum=$(echo $NODE_STABLE_BRANCH | awk -F. '{print $1}')
-						if [ $ARM == 'x86_64' ]; then
+						if [ $arch == 'x86_64' ]; then
 							ARM1= x64
 						fi
 						# get the highest release number in the stable branch line for this processor architecture
 						node_ver=$(curl -sL https://nodejs.org/download/release/index.tab | grep $ARM1 | grep -m 1 v$node_vnum | awk '{print $1}')
-						echo "latest release in the $NODE_STABLE_BRANCH family for $ARM is $node_ver" >> $logfile
+						echo "latest release in the $NODE_STABLE_BRANCH family for $arch is $node_ver" >> $logfile
 						# download that file
 						curl -sL https://nodejs.org/download/release/v$node_ver/node-v$node_ver-linux-$ARM1.tar.gz >node_release-$node_ver.tar.gz
 					fi 
