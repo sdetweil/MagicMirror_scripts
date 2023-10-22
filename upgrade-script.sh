@@ -114,7 +114,7 @@ if [ -d ~/$mfn ]; then
 				date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 				exit 2
 			fi
-			if [ $ARM != 'armv6l' ]; then
+			if [ $arch != 'armv6l' ]; then
 				# check for node installed
 				nv=$(node -v 2>/dev/null)
 				# if not
