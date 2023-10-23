@@ -742,7 +742,8 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 			fi
 			echo "startup command = $v" >>$logfile
 			# execute the command returned
-            $v 2>&1 >>$logfile 2>&1
+         bash -c "$v 2>&1" >>$logfile
+         #$v 2>&1 >>$logfile 2>&1
 			echo "pm2 startup command done" >>$logfile
 			# is this is mac
 			# need to fix pm2 startup, only on catalina

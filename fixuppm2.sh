@@ -134,7 +134,8 @@ if [ -d ~/MagicMirror ]; then
 		fi
 		echo startup command = $v >>$logfile
 		# execute the command returned
-	    $v 2>&1 >>$logfile
+        bash -c "$v 2>&1" >>$logfile
+	    #$v 2>&1 >>$logfile
 		echo pm2 startup command done >>$logfile
 		# is this is mac
 		# need to fix pm2 startup, only on catalina
