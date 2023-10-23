@@ -19,7 +19,7 @@ NODE_TESTED="v20.8.0" # "v16.13.1"
 NPM_TESTED="V10.1.0" # "V7.11.2"
 NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 NODE_INSTALL=false
-known_list="request valid-url jsdom"
+known_list="request valid-url jsdom node-fetch digest-fetch"
 JustProd="--only=prod"
 
 
@@ -71,6 +71,29 @@ if [ -d ~/$mfn ]; then
 		exit 3
 	fi
 	OS=.
+
+	# because of how its executed from the web, p0 gets overlayed with parm
+	# check to see if a parm was passed .. easy apply without  editing
+	p0=$0
+	# if not 'bash', and some parm specified
+	if [ $0 != 'bash' -a "$1." != "." ]; then
+		# then executed locally
+		# get the parm
+		p0=$1
+	fi
+	# lowercase it.. watch out, mac stuff doesn't work  with tr, etc
+	p0=$(echo $p0  | cut -c 1-5 |  awk '{print tolower($0)}' )
+	if [ $p0 == 'apply' ]; then
+		echo user requested to apply changes >>$logfile
+		doinstalls=$true
+		test_run=$false
+	elif [ $p0 == 'force' ]; then
+		echo user requested to force apply changes >>$logfile
+		doinstalls=$true
+		force=$true
+		test_run=$false
+	fi
+
 	if [ $mac == 'Darwin' ]; then
 		echo the os is $(system_profiler SPSoftwareDataType | grep -i "system version" | awk -F: '{ print $2 }') >> $logfile
 	else
@@ -120,64 +143,51 @@ if [ -d ~/$mfn ]; then
 				# if not
 				if [ "$nv." == "." ]; then
 					echo node not installed, trying via apt-get >>$logfile
-					# install the default
-					sudo apt-get update -y >/dev/null
-					ni=$(sudo apt-get install nodejs -y 2>&1)
-					# log it
-					echo $ni >>$logfile
-					# if npm not installed
-					echo npm not installed, trying via apt-get >>$logfile
-					if [ "$(npm -v 2>/dev/null)." == "." ]; then
-						echo npm NOT installed now, install now >>$logfile
-						# install it too
-						ni=$(sudo apt-get install npm -y 2>&1)
+					if [ $doinstalls == $true ]; then
+						# install the default
+						sudo apt-get update -y >/dev/null
+						ni=$(sudo apt-get install nodejs -y 2>&1)
+						# log it
 						echo $ni >>$logfile
-						npminstalled=$true
+						# if npm not installed
+						echo npm not installed, trying via apt-get >>$logfile
+						if [ "$(npm -v 2>/dev/null)." == "." ]; then
+							echo npm NOT installed now, install now >>$logfile
+							# install it too
+							ni=$(sudo apt-get install npm -y 2>&1)
+							echo $ni >>$logfile
+							npminstalled=$true
+						fi
+					else
+						echo node not installed, doing test run, install skipped >>$logfile
 					fi
 				fi
 				# if n is not installed
 				NODE_MAJOR=20
 				# if n is not installed
-				if [ "$(which n)." == "." ]; then
-					# install it globally
-					sudo npm i n -g  >>$logfile 2>&1
-				fi
-				# if n is installed
-				if [ "$(which n)." != "." ]; then
-					# use it to upgrade node
-					NODE_CURRENT=$(node -v)
-					# if needed
-					if verlt $NODE_CURRENT $NODE_TESTED; then
-						sudo n $NODE_TESTED >>$logfile
-						PATH=$PATH
-						NODE_INSTALL=false
+				if [ $doinstalls == $true ]; then
+					if [ "$(which n)." == "." ]; then
+						# install it globally
+						sudo npm i n -g  >>$logfile 2>&1
 					fi
+					# if n is installed
+					if [ "$(which n)." != "." ]; then
+						# use it to upgrade node
+						NODE_CURRENT=$(node -v)
+						# if needed
+						if verlt $NODE_CURRENT $NODE_TESTED; then
+							sudo n $NODE_TESTED >>$logfile
+							PATH=$PATH
+							NODE_INSTALL=false
+						fi
+					fi
+				else
+					echo "n (node version manager tool) not installed, doing test run, install skipped" >>$logfile
 				fi
 			fi
 		fi
 	fi
 
-	# because of how its executed from the web, p0 gets overlayed with parm
-	# check to see if a parm was passed .. easy apply without  editing
-	p0=$0
-	# if not 'bash', and some parm specified
-	if [ $0 != 'bash' -a "$1." != "." ]; then
-		# then executed locally
-		# get the parm
-		p0=$1
-	fi
-	# lowercase it.. watch out, mac stuff doesn't work  with tr, etc
-	p0=$(echo $p0  | cut -c 1-5 |  awk '{print tolower($0)}' )
-	if [ $p0 == 'apply' ]; then
-		echo user requested to apply changes >>$logfile
-		doinstalls=$true
-		test_run=$false
-	elif [ $p0 == 'force' ]; then
-		echo user requested to force apply changes >>$logfile
-		doinstalls=$true
-		force=$true
-		test_run=$false
-	fi
 
 	if [ $test_run == $true ]; then
 		echo
@@ -398,8 +408,10 @@ if [ -d ~/$mfn ]; then
 				fi
 		 fi
 	fi
-	if [ ${NPM_CURRENT:1:2} -ge 8 ]; then
-		JustProd="--no-audit --no-fund --no-update-notifier" 
+	if [ $doinstalls == $true ]; then
+		if [ ${NPM_CURRENT:1:2} -ge 8 ]; then
+			JustProd="--no-audit --no-fund --no-update-notifier"
+		fi
 	fi
 	# change to MagicMirror folder
 	cd ~/$mfn
@@ -451,7 +463,8 @@ if [ -d ~/$mfn ]; then
 
 		fi
 		# get the git remote name
-		remote=$(git remote -v 2>/dev/null | grep -i michmich | grep fetch | awk '{print $1}')
+		remote=$(git remote -v 2>/dev/null |  grep fetch | awk '{print $1}')
+		remote_user=$(git remote -v 2>/dev/null |  grep fetch | awk -F/ '{print $4}')
 
 		# if remote name set
 		if [ "$remote." != "." ]; then
@@ -460,7 +473,7 @@ if [ -d ~/$mfn ]; then
 
 		  # get the local and remote package.json versions
 			local_version=$(grep -m1 version package.json | awk -F\" '{print $4}' | awk -F-  '{print $1}')
-			remote_version=$(curl -sL https://raw.githubusercontent.com/MichMich/MagicMirror/master/package.json | grep -m1 version | awk -F\" '{print $4}')
+			remote_version=$(curl -sL https://raw.githubusercontent.com/$remote_user/MagicMirror/master/package.json | grep -m1 version | awk -F\" '{print $4}')
 
 			# if on 2.9
 			if [ $local_version == '2.9.0' ]; then
