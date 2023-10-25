@@ -704,7 +704,7 @@ if [ -d ~/$mfn ]; then
 
 									# lets check for modules with missing requires (libs removed from MM base)
 									# this skips any default modules
-									echo Checking for modules with removed libraries | tee -a $logfile
+									echo -e '\n'Checking for modules with removed libraries | tee -a $logfile
 									mods=($(find . -maxdepth 2 -type f -name  node_helper.js | awk -F/ '{print $2}'))
 
 									# loop thru all the installed modules
@@ -722,13 +722,13 @@ if [ -d ~/$mfn ]; then
 												# if no package.json, we would have to create one
 												cd $mod
 												if [ ! -e package.json ]; then
-													echo -e ' \n\t ' package.json not found for module $mod | tee -a $logfile
-													if [ $doinstalls == $true ]; then
-														echo adding package.json for module $mod | tee -a $logfile
+													echo -e ' \n\t ' package.json not found for module $mod for library $require >> $logfile
+													#if [ $doinstalls == $true ]; then
+														#echo adding package.json for module $mod | tee -a $logfile
 														npm init -y >>$logfile
-													else
-														echo -e ' \n\t\t 'bypass adding package.json for module $mod, doing test run | tee -a $logfile
-													fi
+													#else
+													#	echo -e ' \n\t\t 'bypass adding package.json for module $mod, doing test run | tee -a $logfile
+													#fi
 												fi
 												# if package.json exists, could have been just added
 												if [ -e package.json ]; then
@@ -736,7 +736,7 @@ if [ -d ~/$mfn ]; then
 													pk=$(grep $require package.json)
 													# if not present, need to do install
 													if [ "$pk." == "." ]; then
-														echo -e ' \n\t 'require for $require in module $mod not found in package.json package.json for module $mod
+														echo -e " \n\t require for \e[91m$require\e[0m in module \e[33m$mod\e[0m not found in package.json" | tee -a $logfile
 														if [ $doinstalls == $true ]; then
 															echo installing $require for module $mod | tee -a $logfile
 															npm install $require $JustProd --save >>$logfile
@@ -778,12 +778,12 @@ if [ -d ~/$mfn ]; then
 									# if the array has entries in it
 									if [ ${#modules[@]} -gt  0 ]; then
 									  echo >> $logfile
-										echo "processing dependency changes for $mtype modules with package.json files" | tee -a $logfile
+										echo -e '\n'"updating dependencies for $mtype modules with package.json files" | tee -a $logfile
 										echo
 										for module in "${modules[@]}"
 										do
-											echo "processing for module" $module please wait | tee -a $logfile
-											echo '----------------------------------' | tee -a $logfile
+											echo -e '\n\t'"processing for module" $module please wait | tee -a $logfile
+											echo -e '\n\t''----------------------------------' | tee -a $logfile
 											# change to that directory
 											cd  $module
 												# process its dependencies
@@ -796,9 +796,10 @@ if [ -d ~/$mfn ]; then
 													 if [ $do_rebuild -ne 0 ]; then
 													 	npm rebuild 2>&1| tee -a $logfile
 													 else
-													 	# does the package,json have a devDependencies section?
+													 	# does the package.json have a devDependencies section?
 													 	dev=$(grep devDependencies package.json)
-													 	# ye s
+													 	# yes, make it some other name to disable (dev will be analyzed and reported
+													 	#  EVEN tho they will not be installed with --omit=dev)
 													 	if [ "$dev". != "." ]; then
 													 		# change it to something else
 													 	  	sed 's/\"devDependencies\":/\"devxDependencies\":/' <package.json  >new_package.json
@@ -817,11 +818,11 @@ if [ -d ~/$mfn ]; then
 													 	fi
 													 fi
 												else
-													echo skipped processing for $module, doing test run | tee -a $logfile
+													echo -e '\n\t'skipped processing for $module, doing test run | tee -a $logfile
 												fi
 											# return to modules folder
 											cd - >/dev/null
-											echo "processing complete for module" $module | tee -a $logfile
+											echo -e '\n\t'"processing complete for module" $module | tee -a $logfile
 											echo
 										done
 									else
