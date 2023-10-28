@@ -3,11 +3,11 @@ logfile=~/screensaver.log
 mac=$(uname -s)
 
 	if [ $mac == 'Darwin' ]; then
-	  # get the current setting	
+	  # get the current setting
 	  setting=$(defaults -currentHost read com.apple.screensaver idleTime)
-		# if its on		
+		# if its on
 		if [ $setting != 0 ] ; then
-		  # turn it off		
+		  # turn it off
 			echo disable screensaver via mac profile >> $logfile
 			defaults -currentHost write com.apple.screensaver idleTime 0
 		else
@@ -21,7 +21,7 @@ mac=$(uname -s)
 		# find the 1st with 'saver' in it (should only be one)
 		# if the process name is a path, parse it and get the last field ( the actual pgm name)
 
-	  screen_saver_running=$(ps -A -o args | awk '{print $1}' | grep -m1 [s]aver | awk -F\/ '{print $NF}');
+		screen_saver_running=$(ps -A -o args | awk '{print $1}' | grep -m1 [s]aver | awk -F\/ '{print $NF}');
 		# if we found something
 		if [ "$screen_saver_running." != "." ]; then
 		  # some screensaver running
@@ -81,23 +81,47 @@ mac=$(uname -s)
 		fi
 		if [ -e "/etc/lightdm/lightdm.conf" ]; then
 		  # if screen saver NOT already disabled?
-			if [ $(grep 'xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf | wc -l) == 0 ]; then
-			  echo disable screensaver via lightdm.conf >> $logfile
-				sudo sed -i '/^\[Seat:\*\]/a xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf
-			else
-			  echo screensaver via lightdm already disabled >> $logfile
-			fi			
+		  echo "Found: screen saver in lightdm"
+		  if [ $(grep 'xserver-command=X -s 0 -dpms' /etc/lightdm/lightdm.conf | wc -l) != 0 ]; then
+		    echo "screensaver via lightdm already disabled but need to be updated"
+		    sudo sed -i -r "s/^(xserver-command.*)$/xserver-command=X -s 0/" /etc/lightdm/lightdm.conf
+		  else
+		    if [ $(grep 'xserver-command=X -s 0' /etc/lightdm/lightdm.conf | wc -l) == 0 ]; then
+		      echo "disable screensaver via lightdm.conf"
+		      sudo sed -i '/^\[Seat:/a xserver-command=X -s 0' /etc/lightdm/lightdm.conf
+		    else
+		      echo "screensaver via lightdm already disabled"
+		    fi
+		  fi
 		fi
 		if [ -d "/etc/xdg/lxsession/LXDE-pi" ]; then
-		  currently_set=$(grep -m1 '\-dpms' /etc/xdg/lxsession/LXDE-pi/autostart)
-			if [ "$currently_set." == "." ]; then
-				echo disable screensaver via lxsession >> $logfile
-				# turn it off for the future
-				sudo su -c "echo -e '@xset s noblank\n@xset s off\n@xset -dpms' >> /etc/xdg/lxsession/LXDE-pi/autostart"
-				# turn it off now
-				export DISPLAY=:0; xset s noblank;xset s off;xset -dpms
-			else
-			  echo lxsession screen saver already disabled >> $logfile
-			fi
+		  currently_set_old=$(grep -m1 '\-dpms' /etc/xdg/lxsession/LXDE-pi/autostart)
+		  currently_set=$(grep -m1 '\xset s off' /etc/xdg/lxsession/LXDE-pi/autostart)
+		  echo "Found: screen saver in lxsession"
+		  if [ "$currently_set_old." != "." ]; then
+		    echo "lxsession screen saver already disabled but need to updated"
+		    sudo sed -i "/^@xset -dpms/d" /etc/xdg/lxsession/LXDE-pi/autostart
+		    export DISPLAY=:0; xset s noblank;xset s off
+		  else
+		    if [ "$currently_set." == "." ]; then
+		      echo "disable screensaver via lxsession"
+		      # turn it off for the future
+		      sudo su -c "echo -e '@xset s noblank\n@xset s off' >> /etc/xdg/lxsession/LXDE-pi/autostart"
+		      # turn it off now
+		      export DISPLAY=:0; xset s noblank;xset s off
+		    else
+		      echo "lxsession screen saver already disabled"
+		    fi
+		  fi
+		fi
+		if [ -e "$HOME/.config/wayfire.ini" ]; then
+		  echo "Found: screen saver in wayland"
+		  current_set=$(grep -m1 "dpms_timeout" $HOME/.config/wayfire.ini | awk '{print $3}')
+		  if [ "$current_set" != 0 ]; then
+		    echo "disable screensaver via wayfire.ini"
+		    sed -i -r "s/^(dpms_timeout.*)$/dpms_timeout = 0/" $HOME/.config/wayfire.ini
+		  else
+		    echo "wayland screen saver already disabled"
+		  fi
 		fi
 	fi
