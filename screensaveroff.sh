@@ -108,7 +108,7 @@ mac=$(uname -s)
 		      # turn it off now
 		      export DISPLAY=:0; xset s noblank;xset s off
 		    else
-		      echo "lxsession screen saver already disabled"
+		      echo lxsession screen saver already disabled >> $logfile
 		    fi
 		  fi
 		fi
