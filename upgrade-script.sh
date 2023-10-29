@@ -182,7 +182,9 @@ if [ -d ~/$mfn ]; then
 						fi
 					fi
 				else
-					echo "n (node version manager tool) not installed, doing test run, install skipped" >>$logfile
+					if [ "$(which n)." == "." ]; then
+						echo "n (node version manager tool) not installed, doing test run, install skipped" >>$logfile
+					fi
 				fi
 			fi
 		fi
@@ -211,21 +213,36 @@ if [ -d ~/$mfn ]; then
 		fi
 		echo -e "\e[0mMinimum Node version: \e[1m$NODE_TESTED\e[0m" | tee -a $logfile
 		echo -e "\e[0mInstalled Node version: \e[1m$NODE_CURRENT\e[0m" | tee -a $logfile
+
 		if verlt $NODE_CURRENT $NODE_TESTED; then
 			echo -e "\e[96mNode should be upgraded.\e[0m" | tee -a $logfile
 			NODE_INSTALL=true
 
 			# Check if a node process is currently running.
 			# If so abort installation.
-			node_running=$(ps -ef | grep "node " | grep -v grep)
-			if [ "$node_running." != "." ]; then
-				echo -e "\e[91mA Node process is currently running. Can't upgrade." | tee -a $logfile
-				echo "Please quit all Node processes and restart the update." | tee -a $logfile
-				echo "running process(s) are"
-				echo $node_running | tee -a $logfile
-				exit;
-			fi
-
+			while true
+			do
+				node_running=$(ps -ef | grep "node " | grep -v grep)
+				if [ "$node_running." != "." ]; then
+					if [ "$(which pm2)." != "." ]; then
+						mmline=$(pm2 ls | grep -m1 online)
+						mm_running=$(echo $mmline | awk -F\│ '{print $2}' | xargs -i pm2 info {} 2>/dev/null | grep -i magic | grep "script path" | awk -F\│ '{print $3}' | grep -i magicmirror | wc -l)
+						if [ $mm_running -ne 0 ]; then
+							echo MagicMirror running under control of PM2, stopping | tee -a $logfile
+							pm2_name=$(echo $mmline | awk -F\│ '{print $3}')
+							pm2 stop $pm2_name >/dev/null 2>&1
+						fi
+					else
+						echo -e "\e[91mA Node process is currently running. Can't upgrade." | tee -a $logfile
+						echo "Please quit all Node processes and restart the update." | tee -a $logfile
+						echo "running process(s) are"
+						echo $node_running | tee -a $logfile
+					fi
+					exit;
+				else
+					break;
+				fi
+			done
 		else
 			echo -e "\e[92mNo Node.js upgrade necessary.\e[0m" | tee -a $logfile
 		fi
@@ -234,6 +251,7 @@ if [ -d ~/$mfn ]; then
 		echo -e "\e[93mNode.js is not installed.\e[0m" | tee -a $logfile
 		NODE_INSTALL=true
 	fi
+
 	# Install or upgrade node if necessary.
 	if $NODE_INSTALL; then
 		if [ $doinstalls == $true ]; then
