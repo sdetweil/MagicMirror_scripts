@@ -22,6 +22,7 @@ mac=$(uname -s)
 		# if the process name is a path, parse it and get the last field ( the actual pgm name)
 
 		screen_saver_running=$(ps -A -o args | awk '{print $1}' | grep -m1 [s]aver | awk -F\/ '{print $NF}');
+
 		# if we found something
 		if [ "$screen_saver_running." != "." ]; then
 		  # some screensaver running
@@ -103,10 +104,10 @@ mac=$(uname -s)
 		  else
 		    if [ "$currently_set." == "." ]; then
 		      echo disable screensaver via lxsession >> $logfile
-		      # turn it off for the future
-		      sudo su -c "echo -e '@xset s noblank\n@xset s off' >> /etc/xdg/lxsession/LXDE-pi/autostart"
-		      # turn it off now
-		      export DISPLAY=:0; xset s noblank;xset s off
+				# turn it off for the future
+				sudo su -c "echo -e '@xset s noblank\n@xset s off\n@xset -dpms' >> /etc/xdg/lxsession/LXDE-pi/autostart"
+				# turn it off now
+				export DISPLAY=:0; xset s noblank;xset s off;xset -dpms
 		    else
 		      echo lxsession screen saver already disabled >> $logfile
 		    fi
