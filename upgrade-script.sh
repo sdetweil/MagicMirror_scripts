@@ -141,12 +141,17 @@ if [ -d ~/$mfn ]; then
 				# check for node installed
 				nv=$(node -v 2>/dev/null)
 				# if not
+				t=$(dpkg --print-architecture| grep armhf)
+				ar=
+				if [ "$t." != "." ]; then
+					ar=":arm7l"
+				fi
 				if [ "$nv." == "." ]; then
 					echo node not installed, trying via apt-get >>$logfile
 					if [ $doinstalls == $true ]; then
 						# install the default
 						sudo apt-get update -y >/dev/null
-						ni=$(sudo apt-get install nodejs -y 2>&1)
+						ni=$(sudo apt-get install "nodejs$ar" "npm$ar" -y 2>&1)
 						# log it
 						echo $ni >>$logfile
 						# if npm not installed
@@ -154,7 +159,7 @@ if [ -d ~/$mfn ]; then
 						if [ "$(npm -v 2>/dev/null)." == "." ]; then
 							echo npm NOT installed now, install now >>$logfile
 							# install it too
-							ni=$(sudo apt-get install npm -y 2>&1)
+							ni=$(sudo apt-get install "npm$ar" -y 2>&1)
 							echo $ni >>$logfile
 							npminstalled=$true
 						fi
@@ -176,7 +181,10 @@ if [ -d ~/$mfn ]; then
 						NODE_CURRENT=$(node -v)
 						# if needed
 						if verlt $NODE_CURRENT $NODE_TESTED; then
-							sudo n $NODE_TESTED >>$logfile
+							if [ "$t." != "." ]; then
+								ar="--arch arm7l"
+							fi
+							sudo n $NODE_TESTED $ar >>$logfile
 							PATH=$PATH
 							NODE_INSTALL=false
 						fi
