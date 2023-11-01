@@ -135,6 +135,8 @@ else
             # start chromium
             echo "Starting $external_browser  browser now, have patience, it takes a minute"
             "$external_browser" http://localhost:$port -e Fullscreen -e Navigationbar  >/dev/null 2>&1
+          elif [ "$external_browser" == "firefox" ]; then
+            "$external_browser" http://localhost:$port  -kiosk
           else
             echo "don't know how to launch $external_browser"
           fi
