@@ -302,7 +302,7 @@ if [ -d ~/$mfn ]; then
 					ARM1=$arch
                     if [ $arch == 'armv6l' ]; then
                     		export NODE_OPTIONS="--max-old-space-size=1024"
-							if [ $(free -m | grep Swap | awk '{print $2}') -lt 512 ]; then
+							if [ $(free -m | grep Swap | awk '{print $2}') -le 512 ]; then
 								echo "increasing swap space" >>$logfile
 								sudo dphys-swapfile swapoff
 								sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile

@@ -188,7 +188,7 @@ if [ $mac != 'Darwin' ]; then
 	sudo apt-get --assume-yes   install  curl wget git build-essential unzip >>$logfile
 fi
 
-if [ $(free -m | grep Mem | awk '{print $2}') -eq 512 ]; then 
+if [ $(free -m | grep Mem | awk '{print $2}') -le 512 ]; then
 	echo " this should be a raspberry pi 02w" >>$logfile
 	export NODE_OPTIONS="--max-old-space-size=1024"
 	# if the swap space is small
