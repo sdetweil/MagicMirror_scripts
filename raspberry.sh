@@ -210,12 +210,16 @@ npminstalled=$false
 if [ $ARM != "armv6l" ]; then
 	# check for node installed
 	nv=$(node -v 2>/dev/null)
+	t=$(dpkg --print-architecture| grep armhf)
+	if [ "$t." != "." ]; then
+		t=":armv7l"
+	fi 
 	# if not
 	if [ "$nv." == "." ]; then
 		echo node not installed, trying via apt-get >>$logfile
 		# install the default
 		sudo apt-get update >/dev/null
-		ni=$(sudo apt-get install nodejs -y 2>&1)
+		ni=$(sudo apt-get install "nodejs$t" "npm$t" -y 2>&1)
 		# log it
 		echo $ni >>$logfile
 		# if npm not installed
@@ -235,10 +239,6 @@ if [ $ARM != "armv6l" ]; then
 		# install it globally
 		sudo npm i n -g  >>$logfile 2>&1
 
-		#sudo apt-get purge nodejs -y &&\
-		#sudo rm -r /etc/apt/sources.list.d/nodesource.list &&\
-		#sudo rm -r /etc/apt/keyrings/nodesource.gpg
-
 	fi
 	arch=
 	# is npm installed?
@@ -254,7 +254,6 @@ if [ $ARM != "armv6l" ]; then
 			if [ ${v:1:2} -lt ${NODE_TESTED:1:2} ]; then
 				echo -e "\e[96minstalling correct version of node and npm, please wait\e[90m" | tee -a $logfile
 				#nr=$(sudo npm install -g n)
-				t=$(dpkg --print-architecture| grep armhf)
 				if [ "$t." != "." ]; then
 					t="--arch armv7l"
 				fi 
