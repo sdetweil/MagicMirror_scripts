@@ -185,10 +185,13 @@ if [ -d ~/$mfn ]; then
 						sudo npm i n -g  >>$logfile 2>&1
 					fi
 					# if n is installed
-					if [ "$(which n)." != "." ]; then
-						
+					if [ "$(which n)." != "." ]; then						
 						# use it to upgrade node
 						NODE_CURRENT=$(node -v 2>/dev/null)
+						if [ "$NODE_CURRENT." == "." ]; then
+				                   NODE_CURRENT="V1.0.0"
+			                           echo forcing low Node version  >> $logfile
+				                fi
 						echo -e "\e[0mNode currently installed. Checking version number." | tee -a $logfile
 				                echo -e "\e[0mMinimum Node version: \e[1m$NODE_TESTED\e[0m" | tee -a $logfile
 				                echo -e "\e[0mInstalled Node version: \e[1m$NODE_CURRENT\e[0m" | tee -a $logfile
@@ -228,7 +231,7 @@ if [ -d ~/$mfn ]; then
 
 	if command_exists node; then
 		echo -e "\e[0mNode currently installed. Checking version number." | tee -a $logfile
-		NODE_CURRENT=$(node -v)
+		NODE_CURRENT=$(node -v >/dev/null)
 		if [ "$NODE_CURRENT." == "." ]; then
 		   NODE_CURRENT="V1.0.0"
 			 echo forcing low Node version  >> $logfile
