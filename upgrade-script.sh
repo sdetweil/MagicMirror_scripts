@@ -153,7 +153,7 @@ if [ -d ~/$mfn ]; then
 				t=$(dpkg --print-architecture| grep armhf)
 				ar=
 				if [ "$t." != "." ]; then
-					ar=":arm7l"
+					ar=":armv7l"
 				fi
 				if [ "$nv." == "." ]; then
 					echo node not installed, trying via apt-get >>$logfile
@@ -198,7 +198,7 @@ if [ -d ~/$mfn ]; then
 						# if needed
 						if verlt $NODE_CURRENT $NODE_TESTED; then
 							if [ "$t." != "." ]; then
-								ar="--arch arm7l"
+								ar="--arch armv7l"
 							fi
 							echo -e "\e[96minstalling correct version of node and npm, please wait\e[90m" | tee -a $logfile
 							sudo n $NODE_TESTED $ar >>$logfile
