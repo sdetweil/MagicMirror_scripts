@@ -182,6 +182,7 @@ if [ -d ~/$mfn ]; then
 				if [ $doinstalls == $true ]; then
 					if [ "$(which n)." == "." ]; then
 						# install it globally
+						echo installing n globally
 						sudo npm i n -g  >>$logfile 2>&1
 					fi
 					# if n is installed
@@ -201,7 +202,7 @@ if [ -d ~/$mfn ]; then
 								ar="--arch armv7l"
 							fi
 							echo -e "\e[96minstalling correct version of node and npm, please wait\e[90m" | tee -a $logfile
-							sudo n $NODE_TESTED $ar >>$logfile
+							sudo n $NODE_TESTED $ar >>$logfile							
 							PATH=$PATH
 							NODE_INSTALL=false
 						fi
@@ -231,7 +232,7 @@ if [ -d ~/$mfn ]; then
 
 	if command_exists node; then
 		echo -e "\e[0mNode currently installed. Checking version number." | tee -a $logfile
-		NODE_CURRENT=$(node -v >/dev/null)
+		NODE_CURRENT=$(node -v 2>/dev/null)
 		if [ "$NODE_CURRENT." == "." ]; then
 		   NODE_CURRENT="V1.0.0"
 			 echo forcing low Node version  >> $logfile
