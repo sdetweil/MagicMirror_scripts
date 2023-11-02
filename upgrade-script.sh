@@ -63,6 +63,7 @@ if [ -d ~/$mfn ]; then
 	logfile=$logdir/upgrade.log
  # echo the log will be $logfile
 	echo  >>$logfile
+	echo update log will be in $logfile
 	date +"Upgrade started - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 	echo system is $(uname -a) >> $logfile
 	if [ $arch == "armv6ll" ]; then
@@ -93,6 +94,14 @@ if [ -d ~/$mfn ]; then
 		force=$true
 		test_run=$false
 	fi
+
+        if [ $test_run == $true ]; then
+                echo
+                echo doing test run = true, NO updates will be applied! | tee -a $logfile
+                echo
+        else
+                echo doing test run = false | tee -a $logfile
+        fi
 
 	if [ $mac == 'Darwin' ]; then
 		echo the os is $(system_profiler SPSoftwareDataType | grep -i "system version" | awk -F: '{ print $2 }') >> $logfile
@@ -177,13 +186,18 @@ if [ -d ~/$mfn ]; then
 					fi
 					# if n is installed
 					if [ "$(which n)." != "." ]; then
+						
 						# use it to upgrade node
 						NODE_CURRENT=$(node -v)
+						echo -e "\e[0mNode currently installed. Checking version number." | tee -a $logfile
+				                echo -e "\e[0mMinimum Node version: \e[1m$NODE_TESTED\e[0m" | tee -a $logfile
+				                echo -e "\e[0mInstalled Node version: \e[1m$NODE_CURRENT\e[0m" | tee -a $logfile
 						# if needed
 						if verlt $NODE_CURRENT $NODE_TESTED; then
 							if [ "$t." != "." ]; then
 								ar="--arch arm7l"
 							fi
+							echo -e "\e[96minstalling correct version of node and npm, please wait\e[90m" | tee -a $logfile
 							sudo n $NODE_TESTED $ar >>$logfile
 							PATH=$PATH
 							NODE_INSTALL=false
@@ -199,15 +213,15 @@ if [ -d ~/$mfn ]; then
 	fi
 
 
-	if [ $test_run == $true ]; then
-		echo
-		echo doing test run = true, NO updates will be applied! | tee -a $logfile
-		echo
-	else
-		echo doing test run = false | tee -a $logfile
-	fi
+#	if [ $test_run == $true ]; then
+#		echo
+#		echo doing test run = true, NO updates will be applied! | tee -a $logfile
+#		echo
+#	else
+#		echo doing test run = false | tee -a $logfile
+#	fi
 
-	echo update log will be in $logfile
+#	echo update log will be in $logfile
 
 	# Check if we need to install or upgrade Node.js.
 	echo -e "\e[96mCheck current Node installation ...\e[0m" | tee -a $logfile
