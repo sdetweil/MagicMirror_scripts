@@ -188,7 +188,7 @@ if [ -d ~/$mfn ]; then
 					if [ "$(which n)." != "." ]; then
 						
 						# use it to upgrade node
-						NODE_CURRENT=$(node -v)
+						NODE_CURRENT=$(node -v 2>/dev/null)
 						echo -e "\e[0mNode currently installed. Checking version number." | tee -a $logfile
 				                echo -e "\e[0mMinimum Node version: \e[1m$NODE_TESTED\e[0m" | tee -a $logfile
 				                echo -e "\e[0mInstalled Node version: \e[1m$NODE_CURRENT\e[0m" | tee -a $logfile
