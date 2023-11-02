@@ -190,9 +190,9 @@ if [ -d ~/$mfn ]; then
 						# use it to upgrade node
 						NODE_CURRENT=$(node -v 2>/dev/null)
 						if [ "$NODE_CURRENT." == "." ]; then
-				                   NODE_CURRENT="V1.0.0"
-			                           echo forcing low Node version  >> $logfile
-				                fi
+				            NODE_CURRENT="V1.0.0"
+			                echo forcing low Node version  >> $logfile
+				        fi
 						echo -e "\e[0mNode currently installed. Checking version number." | tee -a $logfile
 				                echo -e "\e[0mMinimum Node version: \e[1m$NODE_TESTED\e[0m" | tee -a $logfile
 				                echo -e "\e[0mInstalled Node version: \e[1m$NODE_CURRENT\e[0m" | tee -a $logfile
@@ -301,15 +301,6 @@ if [ -d ~/$mfn ]; then
 					# have to do it manually
 					ARM1=$arch
                     if [ $arch == 'armv6l' ]; then
-                    		export NODE_OPTIONS="--max-old-space-size=1024"
-							if [ $(free -m | grep Swap | awk '{print $2}') -le 512 ]; then
-								echo "increasing swap space" >>$logfile
-								sudo dphys-swapfile swapoff
-								sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile
-								#sudo nano /etc/dphys-swapfile
-								sudo dphys-swapfile setup
-								sudo dphys-swapfile swapon
-							fi
                             curl -sL https://unofficial-builds.nodejs.org/download/release/${NODE_TESTED}/node-${NODE_TESTED}-linux-armv6l.tar.gz >node_release-${NODE_TESTED}.tar.gz
                             node_ver=$NODE_TESTED
                     else
@@ -455,6 +446,15 @@ if [ -d ~/$mfn ]; then
 	if [ $doinstalls == $true ]; then
 		if [ ${NPM_CURRENT:1:2} -ge 8 ]; then
 			JustProd="--no-audit --no-fund --no-update-notifier"
+		fi
+		if [ $(free -m | grep Swap | awk '{print $2}') -le 512 ]; then
+			export NODE_OPTIONS="--max-old-space-size=1024"
+			echo "increasing swap space" >>$logfile
+			sudo dphys-swapfile swapoff
+			sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile
+			#sudo nano /etc/dphys-swapfile
+			sudo dphys-swapfile setup
+			sudo dphys-swapfile swapon
 		fi
 	fi
 	# change to MagicMirror folder
