@@ -130,16 +130,26 @@ else
       	  open -a "Google Chrome" http://localhost:$port --args -noerrdialogs -kiosk -start_maximized  --disable-infobars --ignore-certificate-errors-spki-list --ignore-ssl-errors --ignore-certificate-errors 2>/dev/null
       	fi
       else
+        # if the external browser was specified
         if [ "$(which $external_browser)." !=  "." ]; then
-          if [ "$external_browser" == "midori" ]; then
-            # start chromium
+          # launch it
+          case ${external_browser,,} in
+
+          midori )
+            # start midori
             echo "Starting $external_browser  browser now, have patience, it takes a minute"
             "$external_browser" http://localhost:$port -e Fullscreen -e Navigationbar  >/dev/null 2>&1
-          elif [ "$external_browser" == "firefox" ]; then
-            "$external_browser" http://localhost:$port  -kiosk >/dev/null s>&1
-          else
+            ;;
+
+          firefox )
+            # start firefox
+            "$external_browser" http://localhost:$port  -kiosk >/dev/null 2>&1
+            ;;
+
+          * )
+          #else
             echo "don't know how to launch $external_browser"
-          fi
+          esac
         else
           echo "couldn't locate $external_browser from the command shell,. check the PATH environment variable"
         fi
