@@ -147,7 +147,7 @@ if [ $mac != 'Darwin' ]; then
 
 	echo -e "\e[96mUpdating packages ...\e[90m" | tee -a $logfile
 	upgrade=$false
-	update=$(sudo apt-get update --allow-releaseinfo-change>&1)
+	update=$(LC_ALL=C  sudo apt-get update --allow-releaseinfo-change>&1)
 
 	# save return code before any other command is issued
 	update_rc=$?
@@ -188,11 +188,11 @@ if [ $mac != 'Darwin' ]; then
 	sudo apt-get --assume-yes   install  curl wget git build-essential unzip >>$logfile
 fi
 
-if [ $(free -m | grep Mem | awk '{print $2}') -le 512 ]; then
+if [ $(LC_ALL=C free -m | grep Mem | awk '{print $2}') -le 512 ]; then
 	echo " this should be a raspberry pi 02w" >>$logfile
 	export NODE_OPTIONS="--max-old-space-size=1024"
 	# if the swap space is small
-	if [ $(free -m | grep Swap | awk '{print $2}') -lt 512 ]; then 
+	if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -lt 512 ]; then
 		echo "increasing swap space" >>$logfile
 		sudo dphys-swapfile swapoff >>$logfile
 		sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile
@@ -339,7 +339,7 @@ if [ $npminstalled == $false ]; then
 				ARM1=$ARM
 				if [ $ARM == 'armv6l' ]; then 
 					export NODE_OPTIONS="--max-old-space-size=1024"
-					if [ $(free -m | grep Swap | awk '{print $2}') -lt 512 ]; then 
+					if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -lt 512 ]; then
 						echo "increasing swap space" >>$logfile
 						sudo dphys-swapfile swapoff
 						sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile
@@ -367,7 +367,7 @@ if [ $npminstalled == $false ]; then
 				rm ./node_release-$node_ver.tar.gz
 			fi
 			# get the new node version number
-			new_ver=$(node -v 2>&1)
+			new_ver=$(LC_ALL=C node -v 2>&1)
 			# if there is a failure to get it due to a missing library
 			if [ $(echo $new_ver | grep "not found" | wc -l) -ne 0 ]; then
 			  #
@@ -496,7 +496,7 @@ if [ $doInstall == 1 ]; then
 		JustProd="--no-audit --no-fund --no-update-notifier" 
 	fi
 	rm package-lock.json 2>/dev/null
-	npm_i_r=$(npm  $forced_arch $Justprod --omit=dev install)
+	npm_i_r=$(LC_ALL=C  npm  $forced_arch $Justprod --omit=dev install)
     npm_i_rc=$?
     # add the npm install messages to the logfile
   	echo $npm_i_r >> $logfile

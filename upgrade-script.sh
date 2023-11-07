@@ -107,7 +107,7 @@ if [ -d ~/$mfn ]; then
 		echo the os is $(system_profiler SPSoftwareDataType | grep -i "system version" | awk -F: '{ print $2 }') >> $logfile
 	else
 		echo the os is $(lsb_release -a 2>/dev/null)  >> $logfile
-		OS=$(lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
+		OS=$(LC_ALL=C lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
 		#if [ $OS == "buster" ]; then
 		#	echo upgrade on buster is broken, ending install
 		#	exit 4
@@ -251,7 +251,7 @@ if [ -d ~/$mfn ]; then
 				node_running=$(ps -ef | grep "node " | grep -v grep)
 				if [ "$node_running." != "." ]; then
 					if [ "$(which pm2)." != "." ]; then
-						mmline=$(pm2 ls | grep -m1 online)
+						mmline=$(LC_ALL=C pm2 ls | grep -m1 online)
 						mm_running=$(echo $mmline | awk -F\│ '{print $2}' | xargs -i pm2 info {} 2>/dev/null | grep -i magic | grep "script path" | awk -F\│ '{print $3}' | grep -i magicmirror | wc -l)
 						if [ $mm_running -ne 0 ]; then
 							echo MagicMirror running under control of PM2, stopping | tee -a $logfile
@@ -321,7 +321,7 @@ if [ -d ~/$mfn ]; then
 					rm ./node_release-$node_ver.tar.gz
 				fi
 				# get the new node version number
-				new_ver=$(node -v 2>&1)
+				new_ver=$(LC_ALL=C node -v 2>&1)
 				# if there is a failure to get it due to a missing library
 				if [ $(echo $new_ver | grep "not found" | wc -l) -ne 0 ]; then
 				  #
@@ -447,7 +447,7 @@ if [ -d ~/$mfn ]; then
 		if [ ${NPM_CURRENT:1:2} -ge 8 ]; then
 			JustProd="--no-audit --no-fund --no-update-notifier"
 		fi
-		if [ $(free -m | grep Swap | awk '{print $2}') -le 512 ]; then
+		if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -le 512 ]; then
 			export NODE_OPTIONS="--max-old-space-size=1024"
 			echo "increasing swap space" >>$logfile
 			sudo dphys-swapfile swapoff
@@ -507,7 +507,7 @@ if [ -d ~/$mfn ]; then
 
 		fi
 		# get the git remote name
-		remote=$(git remote -v 2>/dev/null |  grep fetch | awk '{print $1}')
+		remote=$(LC_ALL=C  git remote -v 2>/dev/null |  grep fetch | awk '{print $1}')
 		remote_user=$(git remote -v 2>/dev/null |  grep fetch | awk -F/ '{print $4}')
 
 		# if remote name set
@@ -835,10 +835,17 @@ if [ -d ~/$mfn ]; then
 												     rm -rf node_modules 2>/dev/null
 													 sudo rm package-lock.json 2>/dev/null
 													 # check to see if the author created a rebuild process
-													 do_rebuild=$(grep "\"rebuild\"" package.json | wc -l)
-													 # if so, use it
-													 if [ $do_rebuild -ne 0 ]; then
-													 	npm rebuild 2>&1| tee -a $logfile
+													 do_rebuild=$(grep -e "\"refresh\"" -e "\"update\"" -e "\"rebuild\""  package.json)
+													 # split into separate lines if any
+													 commands=($do_rebuild)
+													 # were there any of the selected commands?
+													 if [ ${#commands[@]} -gt  0 ]; then
+													 	# yes, loop thru them and execute
+													 	for command in "${commands[@]}"
+														do
+															x=$(echo $command| tr -d \"| awk -F: '{print $1}' | tr -d \" |awk '{$1=$1};1'| xargs -i npm run {})
+															echo "$x" >>$logfile
+														done
 													 else
 													 	# does the package.json have a devDependencies section?
 													 	dev=$(grep devDependencies package.json)
