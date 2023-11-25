@@ -146,6 +146,11 @@ else
             "$external_browser" http://localhost:$port  -kiosk >/dev/null 2>&1
             ;;
 
+          surf )
+            # start surf
+            "$external_browser" -F http://localhost:$port >/dev/null 2>&1
+            ;;
+
           * )
           #else
             echo "don't know how to launch $external_browser"
