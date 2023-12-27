@@ -61,7 +61,7 @@ bash -c "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scrip
 bash -c "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/fixuppm2.sh)"
 ```
 
-## Switch to the Midori or firefox browser
+## Switch to the Midori or firefox or surf browser
 
 Especially low powered devices like the Pi Zero W might struggle running MagicMirror with the Chromium browser. A simpler browser like Midori, Firefox, or Surf might be a good alternative in this case. To switch to using the Midori  browser, change the `MagicMirror/installers/mm.sh` file to include the `external_browser` variable like this:
 
