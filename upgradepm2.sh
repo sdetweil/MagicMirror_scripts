@@ -23,7 +23,7 @@
 		pm2_npmjs_version=$(npm view pm2 version)
 		pm2_current_version=$(npm list -g --depth=0 | grep -i pm2 | awk -F@ '{print $2}')
 		echo pm2 installed, checking version $pm2_current_version vs $pm2_npmjs_version >> $logfile
-		if [ 1 -o  ${pm2_npmjs_version:0:1} == ${pm2_current_version:0:1} -a $pm2_current_version != $pm2_npmjs_version ]; then
+		if [ 1 -o "${pm2_npmjs_version:0:1}." == "${pm2_current_version:0:1}." -a "$pm2_current_version." != "$pm2_npmjs_version." ]; then
 			# if pm2 is managing MagicMirror,, then update
 			if [ $(pm2 ls -m | grep "\-\-" | grep -i magicmirror | wc -l) -eq 1 ]; then
 				apps_defined=$(pm2 ls -m | grep "\-\-" | wc -l)
