@@ -783,6 +783,9 @@ if [ -d ~/$mfn ]; then
 														echo -e " \n\t require for \e[91m$require\e[0m in module \e[33m$mod\e[0m not found in package.json" | tee -a $logfile
 														if [ $doinstalls == $true ]; then
 															echo installing $require for module $mod | tee -a $logfile
+															if [ $require == "node-fetch" ]; then 
+          															require="$require@2"
+															fi
 															npm install $require $JustProd --save >>$logfile
 														else
 															echo -e ' \n\t\t ' bypass installing $require for module $mod , doing test run  | tee -a $logfile
