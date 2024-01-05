@@ -444,7 +444,9 @@ if [ -d ~/$mfn ]; then
 		 fi
 	fi
 	if [ $doinstalls == $true ]; then
-		if [ ${NPM_CURRENT:1:2} -ge 8 ]; then
+		TEMPV=$(echo ${NPM_CURRENT/\./\ } )
+		NPM_MAJOR=$($TEMPV)
+		if [ $NPM_MAJOR -ge 8 ]; then
 			JustProd="--no-audit --no-fund --no-update-notifier"
 		fi
 		if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -le 512 ]; then
