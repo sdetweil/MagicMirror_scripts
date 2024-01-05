@@ -445,21 +445,32 @@ if [ -d ~/$mfn ]; then
 	fi
 	if [ $doinstalls == $true ]; then
 		# get just the major version  number.. watch out for single or double digits
-		TEMPV=$(echo ${NPM_CURRENT/\./\ } )
-		NPM_MAJOR=$($TEMPV)
-		if [ $NPM_MAJOR -ge 8 ]; then
+		# remove the leading V
+		TEMPV=${NPM_CURRENT:1}
+		# change . to pace
+		TEMPV=${TEMPV/\.*/\ } 2>/dev/null
+		# split get first
+		NPM_MAJOR=($TEMPV)
+		# strip trailing space
+		NPM_MAJOR=$(echo ${NPM_MAJOR[0]} | awk '{$1=$1};1')
+		# compare
+		if [ ${NPM_MAJOR} -ge 8 ]; then
 			JustProd="--no-audit --no-fund --no-update-notifier"
 		fi
-		if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -le 512 ]; then
-			export NODE_OPTIONS="--max-old-space-size=1024"
-			echo "increasing swap space" >>$logfile
-			sudo dphys-swapfile swapoff
-			sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile
-			#sudo nano /etc/dphys-swapfile
-			sudo dphys-swapfile setup
-			sudo dphys-swapfile swapon
+		if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -le 512  ]; then
+			# only for arm architectures
+			if [[ $arch == a* ]]; then
+				export NODE_OPTIONS="--max-old-space-size=1024"
+				echo "increasing swap space" >>$logfile
+				sudo dphys-swapfile swapoff
+				sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile
+				#sudo nano /etc/dphys-swapfile
+				sudo dphys-swapfile setup
+				sudo dphys-swapfile swapon
+			fi
 		fi
 	fi
+
 	# change to MagicMirror folder
 	cd ~/$mfn
 
