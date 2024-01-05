@@ -444,6 +444,7 @@ if [ -d ~/$mfn ]; then
 		 fi
 	fi
 	if [ $doinstalls == $true ]; then
+		# get just the major version  number.. watch out for single or double digits
 		TEMPV=$(echo ${NPM_CURRENT/\./\ } )
 		NPM_MAJOR=$($TEMPV)
 		if [ $NPM_MAJOR -ge 8 ]; then
@@ -536,6 +537,32 @@ if [ -d ~/$mfn ]; then
 			# only change if they are different
 			if [ "$local_version." != "$remote_version." -o $force == $true -o $test_run == $true ]; then
 				echo upgrading from version $local_version to $remote_version | tee -a $logfile
+				# check to see  if MM is running
+				mmline=$(LC_ALL=C pm2 ls | grep -m1 online)
+				pm2_name=$(echo $mmline | awk -F\│ '{print $3}')
+				mm_running=$(echo $mmline | awk -F\│ '{print $2}' | xargs -i pm2 info {} 2>/dev/null | grep -i magic | grep "script path" | awk -F\│ '{print $3}' | grep -i magicmirror | wc -l)
+				# if running, stop it
+				if [ $mm_running -ne 0 ]; then
+					echo MagicMirror running under control of PM2, stopping | tee -a $logfile
+					# pm2_name=$(echo $mmline | awk -F\│ '{print $3}')
+					pm2 stop $pm2_name >/dev/null 2>&1
+				fi
+				# get any files changed
+				changed=$(LC_ALL=C git status | grep modified | awk -F: '{print $2}')
+				# if any
+				if [ ${#changed[@]} -gt 0 ]; then
+					for file in "${changed[@]}"
+					do
+						# strip leading and trailing spaces
+						file=$(echo $file |  awk '{$1=$1};1')
+						fn=$(echo $file | awk -F/ '{print $NF}')
+						if [ "$fn" == "mm.sh" ]; then
+							# restore the file to current mm version state
+							# never need to modify again
+							git checkout $file >/dev/null
+						fi
+					done
+				fi
 
 				# get the latest upgrade
 				echo fetching latest revisions | tee -a $logfile

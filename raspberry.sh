@@ -785,33 +785,36 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 		# if the files we need aren't here, get them
 		if [ ! -e installers/pm2_MagicMirror.json ]; then
 			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/pm2_MagicMirror.json >installers/pm2_MagicMirror.json
-			curl -sl https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm.sh
-			chmod +x installers/mm.sh
+			# curl -sl https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm2.sh
+			#chmod +x installers/mm2.sh
 		fi
 		if [ "$USER"  != "pi" ]; then
-			echo the user is not pi >>$logfile
-			# go to the installers folder
-			cd installers
-			# edit the startup script for the right user
-			echo change mm.sh >>$logfile
-			 if [ ! -e mm_temp.sh ]; then
-			   echo save copy of mm.sh >> $logfile
-			   cp mm.sh mm_temp.sh
-			 fi
-			 if [ $(grep pi mm_temp.sh | wc -l) -gt 0 ]; then
-			  echo change hard coded pi username  >> $logfile
-				sed 's/pi/'$USER'/g' mm_temp.sh >mm.sh
-			 else
-			  echo change relative home path to hard coded path >> $logfile
-			  hf=$(echo $HOME |sed 's/\//\\\//g')
-			  sed 's/\~/'$hf'/g' mm_temp.sh >mm.sh
-			 fi
-			# edit the pms config file for the right user
+			# no need to change mm.sh now
+			if [ 0 -gt 1 ]; then
+				echo the user is not pi >>$logfile
+				# go to the installers folder
+				cd installers
+				# edit the startup script for the right user
+				echo change mm2.sh >>$logfile
+				 if [ ! -e mm_temp.sh ]; then
+				   echo save copy of mm2.sh >> $logfile
+				   cp mm2.sh mm_temp.sh
+				 fi
+				 if [ $(grep pi mm_temp.sh | wc -l) -gt 0 ]; then
+				  echo change hard coded pi username  >> $logfile
+					sed 's/pi/'$USER'/g' mm_temp.sh >mm2.sh
+				 else
+				  echo change relative home path to hard coded path >> $logfile
+				  hf=$(echo $HOME |sed 's/\//\\\//g')
+				  sed 's/\~/'$hf'/g' mm_temp.sh >mm2.sh
+				 fi
+			fi
+			# edit the pm2 config file for the right user
 			echo change $PM2_FILE >>$logfile
 			sed 's/pi/'$USER'/g' $PM2_FILE > pm2_MagicMirror_new.json
 			# make sure to use the updated file
 			PM2_FILE=pm2_MagicMirror_new.json
-			# if this is a mac
+			# if this is a mac, home foilder is in a diffent place, fix that
 			if [ $mac == 'Darwin' ]; then
 				 # copy the path file to the system paths list
 				 #sudo cp ./pm2path /etc/paths.d
