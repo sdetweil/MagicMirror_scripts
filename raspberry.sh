@@ -790,10 +790,10 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 		fi
 		if [ "$USER"  != "pi" ]; then
 			# no need to change mm.sh now
+			echo the user is not pi >>$logfile
+			# go to the installers folder
+			cd installers
 			if [ 0 -gt 1 ]; then
-				echo the user is not pi >>$logfile
-				# go to the installers folder
-				cd installers
 				# edit the startup script for the right user
 				echo change mm2.sh >>$logfile
 				 if [ ! -e mm_temp.sh ]; then

@@ -158,27 +158,29 @@ if [ -d ~/MagicMirror ]; then
 			# if the files we need aren't here, get them
 			if [ ! -e installers/pm2_MagicMirror.json ]; then
 				curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/pm2_MagicMirror.json >installers/pm2_MagicMirror.json
-				curl -sl https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm.sh
-				chmod +x installers/mm.sh
+				#curl -sl https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm.sh
+				#chmod +x installers/mm.sh
 			fi
 			if [ "$USER"  != "pi" ]; then
 				echo the user is not pi >>$logfile
 				# go to the installers folder`
 				cd installers
-				# edit the startup script for the right user
-				echo change mm.sh >>$logfile
-				 if [ ! -e mm_temp.sh ]; then
-				   echo save copy of mm.sh >> $logfile
-				   cp mm.sh mm_temp.sh
-				 fi
-				 if [ $(grep pi mm_temp.sh | wc -l) -gt 0 ]; then
-				  echo change hard coded pi username  >> $logfile
-					sed 's/pi/'$USER'/g' mm_temp.sh >mm.sh
-				 else
-				  echo change relative home path to hard coded path >> $logfile
-				  hf=$(echo $HOME |sed 's/\//\\\//g')
-				  sed 's/\~/'$hf'/g' mm_temp.sh >mm.sh
-				 fi
+				if [ 0 -gt 1 ]; then
+					# edit the startup script for the right user
+					echo change mm.sh >>$logfile
+					if [ ! -e mm_temp.sh ]; then
+						echo save copy of mm.sh >> $logfile
+						cp mm.sh mm_temp.sh
+					fi
+					if [ $(grep pi mm_temp.sh | wc -l) -gt 0 ]; then
+						echo change hard coded pi username  >> $logfile
+						sed 's/pi/'$USER'/g' mm_temp.sh >mm.sh
+					else
+						echo change relative home path to hard coded path >> $logfile
+						hf=$(echo $HOME |sed 's/\//\\\//g')
+						sed 's/\~/'$hf'/g' mm_temp.sh >mm.sh
+					fi
+				fi
 				# edit the pms config file for the right user
 				echo change $PM2_FILE >>$logfile
 				sed 's/pi/'$USER'/g' $PM2_FILE > pm2_MagicMirror_new.json
