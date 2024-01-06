@@ -735,7 +735,7 @@ if [ -d ~/$mfn ]; then
 									echo "updating MagicMirror runtime, please wait" | tee -a $logfile
 									#echo npm  $forced_arch $JustProd install
 									rm -rf node_modules 2>/dev/null
-									if [ ${NPM_CURRENT:1:2} -ge 8 ]; then
+									if [ $NPM_MAJOR -ge 8 ]; then
 										npm  $forced_arch $JustProd --omit=dev install 2>&1 | tee -a $logfile
 									else
 										npm  $forced_arch $JustProd install 2>&1 | tee -a $logfile
