@@ -115,7 +115,7 @@ if [ "$(echo $lsb_info | grep -i raspbian)." != '.' ]; then
 	#	exit 1
 	#fi
 	# is system in grpahical mode
-	if [ $(cat  /etc/systemd/system/default.target | grep -i 'Graphical Interface' | wc -l) -ne 1 ]; then
+	if [ $(systemctl get-default | grep -i Graphical | wc -l) -ne 1 ]; then
 		# no
 		# is Xorg installed?
 		if [ "$(type Xorg)." == "." ]; then
