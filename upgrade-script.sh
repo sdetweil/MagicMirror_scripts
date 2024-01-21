@@ -447,14 +447,14 @@ if [ -d ~/$mfn ]; then
 		# get just the major version  number.. watch out for single or double digits
 		# remove the leading V
 		TEMPV=${NPM_CURRENT:1}
-		# change . to pace
+		# change . to space
 		TEMPV=${TEMPV/\.*/\ } 2>/dev/null
 		# split get first
 		NPM_MAJOR=($TEMPV)
 		# strip trailing space
 		NPM_MAJOR=$(echo ${NPM_MAJOR[0]} | awk '{$1=$1};1')
 		# compare
-		if [ ${NPM_MAJOR} -ge 8 ]; then
+		if [ $NPM_MAJOR -ge 8 ]; then
 			JustProd="--no-audit --no-fund --no-update-notifier"
 		fi
 		if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -le 512  ]; then
