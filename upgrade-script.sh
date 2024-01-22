@@ -290,9 +290,9 @@ if [ -d ~/$mfn ]; then
 			  brew install node
 			else
 				# sudo apt-get install --only-upgrade libstdc++6
-				node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - )
+				node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH.x | sudo -E bash - )
 				echo Node release info = $node_info >> $logfile
-				if [ "$(echo $node_info | grep "not currently supported")." == "." ]; then
+				if [ "$(echo $node_info | grep "Unsupported architecture") == "." -a $ARM != "armv6l"]; then
 					sudo apt-get install -y nodejs
 				else
 					echo node $NODE_STABLE_BRANCH version installer not available, doing manually >>$logfile
