@@ -193,7 +193,7 @@ if [ -d ~/$mfn ]; then
 				            NODE_CURRENT="V1.0.0"
 			                echo forcing low Node version  >> $logfile
 				        fi
-						echo -e "\e[0mNode currently installed. Checking version number." | tee -a $logfile
+						echo -e "\e[0mNode currently installed. Checking version number.\e[0m" | tee -a $logfile
 				                echo -e "\e[0mMinimum Node version: \e[1m$NODE_TESTED\e[0m" | tee -a $logfile
 				                echo -e "\e[0mInstalled Node version: \e[1m$NODE_CURRENT\e[0m" | tee -a $logfile
 						# if needed
@@ -292,7 +292,7 @@ if [ -d ~/$mfn ]; then
 				# sudo apt-get install --only-upgrade libstdc++6
 				node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH.x | sudo -E bash - )
 				echo Node release info = $node_info >> $logfile
-				if [ "$(echo $node_info | grep "Unsupported architecture") == "." -a $ARM != "armv6l"]; then
+				if [ "$(echo $node_info | grep "Unsupported architecture")." == "." -a $ARM != "armv6l" ]; then
 					sudo apt-get install -y nodejs
 				else
 					echo node $NODE_STABLE_BRANCH version installer not available, doing manually >>$logfile
@@ -426,7 +426,7 @@ if [ -d ~/$mfn ]; then
 		 # check to see if git is actually running
 		 git_running=`ps -ef | grep git | grep -v grep | grep -v 'grep git' | wc -l`
 		 # if not running
-		 if [ git_running == $false ]; then
+		 if [ $git_running == $false ]; then
 				# clean up the dangling lock file
 				echo erasing abandonded git lock file >> $logfile
 				rm git_active_lock >/dev/null 2>&1
