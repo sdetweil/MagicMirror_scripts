@@ -144,7 +144,8 @@ function verlt() { [ "$1" = "$2" ] && return 1 || verlte $1 $2 ;}
 
 # Update before first apt-get
 if [ $mac != 'Darwin' ]; then
-
+	# clear the command hash
+   hash -r
 	echo -e "\e[96mUpdating packages ...\e[90m" | tee -a $logfile
 	upgrade=$false
 	update=$(LC_ALL=C  sudo apt-get update --allow-releaseinfo-change>&1)

@@ -106,6 +106,8 @@ if [ -d ~/$mfn ]; then
 	if [ $mac == 'Darwin' ]; then
 		echo the os is $(system_profiler SPSoftwareDataType | grep -i "system version" | awk -F: '{ print $2 }') >> $logfile
 	else
+		# clear command hash
+		hash -r
 		echo the os is $(lsb_release -a 2>/dev/null)  >> $logfile
 		OS=$(LC_ALL=C lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
 		#if [ $OS == "buster" ]; then
