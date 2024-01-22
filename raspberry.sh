@@ -146,7 +146,7 @@ function verlt() { [ "$1" = "$2" ] && return 1 || verlte $1 $2 ;}
 if [ $mac != 'Darwin' ]; then
 	# clear the command hash
    hash -r
-	echo -e "\e[96mUpdating packages ...\e[90m" | tee -a $logfile
+	echo -e "\e[96mUpdating packages ...\e[0m" | tee -a $logfile
 	upgrade=$false
 	update=$(LC_ALL=C  sudo apt-get update --allow-releaseinfo-change>&1)
 
@@ -154,13 +154,13 @@ if [ $mac != 'Darwin' ]; then
 	update_rc=$?
 	echo $update >> $logfile
     if [ $(echo $update | grep -i "is not valid yet" | wc -l) -ne 0 ]; then
-       echo -e "\e[91mSystem date/time is in the past, please correct ...\e[90m" | tee -a $logfile
+       echo -e "\e[91mSystem date/time is in the past, please correct ...\e[0m" | tee -a $logfile
        exit 1
     fi
     # if we had  a problem with update
 	if [ $update_rc -ne 0 ]; then
 
-        echo -e "\e[91mUpdate failed, retrying installation ...\e[90m" | tee -a $logfile
+        echo -e "\e[91mUpdate failed, retrying installation ...\e[0m" | tee -a $logfile
         if [ $(echo $update | grep -e "apt-secure" -e "oldstable" | wc -l) -eq 1 ]; then
 	        update=$(sudo apt-get update --allow-releaseinfo-change 2>&1)
 	        update_rc=$?
@@ -185,7 +185,7 @@ if [ $mac != 'Darwin' ]; then
 		 echo apt-get upgrade result ="rc=$upgrade_rc $upgrade_result" >> $logfile
 	fi
 	# Installing helper tools
-	echo -e "\e[96mInstalling helper tools ...\e[90m" | tee -a $logfile
+	echo -e "\e[96mInstalling helper tools ...\e[0m" | tee -a $logfile
 	sudo apt-get --assume-yes   install  curl wget git build-essential unzip >>$logfile
 fi
 
@@ -253,7 +253,7 @@ if [ $ARM != "armv6l" ]; then
 		v=$(node -v)
 		if [ "$v." != "." ]; then
 			if [ ${v:1:2} -lt ${NODE_TESTED:1:2} ]; then
-				echo -e "\e[96minstalling correct version of node and npm, please wait\e[90m" | tee -a $logfile
+				echo -e "\e[96minstalling correct version of node and npm, please wait\e[0m" | tee -a $logfile
 				#nr=$(sudo npm install -g n)
 				if [ "$t." != "." ]; then
 					t="--arch armv7l"
@@ -312,7 +312,7 @@ if [ $npminstalled == $false ]; then
 	# Install or upgrade node if necessary.
 	if $NODE_INSTALL; then
 
-		echo -e "\e[96mInstalling Node.js ...\e[90m" | tee -a $logfile
+		echo -e "\e[96mInstalling Node.js ...\e[0m" | tee -a $logfile
 
 		# Fetch the latest version of Node.js from the selected branch
 		# The NODE_STABLE_BRANCH variable will need to be manually adjusted when a new branch is released. (e.g. 7.x)
@@ -327,10 +327,10 @@ if [ $npminstalled == $false ]; then
 			fi
 			
 			# sudo apt-get install --only-upgrade libstdc++6
-			node_info=$(curl -sL https://deb.nodesource.com/setup_${NODE_STABLE_BRANCH}.x | sudo -E bash - )
+			node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - )
 			echo Node release info = $node_info >> $logfile
 			#sudo apt-get install -y nodejs
-			if [ "$(echo $node_info | grep "Unsupported architecture")." == "." -a $ARM != "armv6l" ]; then
+			if [ "$(echo $node_info | grep -i "Unsupported architecture")." == "." -a $ARM != "armv6l" ]; then
 				sudo apt-get install -y nodejs
 			else
 				echo node $NODE_STABLE_BRANCH version installer not available, doing manually >>$logfile
@@ -408,7 +408,7 @@ if [ $npminstalled == $false ]; then
 	# Install or upgrade node if necessary.
 	if $NPM_INSTALL; then
 
-		echo -e "\e[96mInstalling npm ...\e[90m" | tee -a $logfile
+		echo -e "\e[96mInstalling npm ...\e[0m" | tee -a $logfile
 
 		# Fetch the latest version of npm from the selected branch
 		# The NODE_STABLE_BRANCH variable will need to be manually adjusted when a new branch is released. (e.g. 7.x)
@@ -444,15 +444,15 @@ if [ $doInstall == 1 ]; then
 		exit;
 	fi
 
-	echo -e "\e[96mCloning MagicMirror ...\e[90m" | tee -a $logfile
+	echo -e "\e[96mCloning MagicMirror ...\e[0m" | tee -a $logfile
 	if git clone --depth=1 https://github.com/MichMich/MagicMirror.git; then
-		echo -e "\e[92mCloning MagicMirror Done!\e[90m" | tee -a $logfile
+		echo -e "\e[92mCloning MagicMirror Done!\e[0m" | tee -a $logfile
 		# replace faulty run-start.sh
 		curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >MagicMirror/run-start.sh
 		chmod +x MagicMirror/run-start.sh
 		sudo touch /etc/chromium-browser/customizations/01-disable-update-check 2>/dev/null;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null 2>&1
 	else
-		echo -e "\e[91mUnable to clone MagicMirror. \e[90m" | tee -a $logfile
+		echo -e "\e[91mUnable to clone MagicMirror. \e[0m" | tee -a $logfile
 		exit;
 	fi
 
@@ -491,7 +491,7 @@ if [ $doInstall == 1 ]; then
       rm package.json
       mv new_package.json package.json
 	fi
-	echo -e "\e[96mInstalling dependencies ...\e[90m" | tee -a $logfile
+	echo -e "\e[96mInstalling dependencies ...\e[0m" | tee -a $logfile
 	# check for NPM v8 or higher, changed parms for prod only on npm install
 	# get just the major version  number.. watch out for single or double digits
 	# remove the leading V
@@ -512,12 +512,12 @@ if [ $doInstall == 1 ]; then
     # add the npm install messages to the logfile
   	echo $npm_i_r >> $logfile
     if [ $npm_i_rc -eq 0 ]; then
-		echo -e "\e[92mDependencies installation Done!\e[90m" | tee -a $logfile
+		echo -e "\e[92mDependencies installation Done!\e[0m" | tee -a $logfile
 	else
         if [ $(echo $npm_i_r | grep "CERT_NOT_YET_VALID" | wc -l) -ne 0 ]; then
-            echo "\e[91mSystem date/time is in the past, please correct \e[90m" | tee -a $logfile
+            echo "\e[91mSystem date/time is in the past, please correct \e[0m" | tee -a $logfile
         fi
-		echo -e "\e[91mUnable to install dependencies! \e[90m" | tee -a $logfile
+		echo -e "\e[91mUnable to install dependencies! \e[0m" | tee -a $logfile
 		exit;
 	fi
 	# fixup permissions on sandbox file if it exists
@@ -559,9 +559,9 @@ fi
 echo -e "\e[96mCheck plymouth installation ...\e[0m" | tee -a $logfile
 if command_exists plymouth; then
 	THEME_DIR="/usr/share/plymouth/themes"
-	echo -e "\e[90mSplashscreen: Checking themes directory.\e[0m" | tee -a $logfile
+	echo -e "\e[96mSplashscreen: Checking themes directory.\e[0m" | tee -a $logfile
 	if [ -d $THEME_DIR ]; then
-		echo -e "\e[90mSplashscreen: Create theme directory if not exists.\e[0m" | tee -a $logfile
+		echo -e "\e[96mSplashscreen: Create theme directory if not exists.\e[0m" | tee -a $logfile
 		if [ ! -d $THEME_DIR/MagicMirror ]; then
 			sudo mkdir $THEME_DIR/MagicMirror
 		fi

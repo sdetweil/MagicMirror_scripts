@@ -203,7 +203,7 @@ if [ -d ~/$mfn ]; then
 							if [ "$t." != "." ]; then
 								ar="--arch armv7l"
 							fi
-							echo -e "\e[96minstalling correct version of node and npm, please wait\e[90m" | tee -a $logfile
+							echo -e "\e[96minstalling correct version of node and npm, please wait\e[0m" | tee -a $logfile
 							sudo n $NODE_TESTED $ar >>$logfile							
 							PATH=$PATH
 							NODE_INSTALL=false
@@ -283,7 +283,7 @@ if [ -d ~/$mfn ]; then
 	# Install or upgrade node if necessary.
 	if $NODE_INSTALL; then
 		if [ $doinstalls == $true ]; then
-			echo -e "\e[96mInstalling Node.js ...\e[90m" | tee -a $logfile
+			echo -e "\e[96mInstalling Node.js ...\e[0m" | tee -a $logfile
             sudo apt-get --allow-releaseinfo-change update >>$logfile
 			# Fetch the latest version of Node.js from the selected branch
 			# The NODE_STABLE_BRANCH variable will need to be manually adjusted when a new branch is released. (e.g. 7.x)
@@ -292,7 +292,7 @@ if [ -d ~/$mfn ]; then
 			  brew install node
 			else
 				# sudo apt-get install --only-upgrade libstdc++6
-				node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH.x | sudo -E bash - )
+				node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - )
 				echo Node release info = $node_info >> $logfile
 				if [ "$(echo $node_info | grep "Unsupported architecture")." == "." -a $ARM != "armv6l" ]; then
 					sudo apt-get install -y nodejs
@@ -396,7 +396,7 @@ if [ -d ~/$mfn ]; then
 	# Install or upgrade node if necessary.
 	if $NPM_INSTALL; then
 		if [ $doinstalls == $true ]; then
-			echo -e "\e[96mInstalling npm ...\e[90m" | tee -a $logfile
+			echo -e "\e[96mInstalling npm ...\e[0m" | tee -a $logfile
 
 			# Fetch the latest version of npm from the selected branch
 			# The NODE_STABLE_BRANCH variable will need to be manually adjusted when a new branch is released. (e.g. 7.x)
@@ -415,7 +415,7 @@ if [ -d ~/$mfn ]; then
 			NPM_CURRENT='V'$(npm -v)
 			echo -e "\e[92mnpm installation Done! version=$NPM_CURRENT\e[0m" | tee -a $logfile
 		else
-			echo -e "\e[96mnpm upgrade defered, doing test run  ...\e[90m" | tee -a $logfile
+			echo -e "\e[96mnpm upgrade defered, doing test run  ...\e[0m" | tee -a $logfile
 		fi
 	fi
 	# used for parsing the array of module names
