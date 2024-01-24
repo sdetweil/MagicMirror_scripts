@@ -618,19 +618,23 @@ if [ -d ~/$mfn ]; then
 						echo save/restore files selection = $choice >> $logfile
 						set_username=$false
 						if [[ $choice =~ ^[Yy]$ ]]; then
-						  git_user=$(git config --global --get user.email)
-							if [ "$git_user." == "." ]; then
-							   set_username=$true
-							    git config --global user.name "upgrade_script"
-								  git config --global user.email "script@upgrade.com"
+							if [ $test_run == $false ]; then
+							    git_user=$(git config --global --get user.email)
+								if [ "$git_user." == "." ]; then
+								   set_username=$true
+								    git config --global user.name "upgrade_script"
+									  git config --global user.email "script@upgrade.com"
+								fi
+								echo "erasing lock files" >> $logfile
+								git reset HEAD package-lock.json >/dev/null
+								sudo rm *-lock.json 2>/dev/null
+								sudo rm  vendor/*-lock.json 2>/dev/null
+								sudo rm  fonts/*-lock.json 2>/dev/null
+								git stash >>$logfile
+								stashed=$true
+							else
+								echo skipping save/restore, doing test run | tee -a $logfile
 							fi
-							echo "erasing lock files" >> $logfile
-							git reset HEAD package-lock.json >/dev/null
-							sudo rm *-lock.json 2>/dev/null
-							sudo rm  vendor/*-lock.json 2>/dev/null
-							sudo rm  fonts/*-lock.json 2>/dev/null
-							git stash >>$logfile
-							stashed=$true
 						else
 							for file in "${diffs[@]}"
 							do
