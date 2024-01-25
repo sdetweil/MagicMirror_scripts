@@ -264,7 +264,7 @@ if [ -d ~/$mfn ]; then
 						echo -e "\e[91mA Node process is currently running. Can't upgrade." | tee -a $logfile
 						echo "Please quit all Node processes and restart the update." | tee -a $logfile
 						echo "running process(s) are"
-						echo $node_running | tee -a $logfile
+						echo -e "$node_running\e[0m" | tee -a $logfile
 						exit
 					fi
 				else
@@ -381,9 +381,26 @@ if [ -d ~/$mfn ]; then
 			# Check if a node process is currently running.
 			# If so abort installation.
 			if pidof "npm" > /dev/null; then
-				echo -e "\e[91mA npm process is currently running. Can't upgrade." | tee -a $logfile
-				echo "Please quit all npm processes and restart the installer." | tee -a $logfile
-				exit;
+				while true
+				do
+					if [ "$(which pm2)." != ".'" ]; then
+						mmline=$(LC_ALL=C pm2 ls | grep -m1 online)
+						pm2_name=$(echo $mmline | awk -F\│ '{print $3}')
+						mm_running=$(LC_ALL=C echo $mmline | awk -F\│ '{print $2}' | xargs -i pm2 info {} 2>/dev/null | grep -i magic | grep "script path" | awk -F\│ '{print $3}' | grep -i magicmirror | wc -l)
+						# if running, stop it
+						if [ $mm_running -ne 0 ]; then
+							echo MagicMirror running under control of PM2, stopping | tee -a $logfile
+							# pm2_name=$(echo $mmline | awk -F\│ '{print $3}')
+							pm2 stop $pm2_name >/dev/null 2>&1
+						else
+							break;
+						fi
+					else
+						echo -e "\e[91mA npm process is currently running. Can't upgrade." | tee -a $logfile
+						echo "Please quit all npm processes and restart the installer." | tee -a $logfile
+						exit;
+					fi
+				done
 			fi
 		else
 			echo -e "\e[92mNo npm upgrade necessary.\e[0m" | tee -a $logfile
