@@ -799,6 +799,17 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 			# curl -sl https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm2.sh
 			#chmod +x installers/mm2.sh
 		fi
+		read -p "Do you want to update the PM2 process name? (y/N)" updateName
+		updateName="${updateName:-N}"
+		newName=MagicMirror
+		if [[ $updateName =~ ^[Yy]$ ]]; then
+			read -p "Enter the new PM2 process name: " newName
+			if [ -n "$newName" ]; then
+				# Update the name in pm2_MagicMirror.json
+				echo rename pm2 process in pm2_MagicMirror.json >>$logfile
+				sed -i '/"name"/ s/:.*/: "'"$newName"'",/' installers/pm2_MagicMirror.json
+			fi
+		fi
 		if [ "$USER"  != "pi" ]; then
 			# no need to change mm.sh now
 			echo the user is not pi >>$logfile
@@ -851,7 +862,7 @@ fi
 
 echo " "
 if [ $pm2setup -eq $true ]; then
-	rmessage="pm2 start MagicMirror"
+	rmessage="pm2 start $newName"
 else
   rmessage="DISPLAY=:0 npm start"
 fi
