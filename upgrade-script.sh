@@ -265,8 +265,8 @@ if [ -d ~/$mfn ]; then
 						echo "Please quit all Node processes and restart the update." | tee -a $logfile
 						echo "running process(s) are"
 						echo $node_running | tee -a $logfile
+						exit
 					fi
-					exit;
 				else
 					break;
 				fi
