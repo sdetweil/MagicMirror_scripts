@@ -257,8 +257,8 @@ if [ -d ~/$mfn ]; then
 						mm_running=$(echo $mmline | awk -F\│ '{print $2}' | xargs -i pm2 info {} 2>/dev/null | grep -i magic | grep "script path" | awk -F\│ '{print $3}' | grep -i magicmirror | wc -l)
 						if [ $mm_running -ne 0 ]; then
 							echo MagicMirror running under control of PM2, stopping | tee -a $logfile
-							pm2_name=$(echo $mmline | awk -F\│ '{print $3}')
-							pm2 stop $pm2_name >/dev/null 2>&1
+							pm2_name=$(echo $mmline | awk -F\│ '{print $3}' | tr -d [:blank:])
+							pm2 stop ${pm2_name,,} >/dev/null 2>&1
 						fi
 					else
 						echo -e "\e[91mA Node process is currently running. Can't upgrade." | tee -a $logfile
@@ -385,7 +385,7 @@ if [ -d ~/$mfn ]; then
 				do
 					if [ "$(which pm2)." != ".'" ]; then
 						mmline=$(LC_ALL=C pm2 ls | grep -m1 online)
-						pm2_name=$(echo $mmline | awk -F\│ '{print $3}')
+						pm2_name=$(echo $mmline | awk -F\│ '{print $3}' | tr -d [:blank:])
 						mm_running=$(LC_ALL=C echo $mmline | awk -F\│ '{print $2}' | xargs -i pm2 info {} 2>/dev/null | grep -i magic | grep "script path" | awk -F\│ '{print $3}' | grep -i magicmirror | wc -l)
 						# if running, stop it
 						if [ $mm_running -ne 0 ]; then
