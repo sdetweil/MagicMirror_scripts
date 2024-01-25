@@ -575,7 +575,7 @@ if [ -d ~/$mfn ]; then
 				if [ $mm_running -ne 0 ]; then
 					echo MagicMirror running under control of PM2, stopping | tee -a $logfile
 					# pm2_name=$(echo $mmline | awk -F\│ '{print $3}')
-					pm2 stop $pm2_name >/dev/null 2>&1
+					pm2 stop $pm2_name | tee -a $logfile
 				fi
 				# get any files changed
 				changed=$(LC_ALL=C git status | grep modified | awk -F: '{print $2}')
