@@ -101,4 +101,88 @@ mac=$(uname -s)
 			  echo lxsession screen saver already enabled >> $logfile
 			fi
 		fi
+		if [ -e "$HOME/.config/wayfire.ini" ]; then
+			#  current_set=$(grep -m1 "dpms_timeout" $HOME/.config/wayfire.ini | awk '{print $3}')
+			#  if [ "$current_set" != 0 ]; then
+			#    echo disable screensaver via wayfire.ini >> $logfile
+			#    sed -i -r "s/^(dpms_timeout.*)$/dpms_timeout = 0/" $HOME/.config/wayfire.ini
+			#  else
+			#    echo wayland screen saver already disabled >> $logfile
+			#  fi
+			echo "Found: wayfire.ini" >> $logfile
+			INI_PATH=$HOME/.config
+			WAYFIRE_CONFIG=$INI_PATH/wayfire.ini
+			IDLE='\[idle\]'
+			DPMS=dpms_timeout
+			IDLE_LINE=0
+			DPMS_LINE=0
+			DPMS_SETTING=1   # 0 = off, 1 = on
+			change=0
+			# get the line count
+			lc=$(wc -l <$WAYFIRE_CONFIG)
+			# find the idle line and its line number
+			IDLE_STRING=$(grep -n $IDLE $WAYFIRE_CONFIG)
+			# find the dpms line and its line number
+			DPMS_STRING=$(grep -n $DPMS $WAYFIRE_CONFIG)
+			# if we found the idle line
+			if [ "$IDLE_STRING." != "." ]; then
+				#  extract line number
+				IDLE_LINE=$(echo $IDLE_STRING | awk -F: '{print $1}')
+			fi
+			# if we found the dpms line
+			if [ "$DPMS_STRING." != "." ]; then
+				# extract line number
+				DPMS_LINE=$(echo $DPMS_STRING | awk -F: '{print $1}')
+				# extract its value  (after = sign)
+				DPMS_VALUE=$(echo $DPMS_STRING | awk -F= '{print $2}')
+				# set the value to write out
+				DPMS_OUT=$DPMS_SETTING
+			fi
+
+			if [ $IDLE_LINE -ne 0 -a $DPMS_LINE -ne 0 -a $DPMS_LINE -gt $IDLE_LINE ]; then
+				# both found
+				# if we found the DPMS_VALUE != 1
+				if [ $DPMS_VALUE -ne $DPMS_SETTING ]; then
+					sed -i "s/$DPMS=.*/$DPMS=$DPMS_OUT/g" $WAYFIRE_CONFIG
+					((change++))
+				else
+					echo "wayfire screen saver already disabled" | tee -a $logfile
+				fi
+			# if both NOT found
+			elif [ $IDLE_LINE -eq 0 -a $DPMS_LINE -eq 0 ]; then
+				# add the two lines
+				echo $IDLE | tr -d '\\' >> $WAYFIRE_CONFIG
+				echo $DPMS=$DPMS_SETTING >> $WAYFIRE_CONFIG
+				((change++))
+			# if we found the idle line, (but not dpms)
+			elif [ $IDLE_LINE -ne 0 ]; then
+				# IDLE was found
+				if [ $DPMS_LINE -eq 0 ]; then
+					# DPMS  not found
+					# insert DPMS after idle
+					sed -i /$IDLE/a\ $DPMS=$DPMS_SETTING $WAYFIRE_CONFIG
+					((change++))
+				fi
+			else
+				# DPMS IS found , idle not found?  weird
+				# insert idle before DPMS?? is this a problem?
+				# lets add both to the end, removing the old one first
+				# remove the dpms line, wherever it is
+				grep -v $DPMS $WAYFIRE_CONFIG>$INI_PATH/wayfire.ini.tmp
+				# add the idle  line
+				echo $IDLE | tr -d '\\' >>$INI_PATH/wayfire.ini.tmp
+				#add the dpms line
+				echo $DPMS=$DPMS_SETTING >>$INI_PATH/wayfire.ini.tmp
+				# copy the current wayfire.ini to save place
+				cp $WAYFIRE_CONFIG $WAYFIRE_CONFIG.old
+				# coppy the work ini to the correct file
+				cp $INI_PATH/wayfire.ini.tmp $WAYFIRE_CONFIG
+				# remove the work file
+				rm  $INI_PATH/wayfire.ini.tmp
+				((change++))
+			fi
+			if [ $change -ne 0 ]; then 
+				echo enable screensaver via $WAYFIRE_CONFIG >> $logfile
+			fi
+		fi		
 	fi
