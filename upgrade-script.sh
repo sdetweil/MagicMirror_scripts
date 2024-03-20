@@ -250,7 +250,7 @@ if [ -d ~/$mfn ]; then
 			# If so abort installation.
 			while true
 			do
-				node_running=$(ps -ef | grep "node " | grep -v grep)
+				node_running=$(ps -ef | grep "[n]ode ")
 				if [ "$node_running." != "." ]; then
 					if [ "$(which pm2)." != "." ]; then
 						mmline=$(LC_ALL=C pm2 ls | grep -m1 online)
@@ -443,7 +443,7 @@ if [ -d ~/$mfn ]; then
 	# if the git lock file exists and git is not running
 	if [ -f git_active_lock ]; then
 		 # check to see if git is actually running
-		 git_running=`ps -ef | grep git | grep -v grep | grep -v 'grep git' | wc -l`
+		 git_running=`ps -ef | grep [g]it | wc -l`
 		 # if not running
 		 if [ $git_running == $false ]; then
 				# clean up the dangling lock file
