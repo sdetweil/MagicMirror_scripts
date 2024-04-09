@@ -445,7 +445,7 @@ if [ $doInstall == 1 ]; then
 	fi
 
 	echo -e "\e[96mCloning MagicMirror ...\e[0m" | tee -a $logfile
-	if git clone --depth=1 https://github.com/MichMich/MagicMirror.git; then
+	if git clone --depth=1 https://github.com/MagicMirrorOrg/MagicMirror.git; then
 		echo -e "\e[92mCloning MagicMirror Done!\e[0m" | tee -a $logfile
 		# replace faulty run-start.sh
 		curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >MagicMirror/run-start.sh
@@ -458,7 +458,7 @@ if [ $doInstall == 1 ]; then
 
 	cd ~/MagicMirror  || exit
 	if [ $(grep version package.json | awk -F: '{print $2}') == '"2.11.0",' -a $ARM == 'x86_64' ]; then
-	    git fetch https://github.com/MichMich/MagicMirror.git develop >/dev/null 2>&1
+	    git fetch https://github.com/MagicMirrorOrg/MagicMirror.git develop >/dev/null 2>&1
 		git branch develop FETCH_HEAD > /dev/null 2>&1
 		git checkout develop > /dev/null 2>&1
 	fi
