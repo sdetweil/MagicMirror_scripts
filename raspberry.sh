@@ -66,7 +66,10 @@ if [ 0 -eq 1 ]; then
 	# if the script was execute from the web
 	if [[ $logdir != *"MagicMirror/installers"* ]]; then
 		# use the MagicMirror/installers folder, if setup
-		if [ -d MagicMirror ]; then
+		if [ -d ~/MagicMirror ]; then
+			if [ ! -d ~/MagicMirror/installers ]; then
+				mkdir ~/MagicMirror/installers 2>/dev/null
+			fi
 			cd ~/MagicMirror/installers >/dev/null
 				logdir=$(pwd)
 			cd - >/dev/null
@@ -76,7 +79,7 @@ if [ 0 -eq 1 ]; then
 		fi
 	fi
 fi
-logfile=$HOME/install.log
+logfile=$logdir/install.log
 echo install log being saved to $logfile
 
 # Determine which Pi is running.
@@ -575,7 +578,15 @@ if command_exists plymouth; then
 		if [ ! -d $THEME_DIR/MagicMirror ]; then
 			sudo mkdir $THEME_DIR/MagicMirror
 		fi
-
+		# if our local folder doesn't exist, create it and add the files.
+		if [ ! -d ~/MagicMirror/splashscreen ]; then
+			mkdir ~/MagicMirror/splashscreen
+			cd ~/MagicMirror/splashscreen
+			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/splash.png >splash.png
+			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/MagicMirror.plymouth >MagicMirror.plymouth
+			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/MagicMirror.script >MagicMirror.script
+			cd - >/dev/null
+		fi
 		if sudo cp ~/MagicMirror/splashscreen/splash.png $THEME_DIR/MagicMirror/splash.png && sudo cp ~/MagicMirror/splashscreen/MagicMirror.plymouth $THEME_DIR/MagicMirror/MagicMirror.plymouth && sudo cp ~/MagicMirror/splashscreen/MagicMirror.script $THEME_DIR/MagicMirror/MagicMirror.script; then
 			echo
 			if [ "$(which plymouth-set-default-theme)." != "." ]; then
@@ -808,7 +819,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 fi
 
 # Use pm2 control like a service MagicMirror
-read -p "Do you want use pm2 for auto starting of your MagicMirror (y/N)?" choice
+read -p "Do you want use pm2 (node process manager) for auto starting of your MagicMirror (y/N)?" choice
 choice="${choice:-N}"
 if [[ $choice =~ ^[Yy]$ ]]; then
       echo install and setup pm2 | tee -a $logfile
@@ -890,8 +901,8 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 		# if the files we need aren't here, get them
 		if [ ! -e installers/pm2_MagicMirror.json ]; then
 			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/pm2_MagicMirror.json >installers/pm2_MagicMirror.json
-			# curl -sl https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm2.sh
-			#chmod +x installers/mm2.sh
+			curl -sl https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm.sh
+			chmod +x installers/mm.sh
 		fi
 		if [ "$USER"  != "pi" ]; then
 			# no need to change mm.sh now
@@ -953,5 +964,9 @@ echo -e "\e[92mWe're ready! Run \e[1m\e[97m$rmessage\e[0m\e[92m from the ~/Magic
 
 echo " "
 echo " "
+if [ $pm2setup -eq $true ]; then
+	echo please see the help for the pm2 command, pm2 --help
+	echo pm2 status will show the running apps, and their runtime status
+fi
 
 date +"install completed - %a %b %e %H:%M:%S %Z %Y" >>$logfile
