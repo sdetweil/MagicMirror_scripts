@@ -212,7 +212,7 @@ if [ -d ~/$mfn ]; then
 								ar="--arch armv7l"
 							fi
 							echo -e "\e[96minstalling correct version of node and npm, please wait\e[0m" | tee -a $logfile
-							sudo n $NODE_TESTED $ar >>$logfile							
+							sudo n $NODE_TESTED $ar >>$logfile
 							PATH=$PATH
 							NODE_INSTALL=false
 						fi
@@ -300,7 +300,7 @@ if [ -d ~/$mfn ]; then
 			  brew install node
 			else
 				# sudo apt-get install --only-upgrade libstdc++6
-				node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - )
+				node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - 2>/dev/null)
 				echo Node release info = $node_info >> $logfile
 				if [ "$(echo $node_info | grep "Unsupported architecture")." == "." -a $ARM != "armv6l" ]; then
 					sudo apt-get install -y nodejs
@@ -310,10 +310,10 @@ if [ -d ~/$mfn ]; then
 					sudo apt-get install -y --only-upgrade libstdc++6 >> $logfile
 					# have to do it manually
 					ARM1=$arch
-                    if [ $arch == 'armv6l' ]; then
-                            curl -sL https://unofficial-builds.nodejs.org/download/release/${NODE_TESTED}/node-${NODE_TESTED}-linux-armv6l.tar.gz >node_release-${NODE_TESTED}.tar.gz
-                            node_ver=$NODE_TESTED
-                    else
+			                if [ $arch == 'armv6l' ]; then
+                        		    curl -sL https://unofficial-builds.nodejs.org/download/release/${NODE_TESTED}/node-${NODE_TESTED}-linux-armv6l.tar.gz >node_release-${NODE_TESTED}.tar.gz
+		                            node_ver=$NODE_TESTED
+                			else
 						node_vnum=$(echo $NODE_STABLE_BRANCH | awk -F. '{print $1}')
 						if [ $arch == 'x86_64' ]; then
 							ARM1= x64
@@ -323,7 +323,7 @@ if [ -d ~/$mfn ]; then
 						echo "latest release in the $NODE_STABLE_BRANCH family for $arch is $node_ver" >> $logfile
 						# download that file
 						curl -sL https://nodejs.org/download/release/v$node_ver/node-v$node_ver-linux-$ARM1.tar.gz >node_release-$node_ver.tar.gz
-					fi 
+					fi
 					cd /usr/local
 					echo using release tar file = node_release-$node_ver.tar.gz >> $logfile
 					sudo tar --strip-components 1 -xzf  $HOME/node_release-$node_ver.tar.gz
