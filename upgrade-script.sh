@@ -15,13 +15,13 @@ git_active_lock='./.git/index.lock'
 lf=$'\n'
 git_user_name=
 git_user_email=
-NODE_TESTED="v20.8.0" # "v16.13.1"
+NODE_TESTED="v20.15.0" # "v16.13.1"
 NPM_TESTED="V10.1.0" # "V7.11.2"
 NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 NODE_INSTALL=false
 known_list="request valid-url jsdom node-fetch digest-fetch"
 JustProd="--only=prod"
-
+NODE_OPTIONS=--max_old_space_size=4096
 
 trim() {
     local var="$*"
@@ -539,9 +539,19 @@ if [ -d ~/$mfn ]; then
 		   fi
 
 		fi
+		remote_user=MagicMirrorOrg
 		# get the git remote name
-		remote=$(LC_ALL=C  git remote -v 2>/dev/null |  grep fetch | awk '{print $1}')
-		remote_user=$(git remote -v 2>/dev/null |  grep fetch | awk -F/ '{print $4}')
+		remote=$(LC_ALL=C  git remote -v 2>/dev/null |  grep -m1 '.com/M'  | awk '{print $1}')
+		if [ $remote == 'upstream' ]; then
+			git remote remove upstream > /dev/null
+			git remote add upstream https://github.com/$remote_user/MagicMirror
+		else
+			if [ $(git remote -v | grep -m1 $remote | awk -F/ '{print $4}') == 'MichMich' ]; then
+				git remote remove $remote > /dev/null
+				git remote add $remote https://github.com/$remote_user/MagicMirror
+			fi
+		fi
+		#remote_user=$(git remote -v 2>/dev/null |  grep fetch | awk -F/ '{print $4}')
 
 		# if remote name set
 		if [ "$remote." != "." ]; then
@@ -759,9 +769,9 @@ if [ -d ~/$mfn ]; then
 									#echo npm  $forced_arch $JustProd install
 									rm -rf node_modules 2>/dev/null
 									if [ $NPM_MAJOR -ge 8 ]; then
-										npm  $forced_arch $JustProd --omit=dev install 2>&1 | tee -a $logfile
+										npm  $forced_arch $JustProd --omit=dev $NODE_OPTIONS install 2>&1 | tee -a $logfile
 									else
-										npm  $forced_arch $JustProd install 2>&1 | tee -a $logfile
+										npm  $forced_arch $JustProd $NODE_OPTIONS install 2>&1 | tee -a $logfile
 									fi
 									done_update=`date +"completed - %a %b %e %H:%M:%S %Z %Y"`
 									echo npm install $done_update on base >> $logfile

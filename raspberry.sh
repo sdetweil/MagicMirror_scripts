@@ -8,6 +8,8 @@ if [ $USER == 'root' ]; then
 	 exit 1
 fi
 
+NODE_OPTIONS=--max_old_space_size=4096
+
 echo -e "\e[0m"
 echo '$$\      $$\                     $$\           $$\      $$\ $$\                                          $$$$$$\'
 echo '$$$\    $$$ |                    \__|          $$$\    $$$ |\__|                                        $$  __$$\'
@@ -26,7 +28,7 @@ doInstall=1
 true=1
 false=0
 # Define the tested version of Node.js.
-NODE_TESTED="v20.8.0" # "v16.13.0"
+NODE_TESTED="v20.15.0" # "v16.13.0"
 NPM_TESTED="V10.1.0" # "V7.11.2"
 NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 USER=`whoami`
@@ -83,6 +85,7 @@ ARM=$(uname -m)
 echo installing on $ARM processor system >>$logfile
 lsb_info=$(lsb_release -a 2>/dev/null)
 echo the os is $lsb_info >> $logfile
+free -m >>$logfile
 OS=$(echo $lsb_info  | awk -F: '{print $NF}' | awk '{print $1}')
 #if [ $OS == "buster" ]; then
 #	echo install on buster is broken, ending install
@@ -507,7 +510,7 @@ if [ $doInstall == 1 ]; then
 		JustProd="--no-audit --no-fund --no-update-notifier" 
 	fi
 	rm package-lock.json 2>/dev/null
-	npm_i_r=$(LC_ALL=C  npm  $forced_arch $Justprod --omit=dev install)
+	npm_i_r=$(LC_ALL=C  npm  $forced_arch $Justprod --omit=dev $NODE_OPTIONS install)
     npm_i_rc=$?
     # add the npm install messages to the logfile
   	echo $npm_i_r >> $logfile
