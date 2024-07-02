@@ -901,6 +901,8 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 		# if the files we need aren't here, get them
 		if [ ! -e installers/pm2_MagicMirror.json ]; then
 			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/pm2_MagicMirror.json >installers/pm2_MagicMirror.json
+		fi
+		if [ !-e installers/mm.sh ]; then
 			curl -sl https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm.sh
 			chmod +x installers/mm.sh
 		fi
