@@ -79,7 +79,7 @@ if [ 0 -eq 1 ]; then
 		fi
 	fi
 fi
-logfile=$logdir/install.log
+logfile=$HOME/install.log
 echo install log being saved to $logfile
 
 # Determine which Pi is running.
