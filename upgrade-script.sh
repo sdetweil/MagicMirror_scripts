@@ -928,7 +928,7 @@ if [ -d ~/$mfn ]; then
 												     rm -rf node_modules 2>/dev/null
 													 sudo rm package-lock.json 2>/dev/null
 													 # check to see if the author created a rebuild process
-													 do_rebuild=$(grep -e "\"refresh\"" -e "\"update\"" -e "\"rebuild\""  package.json)
+													 do_rebuild=$(grep -e "\"refresh\"" -e "\"update\""  package.json)   #" -e "\"rebuild\"
 													 # split into separate lines if any
 													 commands=($do_rebuild)
 													 # were there any of the selected commands?
