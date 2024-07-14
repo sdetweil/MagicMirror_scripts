@@ -910,10 +910,7 @@ if [ -d ~/$mfn ]; then
 										echo
 										for module in "${modules[@]}"
 										do
-											echo -e '\n\t'"processing for module" $module please wait | tee -a $logfile
-											echo -e '\n\t''----------------------------------' | tee -a $logfile
-											# change to that directory
-											if [ $modules == 'MMM-GoogleAssistant' ]; then
+											if [ $module == 'MMM-GoogleAssistant' ]; then
 												# we will process GA and extensions later
 												update_ga=$true
 												continue
@@ -922,6 +919,9 @@ if [ -d ~/$mfn ]; then
 												# this a Google Assistant extension
 												continue
 											fi
+											echo -e '\n\t'"processing for module" $module please wait | tee -a $logfile
+											echo -e '\n\t''----------------------------------' | tee -a $logfile
+											# change to that directory
 											cd  $module
 												# process its dependencies
 												if [ $doinstalls == $true ]; then
