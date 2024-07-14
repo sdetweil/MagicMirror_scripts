@@ -634,7 +634,7 @@ if [ -d ~/$mfn ]; then
 
 					# if there are different files (array size greater than zero)
 					if [ ${#diffs[@]} -gt 0 ]; then
-					  package_lock=0
+					  	package_lock=0
 						echo there are "${#diffs[@]}" local files that are different than the master repo | tee -a $logfile
 						echo | tee -a $logfile
 						for file in "${diffs[@]}"
@@ -902,7 +902,7 @@ if [ -d ~/$mfn ]; then
 										modules=$(find  -maxdepth 2 -name 'package.json' -printf "%h\n" | cut -d'/' -f2 )
 									fi
 									modules=($modules) # split to array $modules
-
+									update_ga=$false
 									# if the array has entries in it
 									if [ ${#modules[@]} -gt  0 ]; then
 									  echo >> $logfile
@@ -913,6 +913,15 @@ if [ -d ~/$mfn ]; then
 											echo -e '\n\t'"processing for module" $module please wait | tee -a $logfile
 											echo -e '\n\t''----------------------------------' | tee -a $logfile
 											# change to that directory
+											if [ $modules == 'MMM-GoogleAssistant' ]; then
+												# we will process GA and extensions later
+												update_ga=$true
+												continue
+											fi
+											if [ ${module,0,3} == 'EXT-' ]; then
+												# this a Google Assistant extension
+												continue
+											fi
 											cd  $module
 												# process its dependencies
 												if [ $doinstalls == $true ]; then
@@ -960,6 +969,16 @@ if [ -d ~/$mfn ]; then
 											echo -e '\n\t'"processing complete for module" $module | tee -a $logfile
 											echo
 										done
+										if [ $update_ga == $true ]; then
+											if [ $doinstalls == $true ]; then
+												echo updating MMM-GoogleAssistant and its EXTensions | tee -a $logfile
+												cd "MMM-GoogleAssistant"
+												npm run refresh | tee -a $logfile
+												cd .. >/dev/null
+											else
+												echo -e '\n\t'skipped processing for MMM-GoogleAssistant and its EXTensions, doing test run | tee -a $logfile
+											fi
+										fi
 									else
 										echo "no modules found needing npm refresh" | tee -a $logfile
 									fi

@@ -48,6 +48,8 @@ trim() {
 beginswith() { case $2 in "$1"*) true;; *) false;; esac; }
 
 cd $HOME
+# set default log location
+logdir=$HOME
 
 mac=$(uname -s)
 if [ 0 -eq 1 ]; then
@@ -79,7 +81,7 @@ if [ 0 -eq 1 ]; then
 		fi
 	fi
 fi
-logfile=$HOME/install.log
+logfile=$logdir/install.log
 echo install log being saved to $logfile
 
 # Determine which Pi is running.
@@ -470,6 +472,10 @@ if [ $doInstall == 1 ]; then
 	fi
 
 	cd ~/MagicMirror  || exit
+	# installers folder removed in 2.29
+	if [ ! -d installers ]; then
+		mkdir installers 2>/dev/null
+	fi
 	if [ $(grep version package.json | awk -F: '{print $2}') == '"2.11.0",' -a $ARM == 'x86_64' ]; then
 	    git fetch https://github.com/MagicMirrorOrg/MagicMirror.git develop >/dev/null 2>&1
 		git branch develop FETCH_HEAD > /dev/null 2>&1
@@ -579,6 +585,7 @@ if command_exists plymouth; then
 			sudo mkdir $THEME_DIR/MagicMirror
 		fi
 		# if our local folder doesn't exist, create it and add the files.
+		# removed from MM distro in 2.29
 		if [ ! -d ~/MagicMirror/splashscreen ]; then
 			mkdir ~/MagicMirror/splashscreen
 			cd ~/MagicMirror/splashscreen
