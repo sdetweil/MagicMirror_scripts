@@ -910,11 +910,11 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 		if [ ! -e installers/pm2_MagicMirror.json ]; then
 			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/pm2_MagicMirror.json >installers/pm2_MagicMirror.json
 		fi
-		if [ !-e installers/mm.sh ]; then
+		if [ ! -e installers/mm.sh ]; then
 			curl -sl https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm.sh
 			chmod +x installers/mm.sh
 		fi
-		read -p "Do you want to update the PM2 process name? (y/N)" updateName
+		read -p "Do you want to update the PM2 process name? (Default is MagicMirror)  (y/N)" updateName
 		updateName="${updateName:-N}"
 		newName=MagicMirror
 		if [[ $updateName =~ ^[Yy]$ ]]; then
