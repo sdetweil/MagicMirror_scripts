@@ -212,7 +212,7 @@ if [ $(LC_ALL=C free -m | grep Mem | awk '{print $2}') -le 512 ]; then
 		echo "increasing swap space" >>$logfile
 		swapsize=$(grep "CONF_SWAPSIZE=" /etc/dphys-swapfile | awk -F= '{print $2}')
 		sudo dphys-swapfile swapoff >>$logfile
-		sudo sed "/SWAPSIZE=$swapsize/ c \SWAPSIZE=1024" -i /etc/dphys-swapfile
+		sudo sed "/CONF_SWAPSIZE=$swapsize/ c \CONF_SWAPSIZE=1024" -i /etc/dphys-swapfile
 		#sudo nano /etc/dphys-swapfile
 		sudo dphys-swapfile setup >>$logfile
 		sudo dphys-swapfile swapon >>$logfile
