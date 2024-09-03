@@ -108,8 +108,8 @@ if [ -d ~/$mfn ]; then
 	else
 		# clear command hash
 		hash -r
-		echo the os is $(lsb_release -a 2>/dev/null)  >> $logfile
-		OS=$(LC_ALL=C lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
+		echo the os is $(cat /etc/os-release 2>/dev/null)  >> $logfile
+		OS=$(LC_ALL=C cat /etc/os-release 2>/dev/null |grep VERSION_CODENAME |  awk -F= '{print $2}')
 		#if [ $OS == "buster" ]; then
 		#	echo upgrade on buster is broken, ending install
 		#	exit 4
@@ -121,7 +121,7 @@ if [ -d ~/$mfn ]; then
 		#	sudo rm -r /etc/apt/keyrings/nodesource.gpg
 		#fi
 		NODE_MAJOR=20
-		if [ ${OS,,} == "buster" ]; then
+		if [ "${OS,,}." == "buster." ]; then
 			echo
 			echo 'MagicMirror version 2.28.0 (July 1 2024), will not run on OS level buster, due to system limitations' | tee -a $logfile
 			echo
@@ -142,14 +142,14 @@ if [ -d ~/$mfn ]; then
 		fi
 
 
-		if [ ${OS,,} == 'stretch' ]; then
+		if [ "${OS,,}." == 'stretch.' ]; then
 			echo
 			echo 'the latest MagicMirror version, 2.22 (Jan 1 2023) or above, will not run on Raspian Stretch' | tee -a $logfile
 			echo
 			date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 			exit 1
 		else
-			if [ ${OS,,} == 'bullseye' -a $arch == 'armv6l' ]; then
+			if [ "${OS,,}." == 'bullseye.' -a $arch == 'armv6l' ]; then
 				echo
 				echo 'the latest MagicMirror version, 2.23 (April 4 2023) or above, will not run on Raspian Bullseye, due to browser limitations' | tee -a $logfile
 				echo
@@ -809,7 +809,7 @@ if [ -d ~/$mfn ]; then
 										  chmod +x run-start.sh
 										  # add fix to disable chromium update checks for a year from time started
 										  sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null
-									  elif [ "$arch" == "x86_64" -a "$OS" == 'buster' ]; then
+									  elif [ "$arch" == "x86_64" -a "." == 'buster.' ]; then
 									  	cd fonts
 									  	   sed '/roboto-fontface/ c \    "roboto-fontface": "latest"' < package.json 	>new_package.json
 									  	   if [ -s new_package.json ]; then

@@ -88,10 +88,10 @@ echo install log being saved to $logfile
 date +"install starting  - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 ARM=$(uname -m)
 echo installing on $ARM processor system >>$logfile
-lsb_info=$(lsb_release -a 2>/dev/null)
+lsb_info=$(cat /etc/os-release 2>/dev/null)
 echo the os is $lsb_info >> $logfile
 free -m >>$logfile
-OS=$(echo $lsb_info  | awk -F: '{print $NF}' | awk '{print $1}')
+OS=$(echo $lsb_info  | grep VERSION_CODENAME |  awk -F= '{print $2}')
 #if [ $OS == "buster" ]; then
 #	echo install on buster is broken, ending install
 #	exit 4
@@ -102,7 +102,7 @@ if [ $ARM == "armv6ll" ]; then
 	exit 3
 fi
 
-if [ $OS = "buster" ]; then
+if [ "$OS." = "buster." ]; then
 	echo
 	echo 'MagicMirror version 2.28.0 (July 1 2024), will not run on OS level buster, due to system limitations' | tee -a $logfile
 	echo
@@ -336,7 +336,7 @@ if [ $npminstalled == $false ]; then
 		if [ $mac == 'Darwin' ]; then
 		  brew install node
 		else
-			if [ $OS == 'bullseye' ]; then
+			if [ "$OS." == 'bullseye.' ]; then
 				if [ -e /usr/share/doc/nodejs/api/embedding.json.gz ]; then
 					sudo chmod 666 /usr/share/doc/nodejs/api/embedding.json.gz
 				fi
@@ -488,7 +488,7 @@ if [ $doInstall == 1 ]; then
 
 	  # add fix to disable chromium update checks for a year from time started
 	  # sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null
-	  if [ "$ARM" == "x86_64" -a "$OS" == 'buster' ]; then
+	  if [ "$ARM" == "x86_64" -a "$OS." == 'buster.' ]; then
 	  	cd fonts
 	  	   sed '/roboto-fontface/ c \    "roboto-fontface": "latest"' < package.json 	>new_package.json
 	  	   if [ -s new_package.json ]; then
