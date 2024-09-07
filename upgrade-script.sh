@@ -53,8 +53,9 @@ if [ -d ~/$mfn ]; then
 
 	# put the log where the script is located
 	logdir=$(dirname $($cmd -f "$0"))
+	if [  "$(echo $logdir | grep "MagicMirror/installers")." == "." ]; then
 	# if the script was execute from the web
-	if [[ $logdir != *"MagicMirror/installers"* ]]; then
+	#if [[ $logdir != *"MagicMirror/installers"* ]]; then
 		# use the MagicMirror/installers folder
 		cd ~/$mfn/installers >/dev/null
 		logdir=$(pwd)
