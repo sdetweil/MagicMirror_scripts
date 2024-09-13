@@ -91,7 +91,7 @@ echo installing on $ARM processor system >>$logfile
 lsb_info=$(cat /etc/os-release 2>/dev/null)
 echo the os is $lsb_info >> $logfile
 free -m >>$logfile
-OS=$(echo $lsb_info  | grep VERSION_CODENAME |  awk -F= '{print $2}')
+OS=$(cat /etc/os-release 2>/dev/null  | grep VERSION_CODENAME |  awk -F= '{print $2}')
 #if [ $OS == "buster" ]; then
 #	echo install on buster is broken, ending install
 #	exit 4
