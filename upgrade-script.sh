@@ -568,8 +568,8 @@ if [ -d ~/$mfn ]; then
 			echo remote name = $remote >>$logfile
 
 		  # get the local and remote package.json versions
-			local_version=$(grep -m1 version package.json | awk -F\" '{print $4}' | awk -F-  '{print $1}')
-			remote_version=$(curl -sL https://raw.githubusercontent.com/$remote_user/MagicMirror/master/package.json | grep -m1 version | awk -F\" '{print $4}')
+			local_version=$(grep -m1 version $keyfile | awk -F\" '{print $4}' | awk -F-  '{print $1}')
+			remote_version=$(curl -sL https://raw.githubusercontent.com/$remote_user/MagicMirror/master/$keyfile | grep -m1 version | awk -F\" '{print $4}')
 
 			# if on 2.9
 			if [ $local_version == '2.9.0' ]; then
@@ -624,7 +624,7 @@ if [ -d ~/$mfn ]; then
 					current_branch=$(LC_ALL=C git branch | grep "*" | awk '{print $2}')
 					echo current branch = $current_branch >>$logfile
 					# find out if package,json has run-start enabled
-					fix_runstart=$(grep run-start package.json| wc -l)
+					fix_runstart=$(grep run-start $keyfile| wc -l)
 					LC_ALL=C git status 2>&1 >>$logfile
 
 					# get the names of the files that are different locally
@@ -749,13 +749,13 @@ if [ -d ~/$mfn ]; then
 									#   # force to look like pi 2
 									#	 echo forcing architecture armv7l >>$logfile
 									#	 forced_arch='--arch=armv7l'
-									  sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < package.json 	>new_package.json
+									  sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < $keyfile 	>new_package.json
 									  if [ -s new_package.json ]; then
-									  	cp new_package.json package.json
+									  	cp new_package.json $keyfile
 									  	rm new_package.json
-									  	echo "package.json update for armv6l completed ok" >>$logfile
+									  	echo "$keyfile update for armv6l completed ok" >>$logfile
 									  else
-									  	echo "package.json update for armv6l failed " >>$logfile
+									  	echo "$keyfile update for armv6l failed " >>$logfile
 									  fi
 									  if [ ! -e run-start.sh ]; then
 										curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
@@ -770,9 +770,9 @@ if [ -d ~/$mfn ]; then
 									fi
 								    if [ $remote_version == '2.13.0' ]; then
 								      # fix downlevel node-ical
-								      sed '/node-ical/ c \         "node-ical\"\:\"^0.12.1\",' < package.json >new_package.json
-								      rm package.json
-								      mv new_package.json package.json
+								      sed '/node-ical/ c \         "node-ical\"\:\"^0.12.1\",' < $keyfile >new_package.json
+								      rm $keyfile
+								      mv new_package.json $keyfile
 									fi
 									echo "updating MagicMirror runtime, please wait" | tee -a $logfile
 									#echo npm  $forced_arch $JustProd install
@@ -791,20 +791,20 @@ if [ -d ~/$mfn ]; then
 										 sudo chmod 4755 node_modules/electron/dist/chrome-sandbox 2>/dev/null
 									fi
 									# if this is v 2.11 or higher
-									newver=$(grep -m1 version package.json | awk -F\" '{print $4}')
+									newver=$(grep -m1 version $keyfile | awk -F\" '{print $4}')
 									# no compound compare for strings, use not of reverse
 									# greater than or equal  means not less than
 									if [ ! "$newver" \< "2.11.0" ]; then
 									  # if one of the older devices, fix the start script to execute in serveronly mode
 									  if [ "$arch" == "armv6l" ]; then
 										  # fixup the start script
-										  sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < package.json 	>new_package.json
+										  sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < $keyfile 	>new_package.json
 										  if [ -s new_package.json ]; then
-										  	cp new_package.json package.json
+										  	cp new_package.json $keyfile
 										  	rm new_package.json
-										  	echo "package.json update for armv6l completed ok" >>$logfile
+										  	echo "$keyfile update for armv6l completed ok" >>$logfile
 										  else
-										  	echo "package.json update for armv6l failed " >>$logfile
+										  	echo "$keyfile update for armv6l failed " >>$logfile
 										  fi
 										  curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
 										  chmod +x run-start.sh
@@ -812,11 +812,11 @@ if [ -d ~/$mfn ]; then
 										  sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null
 									  elif [ "$arch" == "x86_64" -a "." == 'buster.' ]; then
 									  	cd fonts
-									  	   sed '/roboto-fontface/ c \    "roboto-fontface": "latest"' < package.json 	>new_package.json
+									  	   sed '/roboto-fontface/ c \    "roboto-fontface": "latest"' < $keyfile 	>new_package.json
 									  	   if [ -s new_package.json ]; then
-										  	cp new_package.json package.json
+										  	cp new_package.json $keyfile
 										  	rm new_package.json
-										  	echo "package.json update for x86 fontface completed ok" >>$logfile
+										  	echo "$keyfile update for x86 fontface completed ok" >>$logfile
 										  fi
 									  	cd -
 									  fi
@@ -847,8 +847,8 @@ if [ -d ~/$mfn ]; then
 											if [ $? == 0 ]; then
 												# if no package.json, we would have to create one
 												cd $mod
-												if [ ! -e package.json ]; then
-													echo -e ' \n\t ' package.json not found for module $mod for library $require >> $logfile
+												if [ ! -e $keyfile ]; then
+													echo -e ' \n\t ' $keyfile not found for module $mod for library $require >> $logfile
 													#if [ $doinstalls == $true ]; then
 														#echo adding package.json for module $mod | tee -a $logfile
 														npm init -y >>$logfile
@@ -857,12 +857,12 @@ if [ -d ~/$mfn ]; then
 													#fi
 												fi
 												# if package.json exists, could have been just added
-												if [ -e package.json ]; then
+												if [ -e $keyfile ]; then
 													# check for this library in the package.json
-													pk=$(grep $require package.json)
+													pk=$(grep $require $keyfile)
 													# if not present, need to do install
 													if [ "$pk." == "." ]; then
-														echo -e " \n\t require for \e[91m$require\e[0m in module \e[33m$mod\e[0m not found in package.json" | tee -a $logfile
+														echo -e " \n\t require for \e[91m$require\e[0m in module \e[33m$mod\e[0m not found in $keyfile" | tee -a $logfile
 														if [ $doinstalls == $true ]; then
 															echo installing $require for module $mod | tee -a $logfile
 															if [ $require == "node-fetch" ]; then 
@@ -900,14 +900,14 @@ if [ -d ~/$mfn ]; then
 									else
 										# get the list of INSTALLED modules with  package.json files
 										mtype=installed
-										modules=$(find  -maxdepth 2 -name 'package.json' -printf "%h\n" | cut -d'/' -f2 )
+										modules=$(find  -maxdepth 2 -name '$keyfile' -printf "%h\n" | cut -d'/' -f2 )
 									fi
 									modules=($modules) # split to array $modules
 									update_ga=$false
 									# if the array has entries in it
 									if [ ${#modules[@]} -gt  0 ]; then
 									  echo >> $logfile
-										echo -e '\n'"updating dependencies for $mtype modules with package.json files" | tee -a $logfile
+										echo -e '\n'"updating dependencies for $mtype modules with $keyfile files" | tee -a $logfile
 										echo
 										for module in "${modules[@]}"
 										do
@@ -926,10 +926,11 @@ if [ -d ~/$mfn ]; then
 											cd  $module
 												# process its dependencies
 												if [ $doinstalls == $true ]; then
+												   if [ $(grep "\"dependencies"\" $keyfile | wc -l) > 0 ]; then
 												     rm -rf node_modules 2>/dev/null
 													 sudo rm package-lock.json 2>/dev/null
 													 # check to see if the author created a rebuild process
-													 do_rebuild=$(grep -e "\"refresh\"" -e "\"update\""  package.json)   #" -e "\"rebuild\"
+													 do_rebuild=$(grep -e "\"refresh\"" -e "\"update\""  $keyfile)   #" -e "\"rebuild\"
 													 # split into separate lines if any
 													 commands=($do_rebuild)
 													 # were there any of the selected commands?
@@ -942,26 +943,29 @@ if [ -d ~/$mfn ]; then
 														done
 													 else
 													 	# does the package.json have a devDependencies section?
-													 	dev=$(grep devDependencies package.json)
+													 	dev=$(grep devDependencies $keyfile)
 													 	# yes, make it some other name to disable (dev will be analyzed and reported
 													 	#  EVEN tho they will not be installed with --omit=dev)
 													 	if [ "$dev". != "." ]; then
 													 		# change it to something else
-													 	  	sed 's/\"devDependencies\":/\"devxDependencies\":/' <package.json  >new_package.json
+													 	  	sed 's/\"devDependencies\":/\"devxDependencies\":/' <$keyfile  >new_package.json
  															# save the original package.json
- 															mv package.json save_package.json
+ 															mv $keyfile save_package.json
  															# move the modified into place
- 															mv new_package.json package.json
+ 															mv new_package.json $keyfile
 													 	fi
 													 	npm  $forced_arch $JustProd install 2>&1| tee -a $logfile
 													 	# if the sved original exists
 													 	if [ -e save_package.json ]; then
 													 	    # erase the current one 
-													 		rm package.json 2>/dev/null
+													 		rm $keyfile 2>/dev/null
 													 		# move the saved file back 
-													 		mv save_package.json package.json
+													 		mv save_package.json $keyfile
 													 	fi
 													 fi
+													else
+													   echo -e '\n\t'skipped processing for $module, has no runtime dependencies | tee -a $logfile
+													fi
 												else
 													echo -e '\n\t'skipped processing for $module, doing test run | tee -a $logfile
 												fi
