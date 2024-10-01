@@ -18,6 +18,8 @@ git_user_email=
 NODE_TESTED="v20.9.0" # "v16.13.1"
 NPM_TESTED="V10.1.0" # "V7.11.2"
 NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
+BAD_NODE_VERSION=21
+NODE_ACCEPTABLE=V22.9.0
 NODE_INSTALL=false
 known_list="request valid-url jsdom node-fetch digest-fetch"
 JustProd="--only=prod"
@@ -207,6 +209,11 @@ if [ -d ~/$mfn ]; then
 						echo -e "\e[0mNode currently installed. Checking version number.\e[0m" | tee -a $logfile
 				                echo -e "\e[0mMinimum Node version: \e[1m$NODE_TESTED\e[0m" | tee -a $logfile
 				                echo -e "\e[0mInstalled Node version: \e[1m$NODE_CURRENT\e[0m" | tee -a $logfile
+
+						if [ ${NODE_CURRENT:1:2} == $BAD_NODE_VERSION ]; then
+							NODE_TESTED=$NODE_ACCEPTABLE
+							NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
+						fi
 						# if needed
 						if verlt $NODE_CURRENT $NODE_TESTED; then
 							if [ "$t." != "." ]; then
@@ -250,6 +257,11 @@ if [ -d ~/$mfn ]; then
 		fi
 		echo -e "\e[0mMinimum Node version: \e[1m$NODE_TESTED\e[0m" | tee -a $logfile
 		echo -e "\e[0mInstalled Node version: \e[1m$NODE_CURRENT\e[0m" | tee -a $logfile
+
+		if [ ${NODE_CURRENT:1:2} == $BAD_NODE_VERSION ]; then
+			NODE_TESTED=$NODE_ACCEPTABLE
+			NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
+		fi
 
 		if verlt $NODE_CURRENT $NODE_TESTED; then
 			echo -e "\e[96mNode should be upgraded.\e[0m" | tee -a $logfile
