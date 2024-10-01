@@ -29,6 +29,9 @@ if [ -d ~/MagicMirror ]; then
 	logdir=$(dirname $($cmd -f "$0"))
 	# if the script was execute from the web
 	if [[ $logdir != *"MagicMirror/installers"* ]]; then
+		if [ ! -d ~/MagicMirror/installers ]; then
+			mkdir ~/MagicMirror/installers
+		fi
 		# use the MagicMirror/installers folder
 		cd ~/MagicMirror/installers >/dev/null
 		logdir=$(pwd)
@@ -160,6 +163,10 @@ if [ -d ~/MagicMirror ]; then
 				curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/pm2_MagicMirror.json >installers/pm2_MagicMirror.json
 				#curl -sl https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm.sh
 				#chmod +x installers/mm.sh
+			fi
+			if [ ! -e installers/mm.sh ]; then
+				curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm.sh
+				chmod +x installers/mm.sh
 			fi
 			if [ "$USER"  != "pi" ]; then
 				echo the user is not pi >>$logfile
