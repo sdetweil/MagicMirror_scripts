@@ -707,6 +707,7 @@ if [ -d ~/$mfn ]; then
 					if [ "$test_merge_output." == "." ]; then
 
 						need_merge=true
+						cp installers/mm.sh foo.sh
 						# may have to loop here if untracked files inhibit merge
 						# new path will clean up those files
 						while [ $need_merge == true ]
@@ -751,6 +752,32 @@ if [ -d ~/$mfn ]; then
 						done
 						# if no merge errors
 						if [ $merge_result == 0 ]; then
+							# did the installers folder go away (2.29)
+							if [ ! -d installers ]; then
+								echo "installers folder removed, adding back" >> $logfile
+								# yes, make it again
+								mkdir installers
+							fi
+							# if the the pm2 startup script does not exist
+							if [ ! -e installers/mm.sh ]; then
+								echo "mm.sh startup script not present" >> $logfile
+								# if we saved the prior
+								if [ -e foo.sh ]; then
+									echo "use saved copy to restore mm.sh" >> $logfile
+									# move it back
+									mv foo.sh installers/mm.sh
+								else
+									# oops didn't save mm.sh or it was lost on prior run
+									echo "oops, was no saved copy of mm.shm restore from repo" >> $logfile
+									curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm.sh
+									chmod +x installers/mm.sh
+								fi
+							fi
+							# if we got here and the saved copy is still around
+							if [ -e foo.sh ]; then
+								# remove it
+								rm foo.sh
+							fi
 							# some updates applied
 							if [ "$merge_output." != 'Already up to date.' -o $test_run == $true ]; then
 								# update any dependencies for base
