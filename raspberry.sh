@@ -133,7 +133,7 @@ if [ "$(echo $lsb_info | grep -i raspbian)." != '.' ]; then
 	if [ $(systemctl get-default | grep -i Graphical | wc -l) -ne 1 ]; then
 		# no
 		# is Xorg installed?
-		if [ "$(type Xorg)." == "." ]; then
+		if [ "$(type Xorg 2>/dev/null)." == "." ]; then
 			# no
 			echo wrong operating system type, need full desktop version | tee -a $logfile
 		else
