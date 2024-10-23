@@ -90,7 +90,9 @@ ARM=$(uname -m)
 echo installing on $ARM processor system >>$logfile
 lsb_info=$(cat /etc/os-release 2>/dev/null)
 echo the os is $lsb_info >> $logfile
-free -m >>$logfile
+if [ $mac != 'Darwin' ]; then
+	free -m >>$logfile
+fi
 OS=$(cat /etc/os-release 2>/dev/null  | grep VERSION_CODENAME |  awk -F= '{print $2}')
 #if [ $OS == "buster" ]; then
 #	echo install on buster is broken, ending install
@@ -203,20 +205,21 @@ if [ $mac != 'Darwin' ]; then
 	echo -e "\e[96mInstalling helper tools ...\e[0m" | tee -a $logfile
 	sudo apt-get --assume-yes   install  curl wget git build-essential unzip >>$logfile
 fi
-
-if [ $(LC_ALL=C free -m | grep Mem | awk '{print $2}') -le 512 ]; then
-	echo " this should be a raspberry pi 02w" >>$logfile
-	export NODE_OPTIONS="--max-old-space-size=1024"
-	# if the swap space is small
-	if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -lt 512 ]; then
-		echo "increasing swap space" >>$logfile
-		swapsize=$(grep "CONF_SWAPSIZE=" /etc/dphys-swapfile | awk -F= '{print $2}')
-		sudo dphys-swapfile swapoff >>$logfile
-		sudo sed "/CONF_SWAPSIZE=$swapsize/ c \CONF_SWAPSIZE=1024" -i /etc/dphys-swapfile
-		#sudo nano /etc/dphys-swapfile
-		sudo dphys-swapfile setup >>$logfile
-		sudo dphys-swapfile swapon >>$logfile
-	fi 
+if [ $mac != 'Darwin' ]; then 
+	if [ $(LC_ALL=C free -m | grep Mem | awk '{print $2}') -le 512 ]; then
+		echo " this should be a raspberry pi 02w" >>$logfile
+		export NODE_OPTIONS="--max-old-space-size=1024"
+		# if the swap space is small
+		if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -lt 512 ]; then
+			echo "increasing swap space" >>$logfile
+			swapsize=$(grep "CONF_SWAPSIZE=" /etc/dphys-swapfile | awk -F= '{print $2}')
+			sudo dphys-swapfile swapoff >>$logfile
+			sudo sed "/CONF_SWAPSIZE=$swapsize/ c \CONF_SWAPSIZE=1024" -i /etc/dphys-swapfile
+			#sudo nano /etc/dphys-swapfile
+			sudo dphys-swapfile setup >>$logfile
+			sudo dphys-swapfile swapon >>$logfile
+		fi 
+	fi
 fi
 
 npminstalled=$false
@@ -224,7 +227,7 @@ npminstalled=$false
 
 #if [ 
 # ($OS == "bullseye" -o $OS == "bookworm") -a 
-if [ $ARM != "armv6l" ]; then
+if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 	# check for node installed
 	nv=$(node -v 2>/dev/null)
 	t=$(dpkg --print-architecture| grep armhf)
