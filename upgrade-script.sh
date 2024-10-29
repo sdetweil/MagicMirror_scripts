@@ -497,16 +497,18 @@ if [ -d ~/$mfn ]; then
 		if [ $NPM_MAJOR -ge 8 ]; then
 			JustProd="--no-audit --no-fund --no-update-notifier"
 		fi
-		if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -le 512  ]; then
-			# only for arm architectures
-			if [[ $arch == a* ]]; then
-				export NODE_OPTIONS="--max-old-space-size=1024"
-				echo "increasing swap space" >>$logfile
-				sudo dphys-swapfile swapoff
-				sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile
-				#sudo nano /etc/dphys-swapfile
-				sudo dphys-swapfile setup
-				sudo dphys-swapfile swapon
+		if [ $mac != 'Darwin' ]; then
+			if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -le 512  ]; then
+				# only for arm architectures
+				if [[ $arch == a* ]]; then
+					export NODE_OPTIONS="--max-old-space-size=1024"
+					echo "increasing swap space" >>$logfile
+					sudo dphys-swapfile swapoff
+					sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile
+					#sudo nano /etc/dphys-swapfile
+					sudo dphys-swapfile setup
+					sudo dphys-swapfile swapon
+				fi
 			fi
 		fi
 	fi
@@ -955,7 +957,7 @@ if [ -d ~/$mfn ]; then
 												update_ga=$true
 												continue
 											fi
-											if [ ${module,0,3} == 'EXT-' ]; then
+											if [ ${module:0:3} == 'EXT-' ]; then
 												# this a Google Assistant extension
 												continue
 											fi
