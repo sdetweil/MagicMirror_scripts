@@ -515,9 +515,9 @@ if [ $doInstall == 1 ]; then
       rm package.json
       mv new_package.json package.json
 	fi
-	if [ $newver == '2.29.0' ]; then
-		sed -i 's/|| 22"/|| 22 || >=23"/' package.json
-	fi
+	#if [ $newver == '2.29.0' ]; then
+	#	sed -i 's/|| 22"/|| 22 || >=23"/' package.json
+	#fi
 	echo -e "\e[96mInstalling dependencies ...\e[0m" | tee -a $logfile
 	# check for NPM v8 or higher, changed parms for prod only on npm install
 	# get just the major version  number.. watch out for single or double digits
