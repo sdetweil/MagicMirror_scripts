@@ -133,7 +133,7 @@ if [ "$(echo $lsb_info | grep -i raspbian)." != '.' ]; then
 	if [ $(systemctl get-default | grep -i Graphical | wc -l) -ne 1 ]; then
 		# no
 		# is Xorg installed?
-		if [ "$(type Xorg 2>/dev/null)-$(type wayfire 2>/dev/null)." == "." ]; then
+		if [ "$(type Xorg 2>/dev/null)$(type wayfire 2>/dev/null)$(type labwc 2>/dev/null)." == "." ]; then
 			# no
 			echo wrong operating system type, need full desktop version | tee -a $logfile
 		else
@@ -144,7 +144,7 @@ if [ "$(echo $lsb_info | grep -i raspbian)." != '.' ]; then
 		exit 1
 	else
 		# graphical mode, is X running?
-		if [ "$(pidof Xorg)." == "." -a "$(pidof wayfire)." == "." ]; then
+		if [ "$(pidof Xorg)." == "." -a "$(pidof wayfire)." == "." -a "$(pidof labwc)." == "." ]; then
 			echo system running in command line mode, configured for graphical desktop, please reboot | tee -a $logfile
 			date +"install completed - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 			exit 2
@@ -477,15 +477,16 @@ if [ $doInstall == 1 ]; then
 	if [ ! -d installers ]; then
 		mkdir installers 2>/dev/null
 	fi
-	if [ $(grep version package.json | awk -F: '{print $2}') == '"2.11.0",' -a $ARM == 'x86_64' ]; then
-	    git fetch https://github.com/MagicMirrorOrg/MagicMirror.git develop >/dev/null 2>&1
+
+	newver=$(grep -i version package.json | awk -F\" '{ print $4 }')
+
+	if [ $newver == '2.11.0' -a $ARM == 'x86_64' ]; then
+	   git fetch https://github.com/MagicMirrorOrg/MagicMirror.git develop >/dev/null 2>&1
 		git branch develop FETCH_HEAD > /dev/null 2>&1
 		git checkout develop > /dev/null 2>&1
 	fi
 	# if this is v 2.11 or higher
-	newver=$(grep -i version package.json | awk -F\" '{ print $4 }')
 	if verlte "2.11.0" $newver; then
-
 	  # add fix to disable chromium update checks for a year from time started
 	  # sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null
 	  if [ "$ARM" == "x86_64" -a "$OS." == 'buster.' ]; then
@@ -510,6 +511,9 @@ if [ $doInstall == 1 ]; then
       sed '/node-ical/ c \         "node-ical\"\:\"^0.12.1\",' < package.json >new_package.json
       rm package.json
       mv new_package.json package.json
+	fi
+	if [ $newver == '2.29.0' ]; then
+		sed -i 's/|| 22"/|| 22 || >=23"/' package.json
 	fi
 	echo -e "\e[96mInstalling dependencies ...\e[0m" | tee -a $logfile
 	# check for NPM v8 or higher, changed parms for prod only on npm install
@@ -614,7 +618,7 @@ else
 	echo -e "\e[93mplymouth is not installed.\e[0m" | tee -a $logfile
 fi
 # Disable Screensaver
-
+if [ "$(type labwc 2>/dev/null)." == "." ]; then
 read -p "Do you want to disable the screen saver? (y/N)?" choice
 choice="${choice:-Y}"
 if [[ $choice =~ ^[Yy]$ ]]; then
@@ -825,7 +829,9 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 		fi		
 	fi
 fi
-
+else
+	echo "don't know how to disable screen saver on labwc compositor" | tee -a $logfile
+fi
 # Use pm2 control like a service MagicMirror
 read -p "Do you want use pm2 (node process manager) for auto starting of your MagicMirror (y/N)?" choice
 choice="${choice:-N}"
