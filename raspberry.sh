@@ -230,10 +230,11 @@ npminstalled=$false
 if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 	# check for node installed
 	nv=$(node -v 2>/dev/null)
-	t=$(dpkg --print-architecture| grep armhf)
-	if [ "$t." != "." ]; then
-		t=":armv7l"
-	fi 
+	#t=$(dpkg --print-architecture| grep armhf)
+	#if [ "$t." != "." ]; then
+	#	t=":armv7l"
+	#fi 
+        #t=
 	# if not
 	if [ "$nv." == "." ]; then
 		echo node not installed, trying via apt-get >>$logfile
