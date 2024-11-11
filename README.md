@@ -62,6 +62,7 @@ bash -c "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scrip
 ```
 
 ## Switch to the Midori or firefox or surf browser
+When using the Browser over server mode (instead of the built in electron browser) as shown by package.json using "start":"./run-start.sh", you MAY be able to change which Browser to use, see below
 
 Especially low powered devices like the Pi Zero W might struggle running MagicMirror with the Chromium browser. A simpler browser like Midori, Firefox, or Surf might be a good alternative in this case. To switch to using the Midori  browser, change the `MagicMirror/installers/mm.sh` file to include the `external_browser` variable like this:
 
