@@ -89,3 +89,11 @@ cd ~/MagicMirror
 export external_browser=surf
 DISPLAY=:0 npm start
 ```
+
+if you want to setup an external browser over server mode, then run the script 
+
+`setup_browser_over_server.sh`, copy/paste this line into the terminal window on your device:
+
+```bash
+bash -c "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/setup_browser_over_server.sh)"
+``
