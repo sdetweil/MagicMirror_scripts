@@ -96,4 +96,4 @@ if you want to setup an external browser over server mode, then run the script
 
 ```bash
 bash -c "$(curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/setup_browser_over_server.sh)"
-``
+```
