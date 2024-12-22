@@ -143,11 +143,13 @@ else
 
           firefox )
             # start firefox
+            echo "Starting $external_browser  browser now, have patience, it takes a minute"
             "$external_browser" http://localhost:$port  -kiosk >/dev/null 2>&1
             ;;
 
           surf )
             # start surf
+            echo "Starting $external_browser  browser now, have patience, it takes a minute"
             "$external_browser" -F http://localhost:$port >/dev/null 2>&1
             ;;
 
