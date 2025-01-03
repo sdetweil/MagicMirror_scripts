@@ -112,7 +112,11 @@ if [ -d ~/$mfn ]; then
 		# clear command hash
 		hash -r
 		echo the os is $(cat /etc/os-release 2>/dev/null)  >> $logfile
-		OS=$(LC_ALL=C cat /etc/os-release 2>/dev/null |grep VERSION_CODENAME |  awk -F= '{print $2}')
+		if [ $(cat /etc/os-release | wc -l) -lt 5 ]; then
+			OS=$(LC_ALL=C cat /etc/os-release 2>/dev/null | tr "\"\n" "\"t" |  awk -F "\"t" '{for (i=1;i<=NF;i++) print $i}' | grep VERSION_CODENAME |  awk -F= '{print $2}')
+		else
+			OS=$(LC_ALL=C cat /etc/os-release 2>/dev/null |grep VERSION_CODENAME |  awk -F= '{print $2}')
+		fi
 		#if [ $OS == "buster" ]; then
 		#	echo upgrade on buster is broken, ending install
 		#	exit 4
@@ -164,6 +168,7 @@ if [ -d ~/$mfn ]; then
 				nv=$(node -v 2>/dev/null)
 				# if not
 				t=$(dpkg --print-architecture| grep armhf)
+				echo "architecture from dpkg is $t" >>$logfile
 				ar=
 				if [ "$t." != "." ]; then
 					ar=":armv7l"
@@ -315,7 +320,7 @@ if [ -d ~/$mfn ]; then
 				# sudo apt-get install --only-upgrade libstdc++6
 				node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - 2>/dev/null)
 				echo Node release info = $node_info >> $logfile
-				if [ "$(echo $node_info | grep "Unsupported architecture")." == "." -a $ARM != "armv6l" ]; then
+				if [ "$(echo \"$node_info.\" | grep "Unsupported architecture")." == "." -a $ARM != "armv6l" ]; then
 					sudo apt-get install -y nodejs
 				else
 					echo node $NODE_STABLE_BRANCH version installer not available, doing manually >>$logfile
@@ -565,13 +570,15 @@ if [ -d ~/$mfn ]; then
 		remote_user=MagicMirrorOrg
 		# get the git remote name
 		remote=$(LC_ALL=C  git remote -v 2>/dev/null |  grep -m1 '.com/M'  | awk '{print $1}')
-		if [ $remote == 'upstream' ]; then
+		if [ "$remote" == 'upstream' ]; then
 			git remote remove upstream > /dev/null
 			git remote add upstream https://github.com/$remote_user/MagicMirror
 		else
-			if [ $(git remote -v | grep -m1 $remote | awk -F/ '{print $4}') == 'MichMich' ]; then
-				git remote remove $remote > /dev/null
-				git remote add $remote https://github.com/$remote_user/MagicMirror
+			if [ "$remote." != "." ]; then
+				if [ $(git remote -v | grep -m1 $remote | awk -F/ '{print $4}') == 'MichMich' ]; then
+					git remote remove $remote > /dev/null
+					git remote add $remote https://github.com/$remote_user/MagicMirror
+				fi
 			fi
 		fi
 		#remote_user=$(git remote -v 2>/dev/null |  grep fetch | awk -F/ '{print $4}')
@@ -709,7 +716,7 @@ if [ -d ~/$mfn ]; then
 					if [ "$test_merge_output." == "." ]; then
 
 						need_merge=true
-						cp installers/mm.sh foo.sh
+						cp installers/mm.sh foo.sh 2>/dev/null
 						# may have to loop here if untracked files inhibit merge
 						# new path will clean up those files
 						while [ $need_merge == true ]
@@ -934,9 +941,15 @@ if [ -d ~/$mfn ]; then
 												curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/dumpactivemodules.js> ~/$mfn/installers/dumpactivemodules.js
 												justloaded=true
 											fi
-										modules=$(node ../installers/dumpactivemodules.js)
-										if [ $justloaded == true ]; then
-										   rm ~/$mfn/installers/dumpactivemodules.js
+
+										if [ $(which node | wc -l) -gt 0 ]; then
+											# check if node is installed
+											modules=$(node ../installers/dumpactivemodules.js)
+											if [ $justloaded == true ]; then
+											   rm ~/$mfn/installers/dumpactivemodules.js 2>/dev/null
+											fi
+										else
+											modules=""
 										fi
 									else
 										# get the list of INSTALLED modules with  package.json files
@@ -965,51 +978,51 @@ if [ -d ~/$mfn ]; then
 											echo -e '\n\t''----------------------------------' | tee -a $logfile
 											# change to that directory
 											cd  $module
-												# process its dependencies
-												if [ $doinstalls == $true ]; then
-												   if [ $(grep "\"dependencies"\" $keyfile | wc -l) > 0 ]; then
-												     rm -rf node_modules 2>/dev/null
-													 sudo rm package-lock.json 2>/dev/null
-													 # check to see if the author created a rebuild process
-													 do_rebuild=$(grep -e "\"refresh\"" -e "\"update\""  $keyfile)   #" -e "\"rebuild\"
-													 # split into separate lines if any
-													 commands=($do_rebuild)
-													 # were there any of the selected commands?
-													 if [ ${#commands[@]} -gt  0 ]; then
-													 	# yes, loop thru them and execute
-													 	for command in "${commands[@]}"
+											# process its dependencies
+											if [ $doinstalls == $true ]; then
+											   if [ $(grep "\"dependencies"\" $keyfile | wc -l) > 0 ]; then
+													rm -rf node_modules 2>/dev/null
+													sudo rm package-lock.json 2>/dev/null
+													# check to see if the author created a rebuild process
+													do_rebuild=$(grep -e "\"refresh\"" -e "\"update\""  $keyfile)   #" -e "\"rebuild\"
+													# split into separate lines if any
+													commands=($do_rebuild)
+													# were there any of the selected commands?
+													if [ ${#commands[@]} -gt  0 ]; then
+														# yes, loop thru them and execute
+														for command in "${commands[@]}"
 														do
 															x=$(echo $command| tr -d \"| awk -F: '{print $1}' | tr -d \" |awk '{$1=$1};1'| xargs -i npm run {})
 															echo "$x" >>$logfile
 														done
-													 else
-													 	# does the package.json have a devDependencies section?
-													 	dev=$(grep devDependencies $keyfile)
-													 	# yes, make it some other name to disable (dev will be analyzed and reported
-													 	#  EVEN tho they will not be installed with --omit=dev)
-													 	if [ "$dev". != "." ]; then
-													 		# change it to something else
-													 	  	sed 's/\"devDependencies\":/\"devxDependencies\":/' <$keyfile  >new_package.json
- 															# save the original package.json
- 															mv $keyfile save_package.json
- 															# move the modified into place
- 															mv new_package.json $keyfile
-													 	fi
-													 	npm  $forced_arch $JustProd install 2>&1| tee -a $logfile
-													 	# if the sved original exists
-													 	if [ -e save_package.json ]; then
-													 	    # erase the current one 
-													 		rm $keyfile 2>/dev/null
-													 		# move the saved file back 
-													 		mv save_package.json $keyfile
-													 	fi
-													 fi
 													else
-													   echo -e '\n\t'skipped processing for $module, has no runtime dependencies | tee -a $logfile
+														# does the package.json have a devDependencies section?
+														dev=$(grep devDependencies $keyfile)
+														# yes, make it some other name to disable (dev will be analyzed and reported
+														#  EVEN tho they will not be installed with --omit=dev)
+														if [ "$dev". != "." ]; then
+															# change it to something else
+														  	sed 's/\"devDependencies\":/\"devxDependencies\":/' <$keyfile  >new_package.json
+															# save the original package.json
+															mv $keyfile save_package.json
+															# move the modified into place
+															mv new_package.json $keyfile
+														fi
+														npm  $forced_arch $JustProd install 2>&1| tee -a $logfile
+														# if the sved original exists
+														if [ -e save_package.json ]; then
+														    # erase the current one
+															rm $keyfile 2>/dev/null
+															# move the saved file back
+															mv save_package.json $keyfile
+														fi
 													fi
 												else
-													echo -e '\n\t'skipped processing for $module, doing test run | tee -a $logfile
+												   echo -e '\n\t'skipped processing for $module, has no runtime dependencies | tee -a $logfile
 												fi
+											else
+												echo -e '\n\t'skipped processing for $module, doing test run | tee -a $logfile
+											fi
 											# return to modules folder
 											cd - >/dev/null
 											echo -e '\n\t'"processing complete for module" $module | tee -a $logfile
@@ -1055,6 +1068,8 @@ if [ -d ~/$mfn ]; then
 			fi
 		else
 		  echo "Unable to determine upstream git repository" | tee -a $logfile
+		  date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+		  exit 3
 		fi
 		# should be in MagicMirror base
 		cd css
