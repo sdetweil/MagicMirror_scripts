@@ -156,12 +156,12 @@ if [ -d ~/$mfn ]; then
 			date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 			exit 1
 		else
-			if [ "${OS,,}." == 'bullseye.' -a $arch == 'armv6l' ]; then
+			if [ "${OS,,}." == 'buster.' -a $arch == 'armv6l' ]; then
 				echo
-				echo 'the latest MagicMirror version, 2.23 (April 4 2023) or above, will not run on Raspian Bullseye, due to browser limitations' | tee -a $logfile
+				echo 'the latest MagicMirror version, 2.23 (April 4 2023) or above, will not run on Raspian Buster, due to browser limitations' | tee -a $logfile
 				echo
 				date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
-				exit 2
+				exit 1
 			fi
 			if [ $arch != 'armv6l' ]; then
 				# check for node installed
