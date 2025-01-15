@@ -29,6 +29,7 @@ true=1
 false=0
 # Define the tested version of Node.js.
 NODE_TESTED="v20.18.1" # "v16.13.0"
+BAD_NODE_VERSION=21
 NPM_TESTED="V10.8.2" # "V7.11.2"
 NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 USER=`whoami`
@@ -244,11 +245,7 @@ npminstalled=$false
 if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 	# check for node installed
 	nv=$(node -v 2>/dev/null)
-	#t=$(dpkg --print-architecture| grep armhf)
-	#if [ "$t." != "." ]; then
-	#	t=":armv7l"
-	#fi 
-        #t=
+
 	# if not
 	if [ "$nv." == "." ]; then
 		echo node not installed, trying via apt-get >>$logfile
@@ -266,6 +263,8 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 			echo $ni >>$logfile
 			npminstalled=$true
 		fi
+	else
+	   echo installed node version is $nv >>$logfile
 	fi
 	# if n is not installed
 	NODE_MAJOR=20
@@ -273,20 +272,23 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 	if [ "$(which n)." == "." ]; then
 		# install it globally
 		sudo npm i n -g  >>$logfile 2>&1
-
 	fi
 	arch=
 	# is npm installed?
 	echo "installing on $OS" >>$logfile
-	npm=$(which npm)
-	if [ "$npm". != "." ]; then
-		npminstalled=$true
+	#npm=$(which npm)
+	#if [ "$npm". != "." ]; then
+	#	npminstalled=$true
 		# yes
 		# check if node is already at the right level
 		# get node version
 		v=$(node -v)
 		if [ "$v." != "." ]; then
-			if [ ${v:1:2} -lt ${NODE_TESTED:1:2} ]; then
+			testver=${NODE_TESTED:1:2}
+			if [ ${v:1:2} -lt $testver -o ${v:1:2} -eq $BAD_NODE_VERSION  ]; then
+				if [ ${v:1:2} -eq $BAD_NODE_VERSION ]; then
+					 NODE_TESTED=v22
+				fi
 				echo -e "\e[96minstalling correct version of node and npm, please wait\e[0m" | tee -a $logfile
 				#nr=$(sudo npm install -g n)
 				if [ "$t." != "." ]; then
@@ -305,7 +307,7 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 			date +"install aborted - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 			exit 2
 		fi
-	fi
+	#fi
 fi
 if [ $npminstalled == $false ]; then
 	# Check if we need to install or upgrade Node.js.
@@ -452,12 +454,12 @@ if [ $npminstalled == $false ]; then
 		#curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash -
 	  #
 		# if this is a mac, npm was installed with node
-		if [ $mac != 'Darwin' ]; then
-			sudo apt-get install -y npm  >>$logfile
-		fi
+		#if [ $mac != 'Darwin' ]; then
+		#	sudo apt-get install -y npm  >>$logfile
+		#fi
 		# update to the latest.
 		echo upgrading npm to latest >> $logfile
-		sudo npm i -g npm@${NPM_TESTED:1:1}  >>$logfile
+		sudo npm i -g npm@${NPM_TESTED:1:2}  >>$logfile
 		NPM_CURRENT='V'$(npm -v)
 		echo -e "\e[92mnpm installation Done! version=$NPM_CURRENT\e[0m" | tee -a $logfile
 	fi
