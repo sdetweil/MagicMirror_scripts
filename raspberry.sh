@@ -850,6 +850,25 @@ fi
 else
 	echo "don't know how to disable screen saver on labwc compositor" | tee -a $logfile
 fi
+
+if [ 0 == 1 ]; then
+	read -p "Would you like to select and install modules from our 3rd Party list now?\n \t if not, you can launch the module installer later" choice
+	choice="${choice:-N}"
+	if [[ $choice =~ ^[Yy]$ ]]; then
+		cd installers
+		if [ ! -d installer ]; then
+			echo ok, hang on while I setup
+			git clone https://github.com/sdetweil/installer 2>/dev/null
+			cd installer
+			npm ci >/dev/null 2>&1
+			cd ..
+		fi
+		cd installer
+		./installer.sh
+		cd ../..
+	fi
+fi
+
 # Use pm2 control like a service MagicMirror
 read -p "Do you want use pm2 (node process manager) for auto starting of your MagicMirror (y/N)?" choice
 choice="${choice:-N}"
@@ -973,6 +992,8 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 			# edit the pm2 config file for the right user
 			echo change $PM2_FILE >>$logfile
 			sed 's/pi/'$USER'/g' $PM2_FILE > pm2_MagicMirror_new.json
+			hf=$(echo $HOME |sed 's/\//\\\//g')
+		   sed -i 's/\~/'$hf'/g' mm.sh
 			# make sure to use the updated file
 			PM2_FILE=pm2_MagicMirror_new.json
 			# if this is a mac, home foilder is in a diffent place, fix that
@@ -1013,5 +1034,7 @@ if [ $pm2setup -eq $true ]; then
 	echo please see the help for the pm2 command, pm2 --help
 	echo pm2 status will show the running apps, and their runtime status
 fi
+
+
 
 date +"install completed - %a %b %e %H:%M:%S %Z %Y" >>$logfile

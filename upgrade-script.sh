@@ -822,6 +822,15 @@ if [ -d ~/$mfn ]; then
 								      rm $keyfile
 								      mv new_package.json $keyfile
 									fi
+									if [ $local_version == "2.30.0" ]; then
+										if [ $(ls modules  | grep Ext3 | wc -l ) -ne 0 ]; then
+											echo "Ver 2.30.0 and Ext3 modules loaded, install fix" >>$logfile
+											git fetch origin pull/3681/head:_fix_clipping 2>&1 >>$logfile
+											git switch _fix_clipping 2>&1 >>$logfile
+											git branch >>$logfile
+
+										fi
+									fi
 									echo "updating MagicMirror runtime, please wait" | tee -a $logfile
 									#echo npm  $forced_arch $JustProd install
 									rm -rf node_modules 2>/dev/null
