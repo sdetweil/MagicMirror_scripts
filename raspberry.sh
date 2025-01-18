@@ -902,7 +902,7 @@ if [[ $choice =~ ^[Yy]$ ]]; then
 			if [  "$pm2_installed." == "." ]; then
 				# install it.
 				echo pm2 not installed, installing >>$logfile
-				result=$(sudo npm  $up $JustProd install -g pm2 2>&1)
+				result=$(sudo npm  $up $JustProd install -g pm2@latest 2>&1)
 				echo pm2 install result $result >>$logfile
 				pm2cmd=pm2
 				# if this is a mac
