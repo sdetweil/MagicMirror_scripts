@@ -175,6 +175,16 @@ if [ $mac != 'Darwin' ]; then
        echo -e "\e[91mSystem date/time is in the past, please correct ...\e[0m" | tee -a $logfile
        exit 1
     fi
+	if [ $(echo $update | grep -i "Key is stored in legacy trusted.gpg keyring" | wc -l) -ne 0 ]; then
+	   if [ -d /etc/apt/trusted.gpg.d ]; then 
+         echo -e "\e[91mupdating apt key location\e[0m" | tee -a $logfile
+	     sudo mv /etc/apt/trusted.gpg /etc/apt/trusted.gpg.d/trusted.gpg
+		 update=$(LC_ALL=C  sudo apt-get update --allow-releaseinfo-change>&1)
+	   else 
+	     echo secure apt key folder '/etc/apt/trusted.gpg.d' does not exist >>$logfile
+	   fi
+       exit 1
+    fi
     # if we had  a problem with update
 	if [ $update_rc -ne 0 ]; then
 
