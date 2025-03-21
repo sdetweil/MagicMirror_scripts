@@ -15,14 +15,15 @@ git_active_lock='./.git/index.lock'
 lf=$'\n'
 git_user_name=
 git_user_email=
-NODE_TESTED="v20.18.1" # "v16.13.1"
-NPM_TESTED="V10.8.2" # "V7.11.2"
+NODE_TESTED="v22.14.0" #"v20.18.1" # "v16.13.0"
+NPM_TESTED="V10.9.2" #"V10.8.2" # "V7.11.2"
 NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 BAD_NODE_VERSION=21
 NODE_ACCEPTABLE=V22.9.0
 NODE_INSTALL=false
 known_list="request valid-url jsdom node-fetch digest-fetch"
 JustProd="--only=prod"
+switched=""
 NODE_OPTIONS=--max_old_space_size=4096
 
 trim() {
@@ -69,7 +70,7 @@ if [ -d ~/$mfn ]; then
 	echo update log will be in $logfile
 	date +"Upgrade started - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 	echo system is $(uname -a) >> $logfile
-	if [ $arch == "armv6ll" ]; then
+	if [ $arch == "armv6l" ]; then
 		echo -e "nodejs version required for MagicMirror is no longer available for armv6l (pi0w) devices\nupgrade aborted" | tee -a $logfile
 		date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 		exit 3
@@ -280,11 +281,19 @@ if [ -d ~/$mfn ]; then
 				if [ "$node_running." != "." ]; then
 					if [ "$(which pm2)." != "." ]; then
 						mmline=$(LC_ALL=C pm2 ls | grep -m1 online)
-						mm_running=$(echo $mmline | awk -F\│ '{print $2}' | xargs -i pm2 info {} 2>/dev/null | grep -i magic | grep "script path" | awk -F\│ '{print $3}' | grep -i magicmirror | wc -l)
-						if [ $mm_running -ne 0 ]; then
-							echo MagicMirror running under control of PM2, stopping | tee -a $logfile
-							pm2_name=$(echo $mmline | awk -F\│ '{print $3}' | tr -d [:blank:])
-							pm2 stop $pm2_name >/dev/null 2>&1
+						if [ "$mmline." != "." ]; then 
+							mm_running=$(echo $mmline | awk -F\│ '{print $2}' | xargs -i pm2 info {} 2>/dev/null | grep -i magic | grep "script path" | awk -F\│ '{print $3}' | grep -i magicmirror | wc -l)
+							if [ $mm_running -ne 0 ]; then
+								echo MagicMirror running under control of PM2, stopping | tee -a $logfile
+								pm2_name=$(echo $mmline | awk -F\│ '{print $3}' | tr -d [:blank:])
+								pm2 stop $pm2_name >/dev/null 2>&1
+							fi
+						else
+							echo -e "\e[91mA Node process is currently running. Can't upgrade." | tee -a $logfile
+							echo "Please quit all Node processes and restart the update." | tee -a $logfile
+							echo "running process(s) are"
+							echo -e "$node_running\e[0m" | tee -a $logfile
+							exit
 						fi
 					else
 						echo -e "\e[91mA Node process is currently running. Can't upgrade." | tee -a $logfile
@@ -406,29 +415,41 @@ if [ -d ~/$mfn ]; then
 		echo -e "\e[0mInstalled npm version: \e[1m$NPM_CURRENT\e[0m" | tee -a $logfile
 		if verlt $NPM_CURRENT $NPM_TESTED; then
 			echo -e "\e[96mnpm should be upgraded.\e[0m" | tee -a $logfile
-			NPM_INSTALL=true
-
+			NPM_INSTALL=true			
+			if [ $mac != 'Darwin' ]; then 
+				pid_command=pidof
+			else
+				pid_command=pgrep
+			fi
 			# Check if a node process is currently running.
 			# If so abort installation.
-			if pidof "npm" > /dev/null; then
+			if $pid_command "npm" > /dev/null; then
 				while true
 				do
 					if [ "$(which pm2)." != ".'" ]; then
 						mmline=$(LC_ALL=C pm2 ls | grep -m1 online)
-						pm2_name=$(echo $mmline | awk -F\│ '{print $3}' | tr -d [:blank:])
-						mm_running=$(LC_ALL=C echo $mmline | awk -F\│ '{print $2}' | xargs -i pm2 info {} 2>/dev/null | grep -i magic | grep "script path" | awk -F\│ '{print $3}' | grep -i magicmirror | wc -l)
-						# if running, stop it
-						if [ $mm_running -ne 0 ]; then
-							echo MagicMirror running under control of PM2, stopping | tee -a $logfile
-							# pm2_name=$(echo $mmline | awk -F\│ '{print $3}')
-							pm2 stop $pm2_name >/dev/null 2>&1
+						if [ "$mmline." != "." ]; then 
+							pm2_name=$(echo $mmline | awk -F\│ '{print $3}' | tr -d [:blank:])
+							mm_running=$(LC_ALL=C echo $mmline | awk -F\│ '{print $2}' | xargs -i pm2 info {} 2>/dev/null | grep -i magic | grep "script path" | awk -F\│ '{print $3}' | grep -i magicmirror | wc -l)
+							# if running, stop it
+							if [ $mm_running -ne 0 ]; then
+								echo MagicMirror running under control of PM2, stopping | tee -a $logfile
+								# pm2_name=$(echo $mmline | awk -F\│ '{print $3}')
+								pm2 stop $pm2_name >/dev/null 2>&1
+							else
+								break;
+							fi
 						else
-							break;
+							echo -e "\e[91mA npm process is currently running. Can't upgrade." | tee -a $logfile
+							echo "Please quit all npm processes and restart the installer." | tee -a $logfile
+							exit;		
+							break;				
 						fi
 					else
 						echo -e "\e[91mA npm process is currently running. Can't upgrade." | tee -a $logfile
 						echo "Please quit all npm processes and restart the installer." | tee -a $logfile
 						exit;
+						break
 					fi
 				done
 			fi
@@ -560,8 +581,10 @@ if [ -d ~/$mfn ]; then
 					done
 				fi
 		   fi
+
 		   # return to master branch
-		   git checkout master >> $logfile
+		   switched=$current_branch
+		   git checkout master -q >> $logfile
 		   r=$?
 		   if [ $r -ne 0 ]; then
 		   	  cd - >/dev/null
@@ -613,14 +636,25 @@ if [ -d ~/$mfn ]; then
 				echo upgrading from version $local_version to $remote_version | tee -a $logfile
 				# check to see  if MM is running
 				mmline=$(LC_ALL=C pm2 ls | grep -m1 online)
-				pm2_name=$(echo $mmline | awk -F\│ '{print $3}' |tr -d [:blank:])
-				mm_running=$(echo $mmline | awk -F\│ '{print $2}' | xargs -i pm2 info {} 2>/dev/null | grep -i magic | grep "script path" | awk -F\│ '{print $3}' | grep -i magicmirror | wc -l)
-				# if running, stop it
-				if [ $mm_running -ne 0 ]; then
-					echo MagicMirror running under control of PM2, stopping | tee -a $logfile
-					# pm2_name=$(echo $mmline | awk -F\│ '{print $3}')
-					pm2 stop $pm2_name | tee -a $logfile
-				fi
+				if [ "$mmline." != "." ]; then 
+					pm2_name=$(echo $mmline | awk -F\│ '{print $3}' |tr -d [:blank:])
+					mm_running=$(echo $mmline | awk -F\│ '{print $2}' | xargs -i pm2 info {} 2>/dev/null | grep -i magic | grep "script path" | awk -F\│ '{print $3}' | grep -i magicmirror | wc -l)
+					# if running, stop it
+					if [ $mm_running -ne 0 ]; then
+						echo MagicMirror running under control of PM2, stopping | tee -a $logfile
+						# pm2_name=$(echo $mmline | awk -F\│ '{print $3}')
+						pm2 stop $pm2_name | tee -a $logfile
+					fi
+				else
+					mmline=$(LC_ALL=C ps -ef | grep "node " | grep -v grep)
+					if [ "$mmline." != "." ]; then 
+					   echo some node app still running, please shutdown MagicMirror and restart 
+					   if [ "$switched." != "." ]; then
+					     git switch $switched >>$logfile
+					   fi
+					   exit 4
+					fi   
+				fi 
 				# get any files changed
 				changed=$(LC_ALL=C git status | grep modified | awk -F: '{print $2}')
 				# if any
@@ -674,9 +708,13 @@ if [ -d ~/$mfn ]; then
 						if [ $package_lock -eq 1 ]; then
 							echo "any *-lock.json files do not need to be saved"
 						fi
-						read -p "do you want to save these files for later   (Y/n)?" choice
-						choice="${choice:=y}"
-						echo save/restore files selection = $choice >> $logfile
+						if [ $doinstalls == $true ]; then
+							read -p "do you want to save these files for later   (Y/n)?" choice
+							choice="${choice:=y}"
+							echo save/restore files selection = $choice >> $logfile
+						else 
+							echo would prompt for file save option	
+						fi 
 						set_username=$false
 						if [[ $choice =~ ^[Yy]$ ]]; then
 							if [ $test_run == $false ]; then
@@ -1102,6 +1140,9 @@ if [ -d ~/$mfn ]; then
 			    #unalias git >/dev/null
 			 fi
 		#fi
+		if [ "$switched." != "." -a "$doinstalls" == "$false" ]; then 
+		    git switch $switched -q 2>&1 >>$logfile
+		fi
 	IFS=$SAVEIFS   # Restore IFS
 
 	if [ $stashed == $true ]; then

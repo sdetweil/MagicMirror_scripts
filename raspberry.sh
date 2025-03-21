@@ -28,9 +28,9 @@ doInstall=1
 true=1
 false=0
 # Define the tested version of Node.js.
-NODE_TESTED="v20.18.1" # "v16.13.0"
+NODE_TESTED="v22.14.0" #"v20.18.1" # "v16.13.0"
 BAD_NODE_VERSION=21
-NPM_TESTED="V10.8.2" # "V7.11.2"
+NPM_TESTED="V10.9.2" #"V10.8.2" # "V7.11.2"
 NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 USER=`whoami`
 PM2_FILE=pm2_MagicMirror.json
@@ -338,7 +338,7 @@ if [ $npminstalled == $false ]; then
 
 			# Check if a node process is currenlty running.
 			# If so abort installation.
-			node_running=$(ps -ef | grep node | grep -v grep | grep -v nodev) 
+			node_running=$(ps -ef | grep "node " | grep -v grep ) 
 			if [ "$node_running." != "." ]; then
 				echo -e "\e[91mA Node process is currently running. Can't upgrade." | tee -a $logfile
 				echo "Please quit all Node processes and restart the installer." | tee -a $logfile
