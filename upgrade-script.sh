@@ -883,7 +883,6 @@ if [ -d ~/$mfn ]; then
 												git fetch origin pull/3681/head:_fix_clipping 2>&1 >>$logfile
 												git switch _fix_clipping 2>&1 >>$logfile
 												git branch >>$logfile
-
 											fi
 										fi
 										echo "updating MagicMirror runtime, please wait" | tee -a $logfile
@@ -896,6 +895,9 @@ if [ -d ~/$mfn ]; then
 										fi
 										done_update=`date +"completed - %a %b %e %H:%M:%S %Z %Y"`
 										echo npm install $done_update on base >> $logfile
+										if [ ! -e node_modules/@electron/rebuild && -e node_modules/.bin/electron ]; then	  
+										   npm install @electron/rebuild >>$logfile 2>&1
+										fi    
 										# fixup permissions on sandbox file if it exists
 										if [ -f node_modules/electron/dist/chrome-sandbox ]; then
 											echo "fixing sandbox permissions" >>$logfile

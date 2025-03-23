@@ -578,7 +578,7 @@ if [ $doInstall == 1 ]; then
         fi
 		echo -e "\e[91mUnable to install dependencies! \e[0m" | tee -a $logfile
 		exit;
-	fi
+	fi	
 	# fixup permissions on sandbox file if it exists
 	if [ -f node_modules/electron/dist/chrome-sandbox ]; then
 		 echo "fixing sandbox permissions" >>$logfile
@@ -590,6 +590,10 @@ if [ $doInstall == 1 ]; then
 	# if the folder isn't there, then we have problems
 	if [ ! -d node_modules/electron ]; then
 		el_installed=$false
+	else		
+		if [ ! -e node_modules/@electron/rebuild ]; then	  
+			npm install @electron/rebuild >>$logfile 2>&1
+		fi  
 	fi
 	# if one of the older devices, fix the start script to execute in serveronly mode
 	if [ "$ARM" == "armv6l" -o "$ARM" == "i686" -o $el_installed == $false ]; then
