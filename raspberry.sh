@@ -99,7 +99,7 @@ OS=$(cat /etc/os-release 2>/dev/null  | grep VERSION_CODENAME |  awk -F= '{print
 #	echo install on buster is broken, ending install
 #	exit 4
 #fi
-if [ $ARM == "armv6ll" ]; then
+if [ $ARM == "armv6l" ]; then
 	echo -e "nodejs version required for MagicMirror is no longer available for armv6l (pi0w) devices\ninstallation aborted" | tee -a $logfile
 	date +"install ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 	exit 3
@@ -113,14 +113,6 @@ if [ "$OS." = "buster." ]; then
 	echo
 	date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 	exit 1
-	#NODE_TESTED="v18.18.0" # "v16.13.1"
-	#NPM_TESTED="V9.8.1" # "V7.11.2"
-	#NODE_MAJOR=18
-	#NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
-	#OS=$(lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
-	#if [ $OS == "buster" ]; then
-	#	NODE_MAJOR=18
-	#fi
 	:
 fi
 if [ "$(echo $lsb_info | grep -i raspbian)." != '.' ]; then
