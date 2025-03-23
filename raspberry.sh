@@ -163,7 +163,7 @@ function verlt() { [ "$1" = "$2" ] && return 1 || verlte $1 $2 ;}
 # Update before first apt-get
 if [ $mac != 'Darwin' ]; then
 	# clear the command hash
-   hash -r
+    hash -r
 	echo -e "\e[96mUpdating packages ...\e[0m" | tee -a $logfile
 	upgrade=$false
 	update=$(LC_ALL=C  sudo apt-get update --allow-releaseinfo-change>&1)
@@ -364,7 +364,12 @@ if [ $npminstalled == $false ]; then
 		# The NODE_STABLE_BRANCH variable will need to be manually adjusted when a new branch is released. (e.g. 7.x)
 		# Only tested (stable) versions are recommended as newer versions could break MagicMirror.
 		if [ $mac == 'Darwin' ]; then
-		  brew install node
+		  if [ "$(which n)" == "" ]; then 
+		     sudo npm i n -g >null
+		  fi
+		  if [ "$(which n)" ]; then 
+		     sudo n $NODE_TESTED>>$logfile 2>&1	 
+		  fi	 		  
 		else
 			if [ "$OS." == 'bullseye.' ]; then
 				if [ -e /usr/share/doc/nodejs/api/embedding.json.gz ]; then

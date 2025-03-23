@@ -98,7 +98,6 @@ if [ -d ~/$mfn ]; then
 		force=$true
 		test_run=$false
 	fi
-
         if [ $test_run == $true ]; then
                 echo
                 echo doing test run = true, NO updates will be applied! | tee -a $logfile
@@ -319,13 +318,27 @@ if [ -d ~/$mfn ]; then
 	if $NODE_INSTALL; then
 		if [ $doinstalls == $true ]; then
 			echo -e "\e[96mInstalling Node.js ...\e[0m" | tee -a $logfile
-            sudo apt-get --allow-releaseinfo-change update >>$logfile
 			# Fetch the latest version of Node.js from the selected branch
 			# The NODE_STABLE_BRANCH variable will need to be manually adjusted when a new branch is released. (e.g. 7.x)
 			# Only tested (stable) versions are recommended as newer versions could break MagicMirror.
 			if [ $mac == 'Darwin' ]; then
-			  brew install node
+			  if [ "$(which node)" == "" ]; then 
+			    :		  
+			  fi
+			  if [ "$(which node)" != "" ]; then
+				if [ "$(which n)." == "." ]; then
+					# install it globally
+					echo installing n globally >>$logfile
+					sudo npm i n -g  >>$logfile 2>&1
+				fi
+				# if n is installed
+				if [ "$(which n)." != "." ]; then	
+				   sudo n $NODE_TESTED >>$logfile 2>&1
+				fi
+			  fi
+			  #brew install node
 			else
+			    sudo apt-get --allow-releaseinfo-change update >>$logfile
 				echo $NODE_STABLE_BRANCH | grep -qE "x$"
 				if [ $? -eq 1 ]; then 
 					NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
@@ -631,491 +644,497 @@ if [ -d ~/$mfn ]; then
 			$(verlte  "$local_version" "$remote_version")
 			r=$?
 			if [ "$r" == 0 ]; then
-			# only change if they are different
-			if [ "$local_version." != "$remote_version." -o $force == $true -o $test_run == $true ]; then
-				echo upgrading from version $local_version to $remote_version | tee -a $logfile
-				# check to see  if MM is running
-				mmline=$(LC_ALL=C pm2 ls | grep -m1 online)
-				if [ "$mmline." != "." ]; then 
-					pm2_name=$(echo $mmline | awk -F\│ '{print $3}' |tr -d [:blank:])
-					mm_running=$(echo $mmline | awk -F\│ '{print $2}' | xargs -i pm2 info {} 2>/dev/null | grep -i magic | grep "script path" | awk -F\│ '{print $3}' | grep -i magicmirror | wc -l)
-					# if running, stop it
-					if [ $mm_running -ne 0 ]; then
-						echo MagicMirror running under control of PM2, stopping | tee -a $logfile
-						# pm2_name=$(echo $mmline | awk -F\│ '{print $3}')
-						pm2 stop $pm2_name | tee -a $logfile
-					fi
-				else
-					mmline=$(LC_ALL=C ps -ef | grep "node " | grep -v grep)
+				# only change if they are different
+				if [ "$local_version." != "$remote_version." -o $force == $true -o $test_run == $true ]; then					
+					echo upgrading from version $local_version to $remote_version | tee -a $logfile
+					# check to see  if MM is running
+					mmline=$(LC_ALL=C pm2 ls | grep -m1 online)
 					if [ "$mmline." != "." ]; then 
-					   echo some node app still running, please shutdown MagicMirror and restart 
-					   if [ "$switched." != "." ]; then
-					     git switch $switched >>$logfile
-					   fi
-					   exit 4
-					fi   
-				fi 
-				# get any files changed
-				changed=$(LC_ALL=C git status | grep modified | awk -F: '{print $2}')
-				# if any
-				if [ ${#changed[@]} -gt 0 ]; then
-					for file in "${changed[@]}"
-					do
-						# strip leading and trailing spaces
-						file=$(echo $file |  awk '{$1=$1};1')
-						fn=$(echo $file | awk -F/ '{print $NF}')
-						if [ "$fn" == "mm.sh" ]; then
-							# restore the file to current mm version state
-							# never need to modify again
-							git checkout $file >/dev/null
+						pm2_name=$(echo $mmline | awk -F\│ '{print $3}' |tr -d [:blank:])
+						mm_running=$(echo $mmline | awk -F\│ '{print $2}' | xargs -i pm2 info {} 2>/dev/null | grep -i magic | grep "script path" | awk -F\│ '{print $3}' | grep -i magicmirror | wc -l)
+						# if running, stop it
+						if [ $mm_running -ne 0 ]; then
+							echo MagicMirror running under control of PM2, stopping | tee -a $logfile
+							# pm2_name=$(echo $mmline | awk -F\│ '{print $3}')
+							pm2 stop $pm2_name | tee -a $logfile
 						fi
-					done
-				fi
-
-				# get the latest upgrade
-				echo fetching latest revisions | tee -a $logfile
-				LC_ALL=C git fetch $remote &>/dev/null
-				rc=$?
-				echo git fetch rc=$rc >>$logfile
-				if [ $rc -eq 0 ]; then
-
-					# need to get the current branch
-					current_branch=$(LC_ALL=C git branch | grep "*" | awk '{print $2}')
-					echo current branch = $current_branch >>$logfile
-					# find out if package,json has run-start enabled
-					fix_runstart=$(grep run-start $keyfile| wc -l)
-					LC_ALL=C git status 2>&1 >>$logfile
-
-					# get the names of the files that are different locally
-					diffs=$(LC_ALL=C git status 2>&1 | grep modified | awk -F: '{print $2}')
-
-					# split names into an array
-					diffs=($diffs) # split to array $diffs
-
-					# if there are different files (array size greater than zero)
-					if [ ${#diffs[@]} -gt 0 ]; then
-					  	package_lock=0
-						echo there are "${#diffs[@]}" local files that are different than the master repo | tee -a $logfile
-						echo | tee -a $logfile
-						for file in "${diffs[@]}"
+					else
+						mmline=$(LC_ALL=C ps -ef | grep "node " | grep -v grep)
+						if [ "$mmline." != "." ]; then 
+						echo some node app still running, please shutdown MagicMirror and restart 
+						if [ "$switched." != "." ]; then
+							git switch $switched -q >>$logfile
+						fi
+						exit 4
+						fi   
+					fi 
+					# get any files changed
+					changed=$(LC_ALL=C git status | grep modified | awk -F: '{print $2}')
+					# if any
+					if [ ${#changed[@]} -gt 0 ]; then
+						for file in "${changed[@]}"
 						do
-							echo "$file" | tee -a $logfile
-							if [ $(echo $file | grep  '\-lock.json$' | wc -l) -eq 1 ]; then
-								package_lock=$true
+							# strip leading and trailing spaces
+							file=$(echo $file |  awk '{$1=$1};1')
+							fn=$(echo $file | awk -F/ '{print $NF}')
+							if [ "$fn" == "mm.sh" ]; then
+								# restore the file to current mm version state
+								# never need to modify again
+								git checkout $file >/dev/null
 							fi
 						done
-						echo | tee -a $logfile
-						if [ $package_lock -eq 1 ]; then
-							echo "any *-lock.json files do not need to be saved"
-						fi
-						if [ $doinstalls == $true ]; then
-							read -p "do you want to save these files for later   (Y/n)?" choice
-							choice="${choice:=y}"
-							echo save/restore files selection = $choice >> $logfile
-						else 
-							echo would prompt for file save option	
-						fi 
-						set_username=$false
-						if [[ $choice =~ ^[Yy]$ ]]; then
-							if [ $test_run == $false ]; then
-							    git_user=$(git config --global --get user.email)
-								if [ "$git_user." == "." ]; then
-								   set_username=$true
-								    git config --global user.name "upgrade_script"
-									  git config --global user.email "script@upgrade.com"
-								fi
-								echo "erasing lock files" >> $logfile
-								git reset HEAD package-lock.json >/dev/null
-								sudo rm *-lock.json 2>/dev/null
-								sudo rm  vendor/*-lock.json 2>/dev/null
-								sudo rm  fonts/*-lock.json 2>/dev/null
-								git stash >>$logfile
-								stashed=$true
-							else
-								echo skipping save/restore, doing test run | tee -a $logfile
-							fi
-						else
+					fi
+
+					# get the latest upgrade
+					echo fetching latest revisions | tee -a $logfile
+					LC_ALL=C git fetch $remote &>/dev/null
+					rc=$?
+					echo git fetch rc=$rc >>$logfile
+					if [ $rc -eq 0 ]; then
+
+						# need to get the current branch
+						current_branch=$(LC_ALL=C git branch | grep "*" | awk '{print $2}')
+						echo current branch = $current_branch >>$logfile
+						# find out if package,json has run-start enabled
+						fix_runstart=$(grep run-start $keyfile| wc -l)
+						LC_ALL=C git status 2>&1 >>$logfile
+
+						# get the names of the files that are different locally
+						diffs=$(LC_ALL=C git status 2>&1 | grep modified | awk -F: '{print $2}')
+
+						# split names into an array
+						diffs=($diffs) # split to array $diffs
+
+						# if there are different files (array size greater than zero)
+						if [ ${#diffs[@]} -gt 0 ]; then
+							package_lock=0
+							echo there are "${#diffs[@]}" local files that are different than the master repo | tee -a $logfile
+							echo | tee -a $logfile
 							for file in "${diffs[@]}"
 							do
-								f="$(trim "$file")"
-								echo restoring $f from repo >> $logfile
-								if [ $test_run == $false ]; then
-									git checkout HEAD -- $f | tee -a $logfile
-								else
-								  echo skipping restore for $f, doing test run | tee -a $logfile
+								echo "$file" | tee -a $logfile
+								if [ $(echo $file | grep  '\-lock.json$' | wc -l) -eq 1 ]; then
+									package_lock=$true
 								fi
 							done
-						fi
-					else
-						echo no files different from github version >> $logfile
-					fi
-
-					# lets test merge, in memory, no changes to working directory or local repo
-					test_merge_output=$(LC_ALL=C git merge-tree `git merge-base $current_branch HEAD` HEAD $current_branch | grep "^<<<<<<<\|changed in both")
-					echo "test merge result rc='$test_merge_output' , if empty, no conflicts" >> $logfile
-
-					# if there were no conflicts reported
-					if [ "$test_merge_output." == "." ]; then
-
-						need_merge=true
-						cp installers/mm.sh foo.sh 2>/dev/null
-						# may have to loop here if untracked files inhibit merge
-						# new path will clean up those files
-						while [ $need_merge == true ]
-						do
-							if [ $test_run == $false ]; then
-								# go ahead and merge now
-								echo "executing merge, apply specified" >> $logfile
-								# get the text output of merge
-								merge_output=$(LC_ALL=C git merge $remote/$current_branch 2>&1)
-								# and its return code
-								merge_result=$?
-								# make any long line readable
-								merge_output=$(echo $merge_output | tr '|' '\n'| sed "s/create/\\${lf}create/g" | sed "s/mode\ change/\\${lf}mode\ change/g")
-								echo -e "merge result rc= $merge_result\n $merge_output">> $logfile
-							else
-							  	echo "skipping merge, only test run" >> $logfile
-								merge_output=''
-								merge_result=0
+							echo | tee -a $logfile
+							if [ $package_lock -eq 1 ]; then
+								echo "any *-lock.json files do not need to be saved"
 							fi
-							# watch out for files in new release could be overlayed
-							# erase them..
-							if [ $merge_result == 1 ]; then
-								# and the problem is untracked would overwritten
-								if [[ "$merge_output" =~ 'would be overwritten by merge' ]]; then
-									echo "found unexpected untracked files present in new release, removing"  >>$logfile
-									filelist=$(echo $merge_output | awk -F: '{print $3}' | awk -FP '{print $1}'| tr -d '\t'| tr ' ' '\n')
-									files=($filelist)
-									for file in "${files[@]}"
-									do
-										echo "removing file " $file >> $logfile
-										rm $file >/dev/null
-									done
-									# and we will go merge again
+							if [ $doinstalls == $true ]; then
+								read -p "do you want to save these files for later   (Y/n)?" choice
+								choice="${choice:=y}"
+								echo save/restore files selection = $choice >> $logfile
+							else 
+								echo would prompt for file save option	
+							fi 
+							set_username=$false
+							if [[ $choice =~ ^[Yy]$ ]]; then
+								if [ $test_run == $false ]; then
+									git_user=$(git config --global --get user.email)
+									if [ "$git_user." == "." ]; then
+									set_username=$true
+										git config --global user.name "upgrade_script"
+										git config --global user.email "script@upgrade.com"
+									fi
+									echo "erasing lock files" >> $logfile
+									git reset HEAD package-lock.json >/dev/null
+									sudo rm *-lock.json 2>/dev/null
+									sudo rm  vendor/*-lock.json 2>/dev/null
+									sudo rm  fonts/*-lock.json 2>/dev/null
+									git stash >>$logfile
+									stashed=$true
 								else
-								  # some other merge problem
-								  need_merge=false
+									echo skipping save/restore, doing test run | tee -a $logfile
 								fi
 							else
-								# no error, end loop
-								need_merge=false
-							fi
-						done
-						# if no merge errors
-						if [ $merge_result == 0 ]; then
-							# did the installers folder go away (2.29)
-							if [ ! -d installers ]; then
-								echo "installers folder removed, adding back" >> $logfile
-								# yes, make it again
-								mkdir installers
-							fi
-							# if the the pm2 startup script does not exist
-							if [ ! -e installers/mm.sh ]; then
-								echo "mm.sh startup script not present" >> $logfile
-								# if we saved the prior
-								if [ -e foo.sh ]; then
-									echo "use saved copy to restore mm.sh" >> $logfile
-									# move it back
-									mv foo.sh installers/mm.sh
-								else
-									# oops didn't save mm.sh or it was lost on prior run
-									echo "oops, was no saved copy of mm.shm restore from repo" >> $logfile
-									curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm.sh
-									chmod +x installers/mm.sh
-								fi
-							fi
-							# if we got here and the saved copy is still around
-							if [ -e foo.sh ]; then
-								# remove it
-								rm foo.sh
-							fi
-							# some updates applied
-							if [ "$merge_output." != 'Already up to date.' -o $test_run == $true ]; then
-								# update any dependencies for base
-								if [ $doinstalls == $true ]; then
-								  # if this is a pi zero
-									echo processor architecture is $arch >> $logfile
-									if [ "$arch" == "armv6l" -o $fix_runstart == $true ]; then
-									#   # force to look like pi 2
-									#	 echo forcing architecture armv7l >>$logfile
-									#	 forced_arch='--arch=armv7l'
-									  sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < $keyfile 	>new_package.json
-									  if [ -s new_package.json ]; then
-									  	cp new_package.json $keyfile
-									  	rm new_package.json
-									  	echo "$keyfile update for armv6l completed ok" >>$logfile
-									  else
-									  	echo "$keyfile update for armv6l failed " >>$logfile
-									  fi
-									  if [ ! -e run-start.sh ]; then
-										curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
-									    chmod +x run-start.sh
-									  fi
-								          # on armv6l, new OS's have a bug in browser support
-								          # install older chromium if not present
-									  v=$(uname -r); v=${v:0:1}
-									  if [ "$(which chromium-browser)." == '.' -a ${v:0:1} -ne 4 ]; then 
-								                sudo apt-get install -y chromium-browser >>$logfile
-								          fi 
-									fi
-								    if [ $remote_version == '2.13.0' ]; then
-								      # fix downlevel node-ical
-								      sed '/node-ical/ c \         "node-ical\"\:\"^0.12.1\",' < $keyfile >new_package.json
-								      rm $keyfile
-								      mv new_package.json $keyfile
-									fi
-									if [ $local_version == "2.30.0" ]; then
-										if [ $(ls modules  | grep Ext3 | wc -l ) -ne 0 ]; then
-											echo "Ver 2.30.0 and Ext3 modules loaded, install fix" >>$logfile
-											git fetch origin pull/3681/head:_fix_clipping 2>&1 >>$logfile
-											git switch _fix_clipping 2>&1 >>$logfile
-											git branch >>$logfile
-
-										fi
-									fi
-									echo "updating MagicMirror runtime, please wait" | tee -a $logfile
-									#echo npm  $forced_arch $JustProd install
-									rm -rf node_modules 2>/dev/null
-									if [ $NPM_MAJOR -ge 8 ]; then
-										npm  $forced_arch $JustProd --omit=dev $NODE_OPTIONS install 2>&1 | tee -a $logfile
+								for file in "${diffs[@]}"
+								do
+									f="$(trim "$file")"
+									echo restoring $f from repo >> $logfile
+									if [ $test_run == $false ]; then
+										git checkout HEAD -- $f | tee -a $logfile
 									else
-										npm  $forced_arch $JustProd $NODE_OPTIONS install 2>&1 | tee -a $logfile
+									echo skipping restore for $f, doing test run | tee -a $logfile
 									fi
-									done_update=`date +"completed - %a %b %e %H:%M:%S %Z %Y"`
-									echo npm install $done_update on base >> $logfile
-									# fixup permissions on sandbox file if it exists
-									if [ -f node_modules/electron/dist/chrome-sandbox ]; then
-										 echo "fixing sandbox permissions" >>$logfile
-										 sudo chown root node_modules/electron/dist/chrome-sandbox 2>/dev/null
-										 sudo chmod 4755 node_modules/electron/dist/chrome-sandbox 2>/dev/null
-									fi
-									# if this is v 2.11 or higher
-									newver=$(grep -m1 version $keyfile | awk -F\" '{print $4}')
-									# no compound compare for strings, use not of reverse
-									# greater than or equal  means not less than
-									if [ ! "$newver" \< "2.11.0" ]; then
-									  # if one of the older devices, fix the start script to execute in serveronly mode
-									  if [ "$arch" == "armv6l" ]; then
-										  # fixup the start script
-										  sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < $keyfile 	>new_package.json
-										  if [ -s new_package.json ]; then
-										  	cp new_package.json $keyfile
-										  	rm new_package.json
-										  	echo "$keyfile update for armv6l completed ok" >>$logfile
-										  else
-										  	echo "$keyfile update for armv6l failed " >>$logfile
-										  fi
-										  curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
-										  chmod +x run-start.sh
-										  # add fix to disable chromium update checks for a year from time started
-										  sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null
-									  elif [ "$arch" == "x86_64" -a "." == 'buster.' ]; then
-									  	cd fonts
-									  	   sed '/roboto-fontface/ c \    "roboto-fontface": "latest"' < $keyfile 	>new_package.json
-									  	   if [ -s new_package.json ]; then
-										  	cp new_package.json $keyfile
-										  	rm new_package.json
-										  	echo "$keyfile update for x86 fontface completed ok" >>$logfile
-										  fi
-									  	cd -
-									  fi
-									fi
-									if [ $newver == '2.11.0' ]; then
-									   npm install eslint
-									fi
-								fi
-								# process updates for modules after base changed
-								cd modules
-
-									# lets check for modules with missing requires (libs removed from MM base)
-									# this skips any default modules
-									echo -e '\n'Checking for modules with removed libraries | tee -a $logfile
-									mods=($(find . -maxdepth 2 -type f -name  node_helper.js | awk -F/ '{print $2}'))
-
-									# loop thru all the installed modules
-									for  mod in "${mods[@]}"
-									do
-										# get the require statements from the node helper
-										requires=($(egrep -v "^(//|/\*| \*)" $mod/*.js | grep -e "require("  | awk -F '[()]' '{print $2}' | grep -v "\.js" | tr -d '"' | tr -d "'"))
-										# loop thru the requires
-										for require in "${requires[@]}"
-										do
-											# check it against the list of known lib removals
-											case " $known_list " in (*" $require "*) :;; (*) false;; esac
-											# if found in the list
-											if [ $? == 0 ]; then
-												# if no package.json, we would have to create one
-												cd $mod
-												if [ ! -e $keyfile ]; then
-													echo -e ' \n\t ' $keyfile not found for module $mod for library $require >> $logfile
-													#if [ $doinstalls == $true ]; then
-														#echo adding package.json for module $mod | tee -a $logfile
-														npm init -y >>$logfile
-													#else
-													#	echo -e ' \n\t\t 'bypass adding package.json for module $mod, doing test run | tee -a $logfile
-													#fi
-												fi
-												# if package.json exists, could have been just added
-												if [ -e $keyfile ]; then
-													# check for this library in the package.json
-													pk=$(grep $require $keyfile)
-													# if not present, need to do install
-													if [ "$pk." == "." ]; then
-														echo -e " \n\t require for \e[91m$require\e[0m in module \e[33m$mod\e[0m not found in $keyfile" | tee -a $logfile
-														if [ $doinstalls == $true ]; then
-															echo installing $require for module $mod | tee -a $logfile
-															if [ $require == "node-fetch" ]; then 
-          															require="$require@2"
-															fi
-															npm install $require $JustProd --save >>$logfile
-														else
-															echo -e ' \n\t\t ' bypass installing $require for module $mod , doing test run  | tee -a $logfile
-														fi
-													fi
-												fi
-												cd - >/dev/null
-											fi
-										done
-									done
-
-									# now that we may have fixed up module with missing requires
-									#  lets see which ones need a new npm install with this version of MM
-
-									if [ $justActive == $true ]; then
-										# get the list of ACTIVE modules with  package.json files
-										mtype=active
-										justloaded=false
-											# if we want just the modules listed in config.js now
-											# make sure we have the coe locally to get that info
-											if [ ! -f ~/$mfn/installers/dumpactivemodules.js ]; then
-												echo downloading dumpactivemodules script >> $logfile
-												curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/dumpactivemodules.js> ~/$mfn/installers/dumpactivemodules.js
-												justloaded=true
-											fi
-
-										if [ $(which node | wc -l) -gt 0 ]; then
-											# check if node is installed
-											modules=$(node ../installers/dumpactivemodules.js)
-											if [ $justloaded == true ]; then
-											   rm ~/$mfn/installers/dumpactivemodules.js 2>/dev/null
-											fi
-										else
-											modules=""
-										fi
-									else
-										# get the list of INSTALLED modules with  package.json files
-										mtype=installed
-										modules=$(find  -maxdepth 2 -name '$keyfile' -printf "%h\n" | cut -d'/' -f2 )
-									fi
-									modules=($modules) # split to array $modules
-									update_ga=$false
-									# if the array has entries in it
-									if [ ${#modules[@]} -gt  0 ]; then
-									  echo >> $logfile
-										echo -e '\n'"updating dependencies for $mtype modules with $keyfile files" | tee -a $logfile
-										echo
-										for module in "${modules[@]}"
-										do
-											if [ $module == 'MMM-GoogleAssistant' ]; then
-												# we will process GA and extensions later
-												update_ga=$true
-												continue
-											fi
-											if [ ${module:0:3} == 'EXT-' ]; then
-												# this a Google Assistant extension
-												continue
-											fi
-											echo -e '\n\t'"processing for module" $module please wait | tee -a $logfile
-											echo -e '\n\t''----------------------------------' | tee -a $logfile
-											# change to that directory
-											cd  $module
-											# process its dependencies
-											if [ $doinstalls == $true ]; then
-											   if [ $(grep "\"dependencies"\" $keyfile | wc -l) > 0 ]; then
-													rm -rf node_modules 2>/dev/null
-													sudo rm package-lock.json 2>/dev/null
-													# check to see if the author created a rebuild process
-													do_rebuild=$(grep -e "\"refresh\"" -e "\"update\""  $keyfile)   #" -e "\"rebuild\"
-													# split into separate lines if any
-													commands=($do_rebuild)
-													# were there any of the selected commands?
-													if [ ${#commands[@]} -gt  0 ]; then
-														# yes, loop thru them and execute
-														for command in "${commands[@]}"
-														do
-															x=$(echo $command| tr -d \"| awk -F: '{print $1}' | tr -d \" |awk '{$1=$1};1'| xargs -i npm run {})
-															echo "$x" >>$logfile
-														done
-													else
-														# does the package.json have a devDependencies section?
-														dev=$(grep devDependencies $keyfile)
-														# yes, make it some other name to disable (dev will be analyzed and reported
-														#  EVEN tho they will not be installed with --omit=dev)
-														if [ "$dev". != "." ]; then
-															# change it to something else
-														  	sed 's/\"devDependencies\":/\"devxDependencies\":/' <$keyfile  >new_package.json
-															# save the original package.json
-															mv $keyfile save_package.json
-															# move the modified into place
-															mv new_package.json $keyfile
-														fi
-														npm  $forced_arch $JustProd install 2>&1| tee -a $logfile
-														# if the sved original exists
-														if [ -e save_package.json ]; then
-														    # erase the current one
-															rm $keyfile 2>/dev/null
-															# move the saved file back
-															mv save_package.json $keyfile
-														fi
-													fi
-												else
-												   echo -e '\n\t'skipped processing for $module, has no runtime dependencies | tee -a $logfile
-												fi
-											else
-												echo -e '\n\t'skipped processing for $module, doing test run | tee -a $logfile
-											fi
-											# return to modules folder
-											cd - >/dev/null
-											echo -e '\n\t'"processing complete for module" $module | tee -a $logfile
-											echo
-										done
-										if [ $update_ga == $true ]; then
-											if [ $doinstalls == $true ]; then
-												echo updating MMM-GoogleAssistant and its EXTensions | tee -a $logfile
-												cd "MMM-GoogleAssistant"
-												npm run refresh | tee -a $logfile
-												cd .. >/dev/null
-											else
-												echo -e '\n\t'skipped processing for MMM-GoogleAssistant and its EXTensions, doing test run | tee -a $logfile
-											fi
-										fi
-									else
-										echo "no modules found needing npm refresh" | tee -a $logfile
-									fi
-								# return to Magic Mirror folder
-								cd .. >/dev/null
-							else
-								echo "no changes detected for modules, skipping " | tee -a $logfile
+								done
 							fi
 						else
-							echo there were merge errors | tee -a $logfile
-							echo $merge_output | tee -a $logfile
-							echo you should examine and resolve them 	 | tee -a $logfile
-							echo using the command git log --oneline --decorate | tee -a $logfile
-							git log --oneline --decorate | tee -a $logfile
+							echo no files different from github version >> $logfile
+						fi
+
+						# lets test merge, in memory, no changes to working directory or local repo
+						test_merge_output=$(LC_ALL=C git merge-tree `git merge-base $current_branch HEAD` HEAD $current_branch | grep "^<<<<<<<\|changed in both")
+						echo "test merge result rc='$test_merge_output' , if empty, no conflicts" >> $logfile
+
+						# if there were no conflicts reported
+						if [ "$test_merge_output." == "." ]; then
+
+							need_merge=true
+							cp installers/mm.sh foo.sh 2>/dev/null
+							# may have to loop here if untracked files inhibit merge
+							# new path will clean up those files
+							while [ $need_merge == true ]
+							do
+								if [ $test_run == $false ]; then
+									# go ahead and merge now
+									echo "executing merge, apply specified" >> $logfile
+									# get the text output of merge
+									merge_output=$(LC_ALL=C git merge $remote/$current_branch 2>&1)
+									# and its return code
+									merge_result=$?
+									# make any long line readable
+									merge_output=$(echo $merge_output | tr '|' '\n'| sed "s/create/\\${lf}create/g" | sed "s/mode\ change/\\${lf}mode\ change/g")
+									echo -e "merge result rc= $merge_result\n $merge_output">> $logfile
+								else
+									echo "skipping merge, only test run" >> $logfile
+									merge_output=''
+									merge_result=0
+								fi
+								# watch out for files in new release could be overlayed
+								# erase them..
+								if [ $merge_result == 1 ]; then
+									# and the problem is untracked would overwritten
+									if [[ "$merge_output" =~ 'would be overwritten by merge' ]]; then
+										echo "found unexpected untracked files present in new release, removing"  >>$logfile
+										filelist=$(echo $merge_output | awk -F: '{print $3}' | awk -FP '{print $1}'| tr -d '\t'| tr ' ' '\n')
+										files=($filelist)
+										for file in "${files[@]}"
+										do
+											echo "removing file " $file >> $logfile
+											rm $file >/dev/null
+										done
+										# and we will go merge again
+									else
+									# some other merge problem
+									need_merge=false
+									fi
+								else
+									# no error, end loop
+									need_merge=false
+								fi
+							done
+							# if no merge errors
+							if [ $merge_result == 0 ]; then
+								# did the installers folder go away (2.29)
+								if [ ! -d installers ]; then
+									echo "installers folder removed, adding back" >> $logfile
+									# yes, make it again
+									mkdir installers
+								fi
+								# if the the pm2 startup script does not exist
+								if [ ! -e installers/mm.sh ]; then
+									echo "mm.sh startup script not present" >> $logfile
+									# if we saved the prior
+									if [ -e foo.sh ]; then
+										echo "use saved copy to restore mm.sh" >> $logfile
+										# move it back
+										mv foo.sh installers/mm.sh
+									else
+										# oops didn't save mm.sh or it was lost on prior run
+										echo "oops, was no saved copy of mm.shm restore from repo" >> $logfile
+										curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm.sh
+										chmod +x installers/mm.sh
+									fi
+								fi
+								# if we got here and the saved copy is still around
+								if [ -e foo.sh ]; then
+									# remove it
+									rm foo.sh
+								fi
+								# some updates applied
+								if [ "$merge_output." != 'Already up to date.' -o $test_run == $true ]; then
+									# update any dependencies for base
+									if [ $doinstalls == $true ]; then
+									# if this is a pi zero
+										echo processor architecture is $arch >> $logfile
+										if [ "$arch" == "armv6l" -o $fix_runstart == $true ]; then
+										#   # force to look like pi 2
+										#	 echo forcing architecture armv7l >>$logfile
+										#	 forced_arch='--arch=armv7l'
+										sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < $keyfile 	>new_package.json
+										if [ -s new_package.json ]; then
+											cp new_package.json $keyfile
+											rm new_package.json
+											echo "$keyfile update for armv6l completed ok" >>$logfile
+										else
+											echo "$keyfile update for armv6l failed " >>$logfile
+										fi
+										if [ ! -e run-start.sh ]; then
+											curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
+											chmod +x run-start.sh
+										fi
+											# on armv6l, new OS's have a bug in browser support
+											# install older chromium if not present
+										v=$(uname -r); v=${v:0:1}
+										if [ "$(which chromium-browser)." == '.' -a ${v:0:1} -ne 4 ]; then 
+													sudo apt-get install -y chromium-browser >>$logfile
+											fi 
+										fi
+										if [ $remote_version == '2.13.0' ]; then
+										# fix downlevel node-ical
+										sed '/node-ical/ c \         "node-ical\"\:\"^0.12.1\",' < $keyfile >new_package.json
+										rm $keyfile
+										mv new_package.json $keyfile
+										fi
+										if [ $local_version == "2.30.0" ]; then
+											if [ $(ls modules  | grep Ext3 | wc -l ) -ne 0 ]; then
+												echo "Ver 2.30.0 and Ext3 modules loaded, install fix" >>$logfile
+												git fetch origin pull/3681/head:_fix_clipping 2>&1 >>$logfile
+												git switch _fix_clipping 2>&1 >>$logfile
+												git branch >>$logfile
+
+											fi
+										fi
+										echo "updating MagicMirror runtime, please wait" | tee -a $logfile
+										#echo npm  $forced_arch $JustProd install
+										rm -rf node_modules 2>/dev/null
+										if [ $NPM_MAJOR -ge 8 ]; then
+											npm  $forced_arch $JustProd --omit=dev $NODE_OPTIONS install 2>&1 | tee -a $logfile
+										else
+											npm  $forced_arch $JustProd $NODE_OPTIONS install 2>&1 | tee -a $logfile
+										fi
+										done_update=`date +"completed - %a %b %e %H:%M:%S %Z %Y"`
+										echo npm install $done_update on base >> $logfile
+										# fixup permissions on sandbox file if it exists
+										if [ -f node_modules/electron/dist/chrome-sandbox ]; then
+											echo "fixing sandbox permissions" >>$logfile
+											sudo chown root node_modules/electron/dist/chrome-sandbox 2>/dev/null
+											sudo chmod 4755 node_modules/electron/dist/chrome-sandbox 2>/dev/null
+										fi
+										# if this is v 2.11 or higher
+										newver=$(grep -m1 version $keyfile | awk -F\" '{print $4}')
+										# no compound compare for strings, use not of reverse
+										# greater than or equal  means not less than
+										if [ ! "$newver" \< "2.11.0" ]; then
+										# if one of the older devices, fix the start script to execute in serveronly mode
+										if [ "$arch" == "armv6l" ]; then
+											# fixup the start script
+											sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < $keyfile 	>new_package.json
+											if [ -s new_package.json ]; then
+												cp new_package.json $keyfile
+												rm new_package.json
+												echo "$keyfile update for armv6l completed ok" >>$logfile
+											else
+												echo "$keyfile update for armv6l failed " >>$logfile
+											fi
+											curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
+											chmod +x run-start.sh
+											# add fix to disable chromium update checks for a year from time started
+											sudo touch /etc/chromium-browser/customizations/01-disable-update-check;echo CHROMIUM_FLAGS=\"\$\{CHROMIUM_FLAGS\} --check-for-update-interval=31536000\" | sudo tee /etc/chromium-browser/customizations/01-disable-update-check >/dev/null
+										elif [ "$arch" == "x86_64" -a "." == 'buster.' ]; then
+											cd fonts
+											sed '/roboto-fontface/ c \    "roboto-fontface": "latest"' < $keyfile 	>new_package.json
+											if [ -s new_package.json ]; then
+												cp new_package.json $keyfile
+												rm new_package.json
+												echo "$keyfile update for x86 fontface completed ok" >>$logfile
+											fi
+											cd -
+										fi
+										fi
+										if [ $newver == '2.11.0' ]; then
+										npm install eslint
+										fi
+									fi
+									# process updates for modules after base changed
+									cd modules
+
+										# lets check for modules with missing requires (libs removed from MM base)
+										# this skips any default modules
+										echo -e '\n'Checking for modules with removed libraries | tee -a $logfile
+										mods=($(find . -maxdepth 2 -type f -name  node_helper.js | awk -F/ '{print $2}'))
+
+										# loop thru all the installed modules
+										for  mod in "${mods[@]}"
+										do
+											# get the require statements from the node helper
+											requires=($(egrep -v "^(//|/\*| \*)" $mod/*.js | grep -e "require("  | awk -F '[()]' '{print $2}' | grep -v "\.js" | tr -d '"' | tr -d "'"))
+											# loop thru the requires
+											for require in "${requires[@]}"
+											do
+												# check it against the list of known lib removals
+												case " $known_list " in (*" $require "*) :;; (*) false;; esac
+												# if found in the list
+												if [ $? == 0 ]; then
+													# if no package.json, we would have to create one
+													cd $mod
+													if [ ! -e $keyfile ]; then
+														echo -e ' \n\t ' $keyfile not found for module $mod for library $require >> $logfile
+														#if [ $doinstalls == $true ]; then
+															#echo adding package.json for module $mod | tee -a $logfile
+															npm init -y >>$logfile
+														#else
+														#	echo -e ' \n\t\t 'bypass adding package.json for module $mod, doing test run | tee -a $logfile
+														#fi
+													fi
+													# if package.json exists, could have been just added
+													if [ -e $keyfile ]; then
+														# check for this library in the package.json
+														pk=$(grep $require $keyfile)
+														# if not present, need to do install
+														if [ "$pk." == "." ]; then
+															echo -e " \n\t require for \e[91m$require\e[0m in module \e[33m$mod\e[0m not found in $keyfile" | tee -a $logfile
+															if [ $doinstalls == $true ]; then
+																echo installing $require for module $mod | tee -a $logfile
+																if [ $require == "node-fetch" ]; then 
+																		require="$require@2"
+																fi
+																npm install $require $JustProd --save >>$logfile
+															else
+																echo -e ' \n\t\t ' bypass installing $require for module $mod , doing test run  | tee -a $logfile
+															fi
+														fi
+													fi
+													cd - >/dev/null
+												fi
+											done
+										done
+
+										# now that we may have fixed up module with missing requires
+										#  lets see which ones need a new npm install with this version of MM
+
+										if [ $justActive == $true ]; then
+											# get the list of ACTIVE modules with  package.json files
+											mtype=active
+											justloaded=false
+												# if we want just the modules listed in config.js now
+												# make sure we have the coe locally to get that info
+												if [ ! -f ~/$mfn/installers/dumpactivemodules.js ]; then
+													echo downloading dumpactivemodules script >> $logfile
+													curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/dumpactivemodules.js> ~/$mfn/installers/dumpactivemodules.js
+													justloaded=true
+												fi
+
+											if [ $(which node | wc -l) -gt 0 ]; then
+												# check if node is installed
+												modules=$(node ../installers/dumpactivemodules.js)
+												if [ $justloaded == true ]; then
+												rm ~/$mfn/installers/dumpactivemodules.js 2>/dev/null
+												fi
+											else
+												modules=""
+											fi
+										else
+											# get the list of INSTALLED modules with  package.json files
+											mtype=installed
+											modules=$(find  -maxdepth 2 -name '$keyfile' -printf "%h\n" | cut -d'/' -f2 )
+										fi
+										modules=($modules) # split to array $modules
+										update_ga=$false
+										# if the array has entries in it
+										if [ ${#modules[@]} -gt  0 ]; then
+										echo >> $logfile
+											echo -e '\n'"updating dependencies for $mtype modules with $keyfile files" | tee -a $logfile
+											echo
+											for module in "${modules[@]}"
+											do
+												if [ $module == 'MMM-GoogleAssistant' ]; then
+													# we will process GA and extensions later
+													update_ga=$true
+													continue
+												fi
+												if [ ${module:0:3} == 'EXT-' ]; then
+													# this a Google Assistant extension
+													continue
+												fi
+												echo -e '\n\t'"processing for module" $module please wait | tee -a $logfile
+												echo -e '\n\t''----------------------------------' | tee -a $logfile
+												# change to that directory
+												cd  $module
+												# process its dependencies
+												if [ $doinstalls == $true ]; then
+												if [ $(grep "\"dependencies"\" $keyfile | wc -l) > 0 ]; then
+														rm -rf node_modules 2>/dev/null
+														sudo rm package-lock.json 2>/dev/null
+														# check to see if the author created a rebuild process
+														do_rebuild=$(grep -e "\"refresh\"" -e "\"update\""  $keyfile)   #" -e "\"rebuild\"
+														# split into separate lines if any
+														commands=($do_rebuild)
+														# were there any of the selected commands?
+														if [ ${#commands[@]} -gt  0 ]; then
+															# yes, loop thru them and execute
+															for command in "${commands[@]}"
+															do
+																x=$(echo $command| tr -d \"| awk -F: '{print $1}' | tr -d \" |awk '{$1=$1};1'| xargs -i npm run {})
+																echo "$x" >>$logfile
+															done
+														else
+															# does the package.json have a devDependencies section?
+															dev=$(grep devDependencies $keyfile)
+															# yes, make it some other name to disable (dev will be analyzed and reported
+															#  EVEN tho they will not be installed with --omit=dev)
+															if [ "$dev". != "." ]; then
+																# change it to something else
+																sed 's/\"devDependencies\":/\"devxDependencies\":/' <$keyfile  >new_package.json
+																# save the original package.json
+																mv $keyfile save_package.json
+																# move the modified into place
+																mv new_package.json $keyfile
+															fi
+															npm  $forced_arch $JustProd install 2>&1| tee -a $logfile
+															# if the sved original exists
+															if [ -e save_package.json ]; then
+																# erase the current one
+																rm $keyfile 2>/dev/null
+																# move the saved file back
+																mv save_package.json $keyfile
+															fi
+														fi
+													else
+													echo -e '\n\t'skipped processing for $module, has no runtime dependencies | tee -a $logfile
+													fi
+												else
+													echo -e '\n\t'skipped processing for $module, doing test run | tee -a $logfile
+												fi
+												# return to modules folder
+												cd - >/dev/null
+												echo -e '\n\t'"processing complete for module" $module | tee -a $logfile
+												echo
+											done
+											if [ $update_ga == $true ]; then
+												if [ $doinstalls == $true ]; then
+													echo updating MMM-GoogleAssistant and its EXTensions | tee -a $logfile
+													cd "MMM-GoogleAssistant"
+													npm run refresh | tee -a $logfile
+													cd .. >/dev/null
+												else
+													echo -e '\n\t'skipped processing for MMM-GoogleAssistant and its EXTensions, doing test run | tee -a $logfile
+												fi
+											fi
+										else
+											echo "no modules found needing npm refresh" | tee -a $logfile
+										fi
+									# return to Magic Mirror folder
+									cd .. >/dev/null
+								else
+									echo "no changes detected for modules, skipping " | tee -a $logfile
+								fi
+							else
+								echo there were merge errors | tee -a $logfile
+								echo $merge_output | tee -a $logfile
+								echo you should examine and resolve them 	 | tee -a $logfile
+								echo using the command git log --oneline --decorate | tee -a $logfile
+								git log --oneline --decorate | tee -a $logfile
+							fi
+						else
+							echo "there are merge conflicts to be resolved, no changes have been applied" | tee -a $logfile
+							echo $test_merge_output | tee -a $logfile
 						fi
 					else
-						echo "there are merge conflicts to be resolved, no changes have been applied" | tee -a $logfile
-						echo $test_merge_output | tee -a $logfile
+						echo "MagicMirror git fetch failed" | tee -a $logfile
 					fi
 				else
-					echo "MagicMirror git fetch failed" | tee -a $logfile
-				fi
-			else
-			  echo "local version $local_version already same as master $remote_version" | tee -a $logfile
-			fi
+					echo "local version $local_version already same as master $remote_version" | tee -a $logfile
+					if [ "$switched." != "." ]; then
+						git switch $switched -q >>$logfile
+					fi	
+				fi		
 			else
 				echo "local version $local_version newer than remote version $remote_version, aborting update" | tee -a $logfile
+				if [ "$switched." != "." ]; then
+					git switch $switched -q >>$logfile
+				fi	
 			fi
 		else
 		  echo "Unable to determine upstream git repository" | tee -a $logfile
