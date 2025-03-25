@@ -1039,11 +1039,17 @@ if [ -d ~/$mfn ]; then
 												if [ ${module:0:3} == 'EXT-' ]; then
 													# this a Google Assistant extension
 													continue
-												fi
-												echo -e '\n\t'"processing for module" $module please wait | tee -a $logfile
-												echo -e '\n\t''----------------------------------' | tee -a $logfile
+												fi												ß
 												# change to that directory
 												cd  $module
+												# if module from specific author that withdrew all support, skip update.. im hopes
+												if [ "$(git remote -v | grep -i -m1 bugsounet)." != "." ]; then 
+													cd ..
+													echo -e '\n\t'"processing for module" $module skipped, repo no longer available | tee -a $logfile
+													continue
+												fi 	
+												echo -e '\n\t'"processing for module" $module please wait | tee -a $logfile
+												echo -e '\n\t''----------------------------------' | tee -a $logfile												
 												# process its dependencies
 												if [ $doinstalls == $true ]; then
 												if [ $(grep "\"dependencies"\" $keyfile | wc -l) > 0 ]; then
