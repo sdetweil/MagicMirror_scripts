@@ -214,7 +214,7 @@ if [ $mac != 'Darwin' ]; then
 	if [ $upgrade -eq $true ]; then
 	   sudo apt-get install pv -y >>$logfile
 	   echo "apt-get upgrade  started" >> $logfile
-	   upgrade_result=$(sudo apt-get --assume-yes upgrade  2>&1 | pv -l -p)
+	   upgrade_result=$(sudo apt-get --assume-yes full-upgrade  2>&1 | pv -l -p)
 		 upgrade_rc=$?
 		 echo apt-get upgrade result ="rc=$upgrade_rc $upgrade_result" >> $logfile
 	fi
