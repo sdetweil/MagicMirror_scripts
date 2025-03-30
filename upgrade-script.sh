@@ -1039,7 +1039,7 @@ if [ -d ~/$mfn ]; then
 												if [ ${module:0:3} == 'EXT-' ]; then
 													# this a Google Assistant extension
 													continue
-												fi												ß
+												fi												
 												# change to that directory
 												cd  $module
 												# if module from specific author that withdrew all support, skip update.. im hopes
