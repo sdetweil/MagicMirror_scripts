@@ -1,5 +1,9 @@
 # MagicMirror² installation and setup scripts
 
+# DO NOT CLONE this repo, execute by copy/pasting one of the command lines below
+# that way you always use the most up to date script(s)
+# DO NOT CLONE this repo
+
 
 These scripts can be used to automate installation and release upgrades.
 
