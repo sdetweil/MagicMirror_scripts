@@ -257,10 +257,10 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 		ni=$(sudo apt-get install "nodejs$t" "npm$t" -y 2>&1)
 		# log it
 		echo $ni >>$logfile
-		# if npm not installed
-		echo npm not installed, trying via apt-get >>$logfile
+		# if npm not installed		
 		if [ "$(npm -v 2>/dev/null)." == "." ]; then
-			echo npm installed now, install n >>$logfile
+			echo npm not installed, trying via apt-get >>$logfile
+			#echo npm installed now, install npm >>$logfile
 			# install it too
 			ni=$(sudo apt-get install npm -y 2>&1)
 			echo $ni >>$logfile
@@ -270,7 +270,7 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 	   echo installed node version is $nv >>$logfile
 	fi
 	# if n is not installed
-	NODE_MAJOR=20
+	NODE_MAJOR=22
 	# if n is not installed
 	if [ "$(which n)." == "." ]; then
 		# install it globally
@@ -285,7 +285,7 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 		# yes
 		# check if node is already at the right level
 		# get node version
-		v=$(node -v)
+		v=$(node -v 2>/dev/null)
 		if [ "$v." != "." ]; then
 			testver=${NODE_TESTED:1:2}
 			if [ ${v:1:2} -lt $testver -o ${v:1:2} -eq $BAD_NODE_VERSION  ]; then
@@ -299,7 +299,7 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 				fi 
 				sudo n ${NODE_TESTED:1} $t  >> $logfile
 				PATH="$PATH"
-				nodev=$(node -v)
+				nodev=$(node -v 2>/dev/null)
 				if [ "${nodev:0:3}" != ${NODE_TESTED:0:3} ]; then
 					echo node failed to install, exiting | tee -a $logfile
 					exit
