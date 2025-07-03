@@ -297,9 +297,10 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 				if [ "$t." != "." ]; then
 					t="--arch armv7l"
 				fi 
-				sudo n ${NODE_TESTED:1} $t  >> $logfile
-				PATH="$PATH"
+				sudo n ${NODE_TESTED:1:2} $t  >> $logfile
+				hash -r
 				nodev=$(node -v 2>/dev/null)
+				echo "node version $nodev was installed" >$logfile
 				if [ "${nodev:0:3}" != ${NODE_TESTED:0:3} ]; then
 					echo node failed to install, exiting | tee -a $logfile
 					exit
