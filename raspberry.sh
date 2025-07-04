@@ -636,17 +636,19 @@ if command_exists plymouth; then
 			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/MagicMirror.script >MagicMirror.script
 			cd - >/dev/null
 		fi
-		if sudo cp ~/MagicMirror/splashscreen/splash.png $THEME_DIR/MagicMirror/splash.png && sudo cp ~/MagicMirror/splashscreen/MagicMirror.plymouth $THEME_DIR/MagicMirror/MagicMirror.plymouth && sudo cp ~/MagicMirror/splashscreen/MagicMirror.script $THEME_DIR/MagicMirror/MagicMirror.script; then
-			echo
-			if [ "$(which plymouth-set-default-theme)." != "." ]; then
-				if sudo plymouth-set-default-theme -R MagicMirror; then
-					echo -e "\e[92mSplashscreen: Changed theme to MagicMirror successfully.\e[0m" | tee -a $logfile
-				else
-					echo -e "\e[91mSplashscreen: Couldn't change theme to MagicMirror!\e[0m" | tee -a $logfile
+		if [ $OS != "bookworm" ]; then 
+			if sudo cp ~/MagicMirror/splashscreen/splash.png $THEME_DIR/MagicMirror/splash.png && sudo cp ~/MagicMirror/splashscreen/MagicMirror.plymouth $THEME_DIR/MagicMirror/MagicMirror.plymouth && sudo cp ~/MagicMirror/splashscreen/MagicMirror.script $THEME_DIR/MagicMirror/MagicMirror.script; then
+				echo
+				if [ "$(which plymouth-set-default-theme)." != "." ]; then
+					if sudo plymouth-set-default-theme -R MagicMirror; then
+						echo -e "\e[92mSplashscreen: Changed theme to MagicMirror successfully.\e[0m" | tee -a $logfile
+					else
+						echo -e "\e[91mSplashscreen: Couldn't change theme to MagicMirror!\e[0m" | tee -a $logfile
+					fi
 				fi
+			else
+				echo -e "\e[91mSplashscreen: Copying theme failed!\e[0m" | tee -a $logfile
 			fi
-		else
-			echo -e "\e[91mSplashscreen: Copying theme failed!\e[0m" | tee -a $logfile
 		fi
 	else
 		echo -e "\e[91mSplashscreen: Themes folder doesn't exist!\e[0m" | tee -a $logfile
