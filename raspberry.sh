@@ -37,6 +37,7 @@ PM2_FILE=pm2_MagicMirror.json
 forced_arch=
 pm2setup=$false
 JustProd="--only=prod"
+t=
 
 trim() {
     local var="$*"
@@ -254,6 +255,7 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 		echo node not installed, trying via apt-get >>$logfile
 		# install the default
 		sudo apt-get update >/dev/null
+		echo "node platform type ='$t'" >$logfile
 		ni=$(sudo apt-get install "nodejs$t" "npm$t" -y 2>&1)
 		# log it
 		echo $ni >>$logfile
@@ -287,20 +289,22 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 		# get node version
 		v=$(node -v 2>/dev/null)
 		if [ "$v." != "." ]; then
+			echo tested noide version = $v >>$logfile
 			testver=${NODE_TESTED:1:2}
 			if [ ${v:1:2} -lt $testver -o ${v:1:2} -eq $BAD_NODE_VERSION  ]; then
 				if [ ${v:1:2} -eq $BAD_NODE_VERSION ]; then
 					 NODE_TESTED=v22
 				fi
 				echo -e "\e[96minstalling correct version of node and npm, please wait\e[0m" | tee -a $logfile
-				#nr=$(sudo npm install -g n)
+				# checking for 32 bit user space
+				t=$(file $(which bash) | grep armhf)
 				if [ "$t." != "." ]; then
 					t="--arch armv7l"
 				fi 
 				sudo n ${NODE_TESTED:1:2} $t  >> $logfile
 				hash -r
 				nodev=$(node -v 2>/dev/null)
-				echo "node version $nodev was installed" >$logfile
+				echo "node version $nodev was installed" >> $logfile
 				if [ "${nodev:0:3}" != ${NODE_TESTED:0:3} ]; then
 					echo node failed to install, exiting | tee -a $logfile
 					exit
