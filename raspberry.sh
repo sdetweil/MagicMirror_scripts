@@ -29,6 +29,9 @@ true=1
 false=0
 # Define the tested version of Node.js.
 NODE_TESTED="v22.14.0" #"v20.18.1" # "v16.13.0"
+if [ "$testmode." != "." ]; then
+	NODE_TESTED="v22.18.0"
+fi
 BAD_NODE_VERSION=21
 NPM_TESTED="V10.9.2" #"V10.8.2" # "V7.11.2"
 NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
@@ -509,6 +512,11 @@ if [ $doInstall == 1 ]; then
 	# installers folder removed in 2.29
 	if [ ! -d installers ]; then
 		mkdir installers 2>/dev/null
+	fi
+
+	if [ "$testmode." != "." ]; then
+		git fetch origin develop:develop  >/dev/null 2>&1
+		git checkout develop >/dev/null
 	fi
 
 	newver=$(grep -i version package.json | awk -F\" '{ print $4 }')

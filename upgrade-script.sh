@@ -16,6 +16,9 @@ lf=$'\n'
 git_user_name=
 git_user_email=
 NODE_TESTED="v22.14.0" #"v20.18.1" # "v16.13.0"
+if [ "$testmode." != "." ];  then
+	NODE_TESTED="v22.18.0"
+fi
 NPM_TESTED="V10.9.2" #"V10.8.2" # "V7.11.2"
 NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 BAD_NODE_VERSION=21
@@ -568,7 +571,7 @@ if [ -d ~/$mfn ]; then
 		cd - >/dev/null
 		save_alias=$(alias git 2>/dev/null)
         # get the current branch name
-		current_branch=$(git branch | grep \* | cut -d ' '  -f2)
+		current_branch=$(git branch --show-current)
 		if [ $current_branch != 'master' ]; then
 		   echo reverting to master branch from $current_branch, saving changed files | tee -a $logfile
 		   changes=$(LC_ALL=C git status | grep modified | awk -F: '{print $2}')
@@ -630,7 +633,12 @@ if [ -d ~/$mfn ]; then
 
 		  # get the local and remote package.json versions
 			local_version=$(grep -m1 version $keyfile | awk -F\" '{print $4}' | awk -F-  '{print $1}')
-			remote_version=$(curl -sL https://raw.githubusercontent.com/$remote_user/MagicMirror/master/$keyfile | grep -m1 version | awk -F\" '{print $4}')
+			repo=master
+			echo $testmode
+			if [ "${testmode}." != "." ]; then
+				repo=develop
+			fi
+			remote_version=$(curl -sL https://raw.githubusercontent.com/$remote_user/MagicMirror/$repo/$keyfile | grep -m1 version | awk -F\" '{print $4}')
 
 			# if on 2.9
 			if [ $local_version == '2.9.0' ]; then
@@ -643,6 +651,9 @@ if [ -d ~/$mfn ]; then
 			# check if current is less than remote, dont downlevel
 			$(verlte  "$local_version" "$remote_version")
 			r=$?
+			if [ "$testmode." != "." ]; then
+				r=0
+			fi
 			if [ "$r" == 0 ]; then
 				# only change if they are different
 				if [ "$local_version." != "$remote_version." -o $force == $true -o $test_run == $true ]; then					
@@ -816,6 +827,18 @@ if [ -d ~/$mfn ]; then
 							done
 							# if no merge errors
 							if [ $merge_result == 0 ]; then
+								if [ "$testmode." != "." ]; then
+									cb=$(git branch | grep develop)
+									if [ $(echo $cb | grep develop | wc -l) == 1 ]; then
+										if [ $(git branch --show-current  | grep "develop" |  wc -l) == 0 ]; then
+										  git checkout develop >/dev/null
+										fi
+										git pull >/dev/null
+									else
+										git fetch origin develop:develop  >/dev/null
+										git checkout develop >/dev/null
+									fi
+								fi
 								# did the installers folder go away (2.29)
 								if [ ! -d installers ]; then
 									echo "installers folder removed, adding back" >> $logfile
