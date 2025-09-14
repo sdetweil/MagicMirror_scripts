@@ -54,7 +54,7 @@ date +"browser over server setup  starting  - %a %b %e %H:%M:%S %Z %Y" >>$logfil
 	curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
 	chmod +x run-start.sh
   	sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < package.json 	>new_package.json
-	if [ -s new_package.json ]; then
+	if [ -e new_package.json ]; then
 		cp new_package.json package.json
 		rm new_package.json
 		echo "package.json update for browser over server, completed ok" >>$logfile
