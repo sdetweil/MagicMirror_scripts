@@ -28,7 +28,7 @@ doInstall=1
 true=1
 false=0
 # Define the tested version of Node.js.
-NODE_TESTED="v22.14.0" #"v20.18.1" # "v16.13.0"
+NODE_TESTED="v22.18.0" #"v20.18.1" # "v16.13.0"
 if [ "$testmode." != "." ]; then
 	NODE_TESTED="v22.18.0"
 fi
