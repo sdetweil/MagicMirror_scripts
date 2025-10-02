@@ -28,6 +28,66 @@ known_list="request valid-url jsdom node-fetch digest-fetch"
 JustProd="--only=prod"
 switched=""
 NODE_OPTIONS=--max_old_space_size=4096
+remote_user=MagicMirrorOrg
+repo=master
+#echo $testmode
+if [ "${testmode}." != "." ]; then
+	repo=develop
+fi
+
+getRequiredNodeVersion() {
+	engine=$(echo "$package_json" | grep \"engines\" -A 2  | grep $1 | awk -F: '{print $2}' | tr -d \")
+
+	if [[ -z "$engine" ]]; then
+		echo "No $1 engines section specified"
+		exit 1
+	fi
+
+	# Normalize OR conditions by splitting and checking all clauses
+	# Extract all candidate versions
+	candidates=()
+
+	# Convert expression into newline-separated constraints
+	IFS=$'\n'
+	for part in $(echo "$engine" | tr '|' '\n'); do
+		# Match version patterns
+		while [[ $part =~ ([><=^~]*)([0-9]+)(\.([0-9]+))?(\.([0-9]+))?([xX*])? ]]; do
+			major=${BASH_REMATCH[2]}
+			minor=${BASH_REMATCH[4]:-0}
+			patch=${BASH_REMATCH[6]:-0}
+			wildcard=${BASH_REMATCH[7]}
+
+			# If it's a wildcard like 16.x or 12.*
+			if [[ "$wildcard" == "x" || "$wildcard" == "X" || "$wildcard" == "*" ]]; then
+				minor=0
+				patch=0
+			fi
+
+			version="$major.$minor.$patch"
+			candidates+=("$version")
+
+			# Trim matched part and continue parsing
+			part=${part#*"${BASH_REMATCH[0]}"}
+		done
+	done
+
+	# Handle universal "*" or no match
+	if [[ ${#candidates[@]} -eq 0 ]]; then
+		if [[ "$engine" == "*" ]]; then
+			echo "0.0.0"
+			exit 0
+		else
+			echo "Could not parse any version from: $engine"
+			exit 1
+		fi
+	fi
+
+	# Sort versions and pick the minimum
+	min_version=$(printf '%s\n' "${candidates[@]}" | sort -V | head -n 1)
+
+
+	echo -n "$min_version"
+}
 
 trim() {
     local var="$*"
@@ -130,7 +190,7 @@ if [ -d ~/$mfn ]; then
 		#	sudo rm -r /etc/apt/sources.list.d/nodesource.list &&\
 		#	sudo rm -r /etc/apt/keyrings/nodesource.gpg
 		#fi
-		NODE_MAJOR=20
+		NODE_MAJOR=22
 		if [ "${OS,,}." == "buster." ]; then
 			echo
 			echo 'MagicMirror version 2.28.0 (July 1 2024), will not run on OS level buster, due to system limitations' | tee -a $logfile
@@ -139,16 +199,6 @@ if [ -d ~/$mfn ]; then
 			echo
 			date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 			exit 1
-
-		#	NODE_TESTED="v18.18.0" # "v16.13.1"
-		#	NPM_TESTED="V9.8.1" # "V7.11.2"
-		#	NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
-		#	NODE_MAJOR=18
-			#OS=$(lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
-			#if [ $OS == "buster" ]; then
-			#	NODE_MAJOR=18
-			#fi
-		#	:
 		fi
 
 
@@ -198,7 +248,7 @@ if [ -d ~/$mfn ]; then
 					fi
 				fi
 				# if n is not installed
-				NODE_MAJOR=20
+				NODE_MAJOR=22
 				# if n is not installed
 				if [ $doinstalls == $true ]; then
 					if [ "$(which n)." == "." ]; then
@@ -252,6 +302,20 @@ if [ -d ~/$mfn ]; then
 #	fi
 
 #	echo update log will be in $logfile
+
+	# get the package.json contents once
+	package_json=$(curl -sL https://raw.githubusercontent.com/$remote_user/MagicMirror/$repo/$keyfile)
+    remote_version=$(echo "$package_json" | grep -m1 version | awk -F\" '{print $4}')
+    NODE_TESTED=v$(getRequiredNodeVersion node)
+    NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
+    # try to get the npm version from package.json
+    npm_needed=$(getRequiredNodeVersion npm)
+    if [ "$npm_needed" != 'No npm engines section specified' ]; then
+    	NPM_TESTED=v$npm_needed
+    	echo -e "\e[0mfound NPM setting in package.json=$npm_needed  ...\e[0m" >> $logfile
+    else
+      echo -e "\e[0m$npm_needed in package.json, using default=$NPM_TESTED ...\e[0m" >> $logfile
+    fi
 
 	# Check if we need to install or upgrade Node.js.
 	echo -e "\e[96mCheck current Node installation ...\e[0m" | tee -a $logfile
@@ -638,7 +702,7 @@ if [ -d ~/$mfn ]; then
 			if [ "${testmode}." != "." ]; then
 				repo=develop
 			fi
-			remote_version=$(curl -sL https://raw.githubusercontent.com/$remote_user/MagicMirror/$repo/$keyfile | grep -m1 version | awk -F\" '{print $4}')
+			#remote_version=$(curl -sL https://raw.githubusercontent.com/$remote_user/MagicMirror/$repo/$keyfile | grep -m1 version | awk -F\" '{print $4}')
 
 			# if on 2.9
 			if [ $local_version == '2.9.0' ]; then

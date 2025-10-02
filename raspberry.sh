@@ -33,7 +33,7 @@ if [ "$testmode." != "." ]; then
 	NODE_TESTED="v22.18.0"
 fi
 BAD_NODE_VERSION=21
-NPM_TESTED="V10.9.2" #"V10.8.2" # "V7.11.2"
+NPM_TESTED="V10.9.3" #"V10.8.2" # "V7.11.2"
 NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 USER=`whoami`
 PM2_FILE=pm2_MagicMirror.json
@@ -41,6 +41,67 @@ forced_arch=
 pm2setup=$false
 JustProd="--only=prod"
 t=
+keyfile=package.json
+remote_user=MagicMirrorOrg
+repo=master
+#echo $testmode
+if [ "${testmode}." != "." ]; then
+	repo=develop
+fi
+
+getRequiredNodeVersion() {
+	engine=$(echo "$package_json" | grep \"engines\" -A 2  | grep $1 | awk -F: '{print $2}' | tr -d \")
+
+	if [[ -z "$engine" ]]; then
+		echo "No $1 engines section specified"
+		exit 1
+	fi
+
+	# Normalize OR conditions by splitting and checking all clauses
+	# Extract all candidate versions
+	candidates=()
+
+	# Convert expression into newline-separated constraints
+	IFS=$'\n'
+	for part in $(echo "$engine" | tr '|' '\n'); do
+		# Match version patterns
+		while [[ $part =~ ([><=^~]*)([0-9]+)(\.([0-9]+))?(\.([0-9]+))?([xX*])? ]]; do
+			major=${BASH_REMATCH[2]}
+			minor=${BASH_REMATCH[4]:-0}
+			patch=${BASH_REMATCH[6]:-0}
+			wildcard=${BASH_REMATCH[7]}
+
+			# If it's a wildcard like 16.x or 12.*
+			if [[ "$wildcard" == "x" || "$wildcard" == "X" || "$wildcard" == "*" ]]; then
+				minor=0
+				patch=0
+			fi
+
+			version="$major.$minor.$patch"
+			candidates+=("$version")
+
+			# Trim matched part and continue parsing
+			part=${part#*"${BASH_REMATCH[0]}"}
+		done
+	done
+
+	# Handle universal "*" or no match
+	if [[ ${#candidates[@]} -eq 0 ]]; then
+		if [[ "$engine" == "*" ]]; then
+			echo "0.0.0"
+			exit 0
+		else
+			echo "Could not parse any version from: $engine"
+			exit 1
+		fi
+	fi
+
+	# Sort versions and pick the minimum
+	min_version=$(printf '%s\n' "${candidates[@]}" | sort -V | head -n 1)
+
+
+	echo -n "$min_version"
+}
 
 trim() {
     local var="$*"
@@ -292,7 +353,20 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 		# get node version
 		v=$(node -v 2>/dev/null)
 		if [ "$v." != "." ]; then
-			echo tested noide version = $v >>$logfile
+			echo installed node version = $v >>$logfile
+			# get the package.json contents once
+			package_json=$(curl -sL https://raw.githubusercontent.com/$remote_user/MagicMirror/$repo/$keyfile)
+			remote_version=$(echo "$package_json" | grep -m1 version | awk -F\" '{print $4}')
+			NODE_TESTED=v$(getRequiredNodeVersion node)
+			NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
+			# try to get the npm version from package.json
+			npm_needed=$(getRequiredNodeVersion npm)
+			if [ "$npm_needed" != 'No npm engines section specified' ]; then
+				NPM_TESTED=V$npm_needed
+				echo -e "\e[0mfound NPM setting in package.json=$npm_needed  ...\e[0m" >> $logfile
+			else
+			echo -e "\e[0m$npm_needed in package.json, using default=$NPM_TESTED ...\e[0m" >> $logfile
+			fi
 			testver=${NODE_TESTED:1:2}
 			if [ ${v:1:2} -lt $testver -o ${v:1:2} -eq $BAD_NODE_VERSION  ]; then
 				if [ ${v:1:2} -eq $BAD_NODE_VERSION ]; then
@@ -320,6 +394,7 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 		fi
 	#fi
 fi
+
 if [ $npminstalled == $false ]; then
 	# Check if we need to install or upgrade Node.js.
 	echo -e "\e[96mCheck current Node installation ...\e[0m" | tee -a $logfile
