@@ -319,7 +319,7 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 		echo node not installed, trying via apt-get >>$logfile
 		# install the default
 		sudo apt-get update >/dev/null
-		echo "node platform type ='$t'" >$logfile
+		echo "node platform type ='$t'" >>$logfile
 		ni=$(sudo apt-get install "nodejs$t" "npm$t" -y 2>&1)
 		# log it
 		echo $ni >>$logfile
