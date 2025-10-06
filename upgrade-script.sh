@@ -35,6 +35,28 @@ if [ "${testmode}." != "." ]; then
 	repo=develop
 fi
 
+get_nvm_command(){
+	if [ "$NVM_DIR." != "." -a -d $NVM_DIR ]; then
+		# nvm is installed, use it
+		# the lines after 'EOF' thru EOF MUST be on the start of the line
+read -r -d '' multiline_string << EOF
+export NVM_DIR=$NVM_DIR;
+. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh";
+nvm install $1
+nvm uninstall $2
+EOF
+		echo "$multiline_string"
+	else
+	   # check if n is isntalled
+	   if [ "$(which n)." == "." ]; then
+	     sudo npm i n -g  >>$logfile 2>&1
+	   fi
+	   echo "sudo n $1"
+	fi
+	echo ""
+}
+
 getRequiredNodeVersion() {
 	engine=$(echo "$package_json" | grep \"engines\" -A 2  | grep $1 | awk -F: '{print $2}' | tr -d \")
 
@@ -251,19 +273,22 @@ if [ -d ~/$mfn ]; then
 				NODE_MAJOR=22
 				# if n is not installed
 				if [ $doinstalls == $true ]; then
-					if [ "$(which n)." == "." ]; then
+					NODE_CURRENT=$(node -v 2>/dev/null)
+					if [ "$NODE_CURRENT." == "." ]; then
+			            NODE_CURRENT="V1.0.0"
+		                echo forcing low Node version  >> $logfile
+			        fi
+					nvm_command=$(get_nvm_command "$NODE_TESTED" "$NODE_CURRENT")
+				    #echo using $nvm_command
+					#if [ "$(which n)." == "." ]; then
 						# install it globally
-						echo installing n globally
-						sudo npm i n -g  >>$logfile 2>&1
-					fi
+					#	echo installing n globally
+					#	sudo npm i n -g  >>$logfile 2>&1
+					#fi
 					# if n is installed
-					if [ "$(which n)." != "." ]; then						
+					#if [ "$(which n)." != "." ]; then
 						# use it to upgrade node
-						NODE_CURRENT=$(node -v 2>/dev/null)
-						if [ "$NODE_CURRENT." == "." ]; then
-				            NODE_CURRENT="V1.0.0"
-			                echo forcing low Node version  >> $logfile
-				        fi
+
 						echo -e "\e[0mNode currently installed. Checking version number.\e[0m" | tee -a $logfile
 				                echo -e "\e[0mMinimum Node version: \e[1m$NODE_TESTED\e[0m" | tee -a $logfile
 				                echo -e "\e[0mInstalled Node version: \e[1m$NODE_CURRENT\e[0m" | tee -a $logfile
@@ -278,15 +303,17 @@ if [ -d ~/$mfn ]; then
 								ar="--arch armv7l"
 							fi
 							echo -e "\e[96minstalling correct version of node and npm, please wait\e[0m" | tee -a $logfile
-							sudo n $NODE_TESTED $ar >>$logfile
+							#echo using $nvm_command
+							eval "$nvm_command" >>$logfile
+							hash -r
 							PATH=$PATH
 							NODE_INSTALL=false
 						fi
-					fi
-				else
-					if [ "$(which n)." == "." ]; then
-						echo "n (node version manager tool) not installed, doing test run, install skipped" >>$logfile
-					fi
+					#fi
+				#else
+				#	if [ "$(which n)." == "." ]; then
+				#		echo "n (node version manager tool) not installed, doing test run, install skipped" >>$logfile
+				#	fi
 				fi
 			fi
 		fi
@@ -341,7 +368,7 @@ if [ -d ~/$mfn ]; then
 
 			# Check if a node process is currently running.
 			# If so abort installation.
-			while true
+			while false
 			do
 				node_running=$(ps -ef | grep "node " | grep -v grep)
 				if [ "$node_running." != "." ]; then
@@ -385,6 +412,8 @@ if [ -d ~/$mfn ]; then
 	if $NODE_INSTALL; then
 		if [ $doinstalls == $true ]; then
 			echo -e "\e[96mInstalling Node.js ...\e[0m" | tee -a $logfile
+			nvm_command=$(get_nvm_command "$NODE_TESTED" "$NODE_CURRENT")
+			echo using $nvm_command
 			# Fetch the latest version of Node.js from the selected branch
 			# The NODE_STABLE_BRANCH variable will need to be manually adjusted when a new branch is released. (e.g. 7.x)
 			# Only tested (stable) versions are recommended as newer versions could break MagicMirror.
@@ -392,19 +421,13 @@ if [ -d ~/$mfn ]; then
 			  if [ "$(which node)" == "" ]; then 
 			    :		  
 			  fi
-			  if [ "$(which node)" != "" ]; then
-				if [ "$(which n)." == "." ]; then
-					# install it globally
-					echo installing n globally >>$logfile
-					sudo npm i n -g  >>$logfile 2>&1
-				fi
-				# if n is installed
-				if [ "$(which n)." != "." ]; then	
-				   sudo n $NODE_TESTED >>$logfile 2>&1
-				fi
+			  if [ "$(which node)" = "" ]; then
+				   $(eval "$nvm_command") >>$logfile 2>&1
 			  fi
 			  #brew install node
 			else
+				r=eval "$nvm_command"
+				if [ 0 -eq 1 ]; then
 			    sudo apt-get --allow-releaseinfo-change update >>$logfile
 				echo $NODE_STABLE_BRANCH | grep -qE "x$"
 				if [ $? -eq 1 ]; then 
@@ -441,6 +464,7 @@ if [ -d ~/$mfn ]; then
 					cd - >/dev/null
 					rm ./node_release-$node_ver.tar.gz
 				fi
+				fi
 				# get the new node version number
 				new_ver=$(LC_ALL=C node -v 2>&1)
 				# if there is a failure to get it due to a missing library
@@ -454,9 +478,9 @@ if [ -d ~/$mfn ]; then
 			# if pm2 is installed
 			if [ "$(which pm2)." != "." ]; then
 				pm2_npmjs_version=$(npm view pm2 version)
-				pm2_current_version=$(npm list -g --depth=0 | grep -i pm2 | awk -F@ '{print $2}')
+				pm2_current_version=$(pm2 --version)
 				echo pm2 installed, checking version $pm2_current_version vs $pm2_npmjs_version >> $logfile
-				if [ 1 -o  ${pm2_npmjs_version:0:1} == ${pm2_current_version:0:1} -a $pm2_current_version != $pm2_npmjs_version ]; then
+				if [ 1 -eq 1 -o  ${pm2_npmjs_version:0:1} == ${pm2_current_version:0:1} -a $pm2_current_version != $pm2_npmjs_version ]; then
 					# if pm2 is managing MagicMirror,, then update
 					if [ $(pm2 ls -m | grep "\-\-" | grep -i magicmirror | wc -l) -eq 1 ]; then
 						apps_defined=$(pm2 ls -m | grep "\-\-" | wc -l)

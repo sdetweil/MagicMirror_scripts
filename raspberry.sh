@@ -49,6 +49,30 @@ if [ "${testmode}." != "." ]; then
 	repo=develop
 fi
 
+get_nvm_command(){
+	if [ "$NVM_DIR." != "." -a -d $NVM_DIR ]; then
+		# nvm is installed, use it
+		# the lines after 'EOF' thru EOF MUST be on the start of the line
+read -r -d '' multiline_string << EOF
+export NVM_DIR=$NVM_DIR;
+. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh";
+nvm install $1
+nvm uninstall $2
+EOF
+		echo "$multiline_string"
+	else
+	   # check if n is installed
+	   if [ "$(which node)." != "." ]; then
+		   if [ "$(which n)." == "." ]; then
+		     sudo npm i n -g  >>$logfile 2>&1
+		   fi
+		   echo "sudo n $1"
+		fi
+	fi
+	echo ""
+}
+
 getRequiredNodeVersion() {
 	engine=$(echo "$package_json" | grep \"engines\" -A 2  | grep $1 | awk -F: '{print $2}' | tr -d \")
 
@@ -337,11 +361,7 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 	fi
 	# if n is not installed
 	NODE_MAJOR=22
-	# if n is not installed
-	if [ "$(which n)." == "." ]; then
-		# install it globally
-		sudo npm i n -g  >>$logfile 2>&1
-	fi
+	nvm_command=$(get_nvm_command "$NODE_TESTED" "$nv")
 	arch=
 	# is npm installed?
 	echo "installing on $OS" >>$logfile
@@ -378,7 +398,7 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 				if [ "$t." != "." ]; then
 					t="--arch armv7l"
 				fi 
-				sudo n ${NODE_TESTED:1:2} $t  >> $logfile
+				eval "$nvm_command" >>$logfile
 				hash -r
 				nodev=$(node -v 2>/dev/null)
 				echo "node version $nodev was installed" >> $logfile
@@ -412,6 +432,7 @@ if [ $npminstalled == $false ]; then
 			echo -e "\e[96mNode should be upgraded.\e[0m" | tee -a $logfile
 			NODE_INSTALL=true
 
+
 			# Check if a node process is currenlty running.
 			# If so abort installation.
 			node_running=$(ps -ef | grep "node " | grep -v grep ) 
@@ -441,10 +462,10 @@ if [ $npminstalled == $false ]; then
 		# Only tested (stable) versions are recommended as newer versions could break MagicMirror.
 		if [ $mac == 'Darwin' ]; then
 		  if [ "$(which n)" == "" ]; then 
-		     sudo npm i n -g >null
+		     :
 		  fi
 		  if [ "$(which n)" ]; then 
-		     sudo n $NODE_TESTED>>$logfile 2>&1	 
+		      $(eval "$nvm_command") >>$logfile 2>&1
 		  fi	 		  
 		else
 			if [ "$OS." == 'bullseye.' ]; then
@@ -453,46 +474,51 @@ if [ $npminstalled == $false ]; then
 				fi
 			fi
 			
-			# sudo apt-get install --only-upgrade libstdc++6
-			node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - )
-			echo Node release info = $node_info >> $logfile
-			#sudo apt-get install -y nodejs
-			if [ "$(echo $node_info | grep -i "Unsupported architecture")." == "." -a $ARM != "armv6l" ]; then
-				sudo apt-get install -y nodejs
+			if [ "$nvm_command." != "." ]; then
+				eval "$nvm_command" >>$logfile
 			else
-				echo node $NODE_STABLE_BRANCH version installer not available, doing manually >>$logfile
-				# no longer supported install
-				sudo apt-get install -y --only-upgrade libstdc++6  >> $logfile
-				# have to do it manually
-				ARM1=$ARM
-				if [ $ARM == 'armv6l' ]; then 
-					export NODE_OPTIONS="--max-old-space-size=1024"
-					if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -lt 512 ]; then
-						echo "increasing swap space" >>$logfile
-						sudo dphys-swapfile swapoff
-						sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile
-						#sudo nano /etc/dphys-swapfile
-						sudo dphys-swapfile setup
-						sudo dphys-swapfile swapon
-					fi 
-					curl -sL https://unofficial-builds.nodejs.org/download/release/${NODE_TESTED}/node-${NODE_TESTED}-linux-armv6l.tar.gz >node_release-${NODE_TESTED}.tar.gz
-					node_ver=$NODE_TESTED
+
+				# sudo apt-get install --only-upgrade libstdc++6
+				node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - )
+				echo Node release info = $node_info >> $logfile
+				#sudo apt-get install -y nodejs
+				if [ "$(echo $node_info | grep -i "Unsupported architecture")." == "." -a $ARM != "armv6l" ]; then
+					sudo apt-get install -y nodejs
 				else
-					node_vnum=$(echo $NODE_STABLE_BRANCH | awk -F. '{print $1}')
-					if [ $ARM == 'x86_64' ]; then
-						ARM1= x64
+					echo node $NODE_STABLE_BRANCH version installer not available, doing manually >>$logfile
+					# no longer supported install
+					sudo apt-get install -y --only-upgrade libstdc++6  >> $logfile
+					# have to do it manually
+					ARM1=$ARM
+					if [ $ARM == 'armv6l' ]; then
+						export NODE_OPTIONS="--max-old-space-size=1024"
+						if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -lt 512 ]; then
+							echo "increasing swap space" >>$logfile
+							sudo dphys-swapfile swapoff
+							sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile
+							#sudo nano /etc/dphys-swapfile
+							sudo dphys-swapfile setup
+							sudo dphys-swapfile swapon
+						fi
+						curl -sL https://unofficial-builds.nodejs.org/download/release/${NODE_TESTED}/node-${NODE_TESTED}-linux-armv6l.tar.gz >node_release-${NODE_TESTED}.tar.gz
+						node_ver=$NODE_TESTED
+					else
+						node_vnum=$(echo $NODE_STABLE_BRANCH | awk -F. '{print $1}')
+						if [ $ARM == 'x86_64' ]; then
+							ARM1= x64
+						fi
+						# get the highest release number in the stable branch line for this processor architecture
+						node_ver=$(curl -sL https://nodejs.org/download/release/index.tab | grep $ARM1 | grep -m 1 v$node_vnum | awk '{print $1}')
+						echo "latest release in the $NODE_STABLE_BRANCH family for $ARM is $node_ver" >> $logfile
+						# download that file
+						curl -sL https://nodejs.org/download/release/v$node_ver/node-v$node_ver-linux-$ARM1.tar.gz >node_release-$node_ver.tar.gz
 					fi
-					# get the highest release number in the stable branch line for this processor architecture
-					node_ver=$(curl -sL https://nodejs.org/download/release/index.tab | grep $ARM1 | grep -m 1 v$node_vnum | awk '{print $1}')
-					echo "latest release in the $NODE_STABLE_BRANCH family for $ARM is $node_ver" >> $logfile
-					# download that file
-					curl -sL https://nodejs.org/download/release/v$node_ver/node-v$node_ver-linux-$ARM1.tar.gz >node_release-$node_ver.tar.gz
+					cd /usr/local
+					echo using release tar file = node_release-$node_ver.tar.gz >> $logfile
+					sudo tar --strip-components 1 -xzf  $HOME/node_release-$node_ver.tar.gz
+					cd - >/dev/null
+					rm ./node_release-$node_ver.tar.gz
 				fi
-				cd /usr/local
-				echo using release tar file = node_release-$node_ver.tar.gz >> $logfile
-				sudo tar --strip-components 1 -xzf  $HOME/node_release-$node_ver.tar.gz
-				cd - >/dev/null
-				rm ./node_release-$node_ver.tar.gz
 			fi
 			# get the new node version number
 			new_ver=$(LC_ALL=C node -v 2>&1)
