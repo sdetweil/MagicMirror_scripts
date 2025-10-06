@@ -145,6 +145,9 @@ if [ -d ~/$mfn ]; then
 	# if the script was execute from the web
 	#if [[ $logdir != *"MagicMirror/installers"* ]]; then
 		# use the MagicMirror/installers folder
+		if [ ! -d ~/$mfn/installers ]; then
+			mkdir ~/$mfn/installers
+		fi
 		cd ~/$mfn/installers >/dev/null
 		logdir=$(pwd)
 		cd - >/dev/null
