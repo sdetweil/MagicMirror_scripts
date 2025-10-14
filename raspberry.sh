@@ -312,7 +312,8 @@ if [ $mac != 'Darwin' ]; then
 	echo -e "\e[96mInstalling helper tools ...\e[0m" | tee -a $logfile
 	sudo apt-get --assume-yes   install  curl wget git build-essential unzip >>$logfile
 fi
-if [ $mac != 'Darwin' ]; then 
+# trixie swap space chaneg requires reboot
+if [ $mac != 'Darwin' -o "$OS." != 'trixie' ]; then
 	if [ $(LC_ALL=C free -m | grep Mem | awk '{print $2}') -le 512 ]; then
 		echo " this should be a raspberry pi 02w" >>$logfile
 		export NODE_OPTIONS="--max-old-space-size=1024"
@@ -327,6 +328,11 @@ if [ $mac != 'Darwin' ]; then
 			sudo dphys-swapfile swapon >>$logfile
 		fi 
 	fi
+else
+  	if [ "$OS." == 'trixie' ]; then
+  		echo the swap file size should be increased, but on trixie this requres a reboot
+  		echo see https://forums.raspberrypi.com/viewtopic.php?t=392530#p2341749
+  	fi
 fi
 
 npminstalled=$false
