@@ -189,9 +189,21 @@ OS=$(cat /etc/os-release 2>/dev/null  | grep VERSION_CODENAME |  awk -F= '{print
 #	exit 4
 #fi
 if [ $ARM == "armv6l" ]; then
-	echo -e "nodejs version required for MagicMirror is no longer available for armv6l (pi0w) devices\ninstallation aborted" | tee -a $logfile
-	date +"install ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
-	exit 3
+	# Check if Node.js 22+ is already installed (from unofficial builds)
+	if command -v node >/dev/null 2>&1; then
+		NODE_VERSION=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
+		if [ "$NODE_VERSION" -ge 22 ]; then
+			echo -e "Detected Node.js v$(node -v) on armv6l device - continuing with installation" | tee -a $logfile
+		else
+			echo -e "nodejs version 22+ required for MagicMirror but found v$(node -v)\nPlease upgrade Node.js before continuing\ninstallation aborted" | tee -a $logfile
+			date +"install ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+			exit 3
+		fi
+	else
+		echo -e "nodejs version 22+ required for MagicMirror is no longer officially available for armv6l (pi0w) devices\nPlease install an unofficial build (e.g., from unofficial-builds.nodejs.org) before continuing\ninstallation aborted" | tee -a $logfile
+		date +"install ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+		exit 3
+	fi
 fi
 
 if [ "$OS." = "buster." ]; then
