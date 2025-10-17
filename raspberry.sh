@@ -193,7 +193,7 @@ if [ $ARM == "armv6l" ]; then
 	if command -v node >/dev/null 2>&1; then
 		NODE_VERSION=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
 		if [ "$NODE_VERSION" -ge 22 ]; then
-			echo -e "Detected Node.js v$(node -v) on armv6l device - continuing with installation" | tee -a $logfile
+			echo -e "Detected Node.js $(node -v) on armv6l device - continuing with installation" | tee -a $logfile
 		else
 			echo -e "nodejs version 22+ required for MagicMirror but found v$(node -v)\nPlease upgrade Node.js before continuing\ninstallation aborted" | tee -a $logfile
 			date +"install ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
