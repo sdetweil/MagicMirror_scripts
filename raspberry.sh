@@ -73,6 +73,35 @@ EOF
 	echo ""
 }
 
+getLatestUnofficialNodeVersion() {
+	# Fetch the latest Node.js version >= 22 from unofficial builds that has armv6l support
+	local versions
+	local latest_version
+	
+	# Get all available versions >= 22 in descending order
+	versions=$(curl -sL https://unofficial-builds.nodejs.org/download/release/ | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | grep -E '^v2[2-9]' | sort -V -r)
+	
+	if [[ -z "$versions" ]]; then
+		echo "Error: Could not fetch Node.js versions >= 22 from unofficial builds" >&2
+		return 1
+	fi
+	
+	# Find the latest version that has armv6l builds
+	while IFS= read -r version; do
+		if [ -n "$version" ] && curl -sL "https://unofficial-builds.nodejs.org/download/release/$version/" | grep -q "armv6l"; then
+			latest_version=$version
+			break
+		fi
+	done <<< "$versions"
+	
+	if [[ -z "$latest_version" ]]; then
+		echo "Error: No Node.js version >= 22 with armv6l support found in unofficial builds" >&2
+		return 1
+	fi
+	
+	echo "$latest_version"
+}
+
 getRequiredNodeVersion() {
 	engine=$(echo "$package_json" | grep \"engines\" -A 2  | grep $1 | awk -F: '{print $2}' | tr -d \")
 
@@ -195,14 +224,95 @@ if [ $ARM == "armv6l" ]; then
 		if [ "$NODE_VERSION" -ge 22 ]; then
 			echo -e "Detected Node.js $(node -v) on armv6l device - continuing with installation" | tee -a $logfile
 		else
-			echo -e "nodejs version 22+ required for MagicMirror but found v$(node -v)\nPlease upgrade Node.js before continuing\ninstallation aborted" | tee -a $logfile
+			echo -e "nodejs version 22+ required for MagicMirror but found v$(node -v)" | tee -a $logfile
+			echo -e "Attempting to upgrade to latest Node.js from unofficial builds..." | tee -a $logfile
+			
+			# Get the latest version
+			LATEST_NODE_VERSION=$(getLatestUnofficialNodeVersion)
+			if [ $? -ne 0 ]; then
+				echo -e "Failed to fetch latest Node.js version\ninstallation aborted" | tee -a $logfile
+				date +"install ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+				exit 3
+			fi
+			
+			echo -e "Installing Node.js $LATEST_NODE_VERSION for armv6l..." | tee -a $logfile
+			
+			# Download and install the latest version
+			cd /tmp
+			curl -sL "https://unofficial-builds.nodejs.org/download/release/${LATEST_NODE_VERSION}/node-${LATEST_NODE_VERSION}-linux-armv6l.tar.gz" -o "node-${LATEST_NODE_VERSION}-linux-armv6l.tar.gz"
+			if [ $? -ne 0 ]; then
+				echo -e "Failed to download Node.js $LATEST_NODE_VERSION\ninstallation aborted" | tee -a $logfile
+				date +"install ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+				exit 3
+			fi
+			
+			cd /usr/local
+			sudo tar --strip-components 1 -xzf "/tmp/node-${LATEST_NODE_VERSION}-linux-armv6l.tar.gz"
+			if [ $? -ne 0 ]; then
+				echo -e "Failed to extract Node.js $LATEST_NODE_VERSION\ninstallation aborted" | tee -a $logfile
+				date +"install ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+				exit 3
+			fi
+			
+			# Clean up
+			rm "/tmp/node-${LATEST_NODE_VERSION}-linux-armv6l.tar.gz"
+			cd $HOME
+			
+			# Verify installation
+			hash -r
+			NEW_NODE_VERSION=$(node -v 2>/dev/null)
+			if [ $? -eq 0 ]; then
+				echo -e "Successfully installed Node.js $NEW_NODE_VERSION on armv6l device" | tee -a $logfile
+			else
+				echo -e "Node.js installation verification failed\ninstallation aborted" | tee -a $logfile
+				date +"install ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+				exit 3
+			fi
+		fi
+	else
+		echo -e "Node.js not found - installing latest version from unofficial builds..." | tee -a $logfile
+		
+		# Get the latest version
+		LATEST_NODE_VERSION=$(getLatestUnofficialNodeVersion)
+		if [ $? -ne 0 ]; then
+			echo -e "Failed to fetch latest Node.js version\ninstallation aborted" | tee -a $logfile
 			date +"install ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 			exit 3
 		fi
-	else
-		echo -e "nodejs version 22+ required for MagicMirror is no longer officially available for armv6l (pi0w) devices\nPlease install an unofficial build (e.g., from unofficial-builds.nodejs.org) before continuing\ninstallation aborted" | tee -a $logfile
-		date +"install ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
-		exit 3
+		
+		echo -e "Installing Node.js $LATEST_NODE_VERSION for armv6l..." | tee -a $logfile
+		
+		# Download and install the latest version
+		cd /tmp
+		curl -sL "https://unofficial-builds.nodejs.org/download/release/${LATEST_NODE_VERSION}/node-${LATEST_NODE_VERSION}-linux-armv6l.tar.gz" -o "node-${LATEST_NODE_VERSION}-linux-armv6l.tar.gz"
+		if [ $? -ne 0 ]; then
+			echo -e "Failed to download Node.js $LATEST_NODE_VERSION\ninstallation aborted" | tee -a $logfile
+			date +"install ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+			exit 3
+		fi
+		
+		cd /usr/local
+		sudo tar --strip-components 1 -xzf "/tmp/node-${LATEST_NODE_VERSION}-linux-armv6l.tar.gz"
+		if [ $? -ne 0 ]; then
+			echo -e "Failed to extract Node.js $LATEST_NODE_VERSION\ninstallation aborted" | tee -a $logfile
+			date +"install ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+			exit 3
+		fi
+		
+		# Clean up
+		rm "/tmp/node-${LATEST_NODE_VERSION}-linux-armv6l.tar.gz"
+		cd $HOME
+		
+		# Verify installation
+		hash -r
+		NEW_NODE_VERSION=$(node -v 2>/dev/null)
+		if [ $? -eq 0 ]; then
+			echo -e "Successfully installed Node.js $NEW_NODE_VERSION on armv6l device" | tee -a $logfile
+		else
+			echo -e "Node.js installation verification failed\ninstallation aborted" | tee -a $logfile
+			date +"install ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+			exit 3
+		fi
 	fi
 fi
 
