@@ -43,7 +43,11 @@ read -r -d '' multiline_string << EOF
 export NVM_DIR=$NVM_DIR;
 . "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh";
-nvm install $1
+axx=
+if [ "$3." != "." ]; then
+	axx=":32"
+fi
+nvm install $1$axx
 nvm uninstall $2
 EOF
 		echo "$multiline_string"
@@ -52,7 +56,11 @@ EOF
 	   if [ "$(which n)." == "." ]; then
 	     sudo npm i n -g  >>$logfile 2>&1
 	   fi
-	   echo "sudo n $1"
+	   axx=
+	   if [ "$3." != "." ]; then
+	   	axx="--arch ${3:1}"
+	   fi
+	   echo "sudo n $axx $1 "
 	fi
 	echo ""
 }
@@ -281,7 +289,7 @@ if [ -d ~/$mfn ]; then
 			            NODE_CURRENT="V1.0.0"
 		                echo forcing low Node version  >> $logfile
 			        fi
-					nvm_command=$(get_nvm_command "$NODE_TESTED" "$NODE_CURRENT")
+					nvm_command=$(get_nvm_command "$NODE_TESTED" "$NODE_CURRENT" "$ar")
 				    #echo using $nvm_command
 					#if [ "$(which n)." == "." ]; then
 						# install it globally
@@ -414,8 +422,14 @@ if [ -d ~/$mfn ]; then
 	# Install or upgrade node if necessary.
 	if $NODE_INSTALL; then
 		if [ $doinstalls == $true ]; then
+			t=$(dpkg --print-architecture| grep armhf)
+			echo "architecture from dpkg is $t" >>$logfile
+			ar=
+			if [ "$t." != "." ]; then
+				ar=":armv7l"
+			fi
 			echo -e "\e[96mInstalling Node.js ...\e[0m" | tee -a $logfile
-			nvm_command=$(get_nvm_command "$NODE_TESTED" "$NODE_CURRENT")
+			nvm_command=$(get_nvm_command "$NODE_TESTED" "$NODE_CURRENT" "$ar")
 			echo using $nvm_command
 			# Fetch the latest version of Node.js from the selected branch
 			# The NODE_STABLE_BRANCH variable will need to be manually adjusted when a new branch is released. (e.g. 7.x)
