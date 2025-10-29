@@ -648,17 +648,22 @@ if [ -d ~/$mfn ]; then
 		if [ $NPM_MAJOR -ge 8 ]; then
 			JustProd="--no-audit --no-fund --no-update-notifier"
 		fi
-		if [ $mac != 'Darwin' ]; then
+		if [ $mac != 'Darwin' -a "$OS." != 'trixie' ]; then
 			if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -le 512  ]; then
 				# only for arm architectures
 				if [[ $arch == a* ]]; then
-					export NODE_OPTIONS="--max-old-space-size=1024"
-					echo "increasing swap space" >>$logfile
-					sudo dphys-swapfile swapoff
-					sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile
-					#sudo nano /etc/dphys-swapfile
-					sudo dphys-swapfile setup
-					sudo dphys-swapfile swapon
+					if [ -e /etc/dphys-swapfile ]; then
+						echo "increasing swap space" >>$logfile
+						export NODE_OPTIONS="--max-old-space-size=1024"
+						echo "increasing swap space" >>$logfile
+						sudo dphys-swapfile swapoff
+						sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile
+						#sudo nano /etc/dphys-swapfile
+						sudo dphys-swapfile setup
+						sudo dphys-swapfile swapon
+					else
+					   echo swap control file /etc/dphys-swapfile doesn\'t exist >>$logfile
+					fi
 				fi
 			fi
 		fi

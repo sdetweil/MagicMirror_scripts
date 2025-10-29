@@ -313,19 +313,24 @@ if [ $mac != 'Darwin' ]; then
 	sudo apt-get --assume-yes   install  curl wget git build-essential unzip >>$logfile
 fi
 # trixie swap space chaneg requires reboot
-if [ $mac != 'Darwin' -o "$OS." != 'trixie' ]; then
+if [ $mac != 'Darwin' -a "$OS." != 'trixie' ]; then
 	if [ $(LC_ALL=C free -m | grep Mem | awk '{print $2}') -le 512 ]; then
 		echo " this should be a raspberry pi 02w" >>$logfile
 		export NODE_OPTIONS="--max-old-space-size=1024"
 		# if the swap space is small
 		if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -lt 512 ]; then
-			echo "increasing swap space" >>$logfile
-			swapsize=$(grep "CONF_SWAPSIZE=" /etc/dphys-swapfile | awk -F= '{print $2}')
-			sudo dphys-swapfile swapoff >>$logfile
-			sudo sed "/CONF_SWAPSIZE=$swapsize/ c \CONF_SWAPSIZE=1024" -i /etc/dphys-swapfile
-			#sudo nano /etc/dphys-swapfile
-			sudo dphys-swapfile setup >>$logfile
-			sudo dphys-swapfile swapon >>$logfile
+			# if the old swap control file exists
+			if [ -e /etc/dphys-swapfile ]; then
+				echo "increasing swap space" >>$logfile
+				swapsize=$(grep "CONF_SWAPSIZE=" /etc/dphys-swapfile | awk -F= '{print $2}')
+				sudo dphys-swapfile swapoff >>$logfile
+				sudo sed "/CONF_SWAPSIZE=$swapsize/ c \CONF_SWAPSIZE=1024" -i /etc/dphys-swapfile
+				#sudo nano /etc/dphys-swapfile
+				sudo dphys-swapfile setup >>$logfile
+				sudo dphys-swapfile swapon >>$logfile
+			else
+			   echo swap control file /etc/dphys-swapfile doesn\'t exist >>$logfile
+			fi
 		fi 
 	fi
 else
