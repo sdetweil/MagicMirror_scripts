@@ -46,8 +46,13 @@ if [ 0 -eq 1 ]; then
 	fi
 fi
 logfile=$logdir/browser_over_server.log
-echo install log being saved to $logfile
 
+echo install log being saved to $logfile | tee -a $logfile
+if [ ! -d $HOME/MagicMirror9 ]; then
+	echo MagicMirror not installed
+	date +"browser over server setup  ending  - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+	exit 2
+fi
 # Determine which Pi is running.
 date +"browser over server setup  starting  - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 	cd $HOME/MagicMirror
