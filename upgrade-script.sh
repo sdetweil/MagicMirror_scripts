@@ -782,10 +782,13 @@ if [ -d ~/$mfn ]; then
 					else
 						mmline=$(LC_ALL=C ps -ef | grep "node " | grep -v grep)
 						if [ "$mmline." != "." ]; then 
-						echo some node app still running, please shutdown MagicMirror and restart 
-						if [ "$switched." != "." ]; then
-							git switch $switched -q >>$logfile
-						fi
+							echo some node app still running, please shutdown those apps, maybe MagicMirror, and restart
+							echo here is a list of those processes
+							echo $mline
+							if [ "$switched." != "." ]; then
+								git switch $switched -q >>$logfile
+							fi
+						date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 						exit 4
 						fi   
 					fi 
