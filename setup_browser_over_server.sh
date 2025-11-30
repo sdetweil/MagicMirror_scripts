@@ -48,7 +48,7 @@ fi
 logfile=$logdir/browser_over_server.log
 
 echo install log being saved to $logfile | tee -a $logfile
-if [ ! -d $HOME/MagicMirror9 ]; then
+if [ ! -d $HOME/MagicMirror ]; then
 	echo MagicMirror not installed
 	date +"browser over server setup  ending  - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 	exit 2
