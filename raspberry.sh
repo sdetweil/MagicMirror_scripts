@@ -373,6 +373,7 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 	# if n is not installed
 	NODE_MAJOR=22
 	nvm_command=$(get_nvm_command "$NODE_TESTED" "$nv")
+	echo nvm_command is $nvm_command
 	arch=
 	# is npm installed?
 	echo "installing on $OS" >>$logfile
@@ -396,7 +397,7 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 				NPM_TESTED=V$npm_needed
 				echo -e "\e[0mfound NPM setting in package.json=$npm_needed  ...\e[0m" >> $logfile
 			else
-			echo -e "\e[0m$npm_needed in package.json, using default=$NPM_TESTED ...\e[0m" >> $logfile
+				echo -e "\e[0m$npm_needed in package.json, using default=$NPM_TESTED ...\e[0m" >> $logfile
 			fi
 			testver=${NODE_TESTED:1:2}
 			if [ ${v:1:2} -lt $testver -o ${v:1:2} -eq $BAD_NODE_VERSION  ]; then
@@ -415,6 +416,7 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 				echo "node version $nodev was installed" >> $logfile
 				if [ "${nodev:0:3}" != ${NODE_TESTED:0:3} ]; then
 					echo node failed to install, exiting | tee -a $logfile
+					date +"install aborted - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 					exit
 				fi
 			fi
@@ -751,9 +753,13 @@ if command_exists plymouth; then
 		if [ ! -d ~/MagicMirror/splashscreen ]; then
 			mkdir ~/MagicMirror/splashscreen
 			cd ~/MagicMirror/splashscreen
-			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/splash.png >splash.png
-			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/MagicMirror.plymouth >MagicMirror.plymouth
-			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/MagicMirror.script >MagicMirror.script
+
+			#curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/splash.png >splash.png
+			curl -sL https://github.com/sdetweil/MagicMirror_scripts/blob/master/splashscreen/splash.png >splash.png
+			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/refs/heads/master/splashscreen/MagicMirror.plymouth >MagicMirror.plymouth
+			#curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/MagicMirror.plymouth >MagicMirror.plymouth
+			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/refs/heads/master/splashscreen/MagicMirror.script >MagicMirror.script
+			#curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/MagicMirror.script >MagicMirror.script
 			cd - >/dev/null
 		fi
 		if [ $OS != "bookworm" ]; then 
