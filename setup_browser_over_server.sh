@@ -67,6 +67,22 @@ date +"browser over server setup  starting  - %a %b %e %H:%M:%S %Z %Y" >>$logfil
 		echo "package.json update for browser over server failed " >>$logfile
 	fi
 
+	# if the the pm2 startup script does not exist
+	if [ ! -e mm_script ]; then
+		echo "mm.sh startup script not present" >> $logfile
+		# if we saved the prior
+		if [ -e foo.sh ]; then
+			echo "use saved copy to restore mm.sh" >> $logfile
+			# move it back
+			mv foo.sh installers/mm.sh
+		else
+			# oops didn't save mm.sh or it was lost on prior run
+			echo "oops, was no saved copy of mm.shm restore from repo" >> $logfile
+			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm.sh
+			chmod +x installers/mm.sh
+		fi
+	fi
+
 	echo which browser would you like to use
 	echo 1 chrome
 	echo 2 firefox
