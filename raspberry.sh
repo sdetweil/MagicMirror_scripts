@@ -28,12 +28,13 @@ doInstall=1
 true=1
 false=0
 # Define the tested version of Node.js.
-NODE_TESTED="v22.18.0" #"v20.18.1" # "v16.13.0"
+NODE_TESTED="v22.21.1" #"v20.18.1" # "v16.13.0"
 if [ "$testmode." != "." ]; then
-	NODE_TESTED="v22.18.0"
+	NODE_TESTED="v22.21.1"
+	echo setting test node version $NODE_TESTED
 fi
 BAD_NODE_VERSION=21
-NPM_TESTED="V10.9.3" #"V10.8.2" # "V7.11.2"
+NPM_TESTED="V10.9.4" #"V10.8.2" # "V7.11.2"
 NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 USER=`whoami`
 PM2_FILE=pm2_MagicMirror.json
