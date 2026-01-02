@@ -722,7 +722,7 @@ if [ -d ~/$mfn ]; then
 		fi
 		remote_user=MagicMirrorOrg
 		# get the git remote name
-		remote=$(LC_ALL=C  git remote -v 2>/dev/null |  grep -m1 '.com/M'  | awk '{print $1}')
+		remote=$(LC_ALL=C  git remote -v 2>/dev/null |  grep -m1 -e '.com/M' -e '.com:M'  | awk '{print $1}')
 		if [ "$remote" == 'upstream' ]; then
 			git remote remove upstream > /dev/null
 			git remote add upstream https://github.com/$remote_user/MagicMirror
