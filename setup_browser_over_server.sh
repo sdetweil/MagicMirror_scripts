@@ -58,7 +58,7 @@ date +"browser over server setup  starting  - %a %b %e %H:%M:%S %Z %Y" >>$logfil
 	cd $HOME/MagicMirror
 	curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/run-start.sh >run-start.sh
 	chmod +x run-start.sh
-  	sed '/start/ c \    "start\"\:\"./run-start.sh $1\",' < package.json 	>new_package.json
+  	sed '/start\"/ c \    "start\"\:\"./run-start.sh $1\",' < package.json 	>new_package.json
 	if [ -e new_package.json ]; then
 		cp new_package.json package.json
 		rm new_package.json
@@ -77,7 +77,10 @@ date +"browser over server setup  starting  - %a %b %e %H:%M:%S %Z %Y" >>$logfil
 			mv foo.sh installers/mm.sh
 		else
 			# oops didn't save mm.sh or it was lost on prior run
-			echo "oops, was no saved copy of mm.shm restore from repo" >> $logfile
+			echo "oops, was no saved copy of mm.sh, restore from repo" >> $logfile
+			if [ ! -d installers ]; then
+				mkdir installers
+			fi
 			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm.sh
 			chmod +x installers/mm.sh
 		fi

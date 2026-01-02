@@ -53,7 +53,7 @@ else
   #check for macOS
   mac=$(uname)
   el_installed=$true
-  if [ ! -d node_modules/electron ]; then
+  if [ ! -d node_modules/electron ] || [ "$external_browser." != "." ]; then
     el_installed=$false
   fi
   #
