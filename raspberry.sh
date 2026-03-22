@@ -37,7 +37,7 @@ PM2_FILE=pm2_MagicMirror.json
 forced_arch=
 pm2setup=$false
 JustProd="--only=prod"
-
+css_dir=css
 trim() {
     local var="$*"
     # remove leading whitespace characters
@@ -531,9 +531,13 @@ if [ $doInstall == 1 ]; then
 	  	   echo "erase vendor package-lock.json to allow later nan/fsevents install on mac" >>$logfile
 	  fi
 	fi
-    if [ ! -e css/custom.css ]; then
-       touch css/custom.css
-    fi
+	if [ -d defaultmodules ]; then 
+           css_dir=config
+        fi
+    	if [ ! -e $css_dir/custom.css ]; then
+       		touch $css_dir/custom.css
+    	fi
+   
     if [ $newver == '2.13.0' ]; then
       # fix downlevel node-ical
       sed '/node-ical/ c \         "node-ical\"\:\"^0.12.1\",' < package.json >new_package.json

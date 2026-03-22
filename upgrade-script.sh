@@ -15,15 +15,16 @@ git_active_lock='./.git/index.lock'
 lf=$'\n'
 git_user_name=
 git_user_email=
-NODE_TESTED="v22.14.0" #"v20.18.1" # "v16.13.0"
-NPM_TESTED="V10.9.2" #"V10.8.2" # "V7.11.2"
+NODE_TESTED="v22.21.0" #"v20.18.1" # "v16.13.0"
+NPM_TESTED="V10.9.4" #"V10.8.2" # "V7.11.2"
 NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 BAD_NODE_VERSION=21
-NODE_ACCEPTABLE=V22.9.0
+NODE_ACCEPTABLE=V22.14.0
 NODE_INSTALL=false
 known_list="request valid-url jsdom node-fetch digest-fetch"
 JustProd="--only=prod"
 switched=""
+develop=$false
 NODE_OPTIONS=--max_old_space_size=4096
 
 trim() {
@@ -65,7 +66,7 @@ if [ -d ~/$mfn ]; then
 		cd - >/dev/null
 	fi
 	logfile=$logdir/upgrade.log
- # echo the log will be $logfile
+	 # echo the log will be $logfile
 	echo  >>$logfile
 	echo update log will be in $logfile
 	date +"Upgrade started - %a %b %e %H:%M:%S %Z %Y" >>$logfile
@@ -97,6 +98,12 @@ if [ -d ~/$mfn ]; then
 		doinstalls=$true
 		force=$true
 		test_run=$false
+	elif [ $p0 == 'testit' ]; then
+                echo user requested to test  apply changes >>$logfile
+                doinstalls=$true
+                force=$true
+		develop=$true
+                test_run=$false
 	fi
         if [ $test_run == $true ]; then
                 echo
@@ -117,16 +124,6 @@ if [ -d ~/$mfn ]; then
 		else
 			OS=$(LC_ALL=C cat /etc/os-release 2>/dev/null |grep VERSION_CODENAME |  awk -F= '{print $2}')
 		fi
-		#if [ $OS == "buster" ]; then
-		#	echo upgrade on buster is broken, ending install
-		#	exit 4
-		#fi
-		# if n is not installed
-		#if [ "$(which n)." == "." ]; then
-		#	sudo apt-get purge nodejs -y &&\
-		#	sudo rm -r /etc/apt/sources.list.d/nodesource.list &&\
-		#	sudo rm -r /etc/apt/keyrings/nodesource.gpg
-		#fi
 		NODE_MAJOR=20
 		if [ "${OS,,}." == "buster." ]; then
 			echo
@@ -136,16 +133,6 @@ if [ -d ~/$mfn ]; then
 			echo
 			date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 			exit 1
-
-		#	NODE_TESTED="v18.18.0" # "v16.13.1"
-		#	NPM_TESTED="V9.8.1" # "V7.11.2"
-		#	NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
-		#	NODE_MAJOR=18
-			#OS=$(lsb_release -a 2>/dev/null | grep name: | awk '{print $2}')
-			#if [ $OS == "buster" ]; then
-			#	NODE_MAJOR=18
-			#fi
-		#	:
 		fi
 
 
@@ -554,20 +541,25 @@ if [ -d ~/$mfn ]; then
 				fi
 			fi
 		fi
+		if [ $develop == $true ]; then
+			:
+		fi
 	fi
 
 	# change to MagicMirror folder
 	cd ~/$mfn
-
+                if [ -d defaultmodules ]; then 
+                    find ccs  -maxdepth 1 -type f \( -not -name "font-awesome.css" -not -name "main.css" -not -name "roboto.css" -not -name custom.css.sample \) | xargs -I {} mv {} config
+		fi
 		# save custom.css
-		cd css
-			if [ -f custom.css ]; then
-				echo "saving custom.css" | tee -a $logfile
-				cp -p custom.css save_custom.css
-			fi
-		cd - >/dev/null
+		#cd css
+		#	if [ -f custom.css ]; then
+		#		echo "saving custom.css" | tee -a $logfile
+		#		cp -p custom.css save_custom.css
+		#	fi
+		#cd - >/dev/null
 		save_alias=$(alias git 2>/dev/null)
-        # get the current branch name
+	        # get the current branch name
 		current_branch=$(git branch | grep \* | cut -d ' '  -f2)
 		if [ $current_branch != 'master' ]; then
 		   echo reverting to master branch from $current_branch, saving changed files | tee -a $logfile
@@ -607,6 +599,9 @@ if [ -d ~/$mfn ]; then
 		   fi
 
 		fi
+		if [ $develop == $true ]; then 
+			:
+		fi 
 		remote_user=MagicMirrorOrg
 		# get the git remote name
 		remote=$(LC_ALL=C  git remote -v 2>/dev/null |  grep -m1 '.com/M'  | awk '{print $1}')
@@ -904,6 +899,7 @@ if [ -d ~/$mfn ]; then
 											sudo chown root node_modules/electron/dist/chrome-sandbox 2>/dev/null
 											sudo chmod 4755 node_modules/electron/dist/chrome-sandbox 2>/dev/null
 										fi
+
 										# if this is v 2.11 or higher
 										newver=$(grep -m1 version $keyfile | awk -F\" '{print $4}')
 										# no compound compare for strings, use not of reverse
@@ -936,8 +932,14 @@ if [ -d ~/$mfn ]; then
 										fi
 										fi
 										if [ $newver == '2.11.0' ]; then
-										npm install eslint
+											npm install eslint
 										fi
+										if [ -d defaultmodules ]; then 
+									   		cd css
+											#  move css to config 
+											find . -maxdepth 1 -type f \( -not -name "font-awesome.css" -not -name "main.css" -not -name "roboto.css" -not -name "custom.css.sample" \) | xargs -I {}  mv {} ../config >/dev/null
+											cd ..
+										fi										
 									fi
 									# process updates for modules after base changed
 									cd modules
@@ -1153,9 +1155,14 @@ if [ -d ~/$mfn ]; then
 		cd css
 			# restore  custom.css
 			if [ -f save_custom.css ]; then
-				echo "restoring custom.css" | tee -a $logfile
-				cp -p save_custom.css custom.css
-				rm save_custom.css
+				if [ ! -d ../defaultmodules ]; then
+					echo "restoring custom.css" | tee -a $logfile
+					cp -p save_custom.css custom.css >/dev/null
+					rm save_custom.css
+				else
+				   echo "restoring custom.css to config folder" | tee -a $logfile
+				   mv save_custom.css ../config >/dev/null
+				fi
 			fi
 		cd - >/dev/null
 		#if [ "$lang." != "en_US.UTF-8." ]; then
