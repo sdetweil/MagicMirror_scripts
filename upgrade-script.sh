@@ -15,17 +15,109 @@ git_active_lock='./.git/index.lock'
 lf=$'\n'
 git_user_name=
 git_user_email=
-NODE_TESTED="v22.21.0" #"v20.18.1" # "v16.13.0"
+NODE_TESTED="v22.21.1" #"v20.18.1" # "v16.13.0"
+if [ "$testmode." != "." ];  then
+	NODE_TESTED="v22.21.1"
+fi
 NPM_TESTED="V10.9.4" #"V10.8.2" # "V7.11.2"
 NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 BAD_NODE_VERSION=21
-NODE_ACCEPTABLE=V22.14.0
+NODE_ACCEPTABLE=V22.21.1
 NODE_INSTALL=false
 known_list="request valid-url jsdom node-fetch digest-fetch"
 JustProd="--only=prod"
 switched=""
-develop=$false
 NODE_OPTIONS=--max_old_space_size=4096
+remote_user=MagicMirrorOrg
+repo=master
+#echo $testmode
+if [ "${testmode}." != "." ]; then
+	repo=develop
+fi
+
+get_nvm_command(){
+	if [ "$NVM_DIR." != "." -a -d $NVM_DIR ]; then
+		# nvm is installed, use it
+		# the lines after 'EOF' thru EOF MUST be on the start of the line
+read -r -d '' multiline_string << EOF
+export NVM_DIR=$NVM_DIR;
+. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh";
+axx=
+if [ "$3." != "." ]; then
+	axx=":32"
+fi
+nvm install $1$axx
+nvm uninstall $2
+EOF
+		echo "$multiline_string"
+	else
+	   # check if n is isntalled
+	   if [ "$(which n)." == "." ]; then
+	     sudo npm i n -g  >>$logfile 2>&1
+	   fi
+	   axx=
+	   if [ "$3." != "." ]; then
+	   	axx="--arch ${3:1}"
+	   fi
+	   echo "sudo n $axx $1 "
+	fi
+	echo ""
+}
+
+getRequiredNodeVersion() {
+	engine=$(echo "$package_json" | grep \"engines\" -A 2  | grep $1 | awk -F: '{print $2}' | tr -d \")
+
+	if [[ -z "$engine" ]]; then
+		echo "No $1 engines section specified"
+		exit 1
+	fi
+
+	# Normalize OR conditions by splitting and checking all clauses
+	# Extract all candidate versions
+	candidates=()
+
+	# Convert expression into newline-separated constraints
+	IFS=$'\n'
+	for part in $(echo "$engine" | tr '|' '\n'); do
+		# Match version patterns
+		while [[ $part =~ ([><=^~]*)([0-9]+)(\.([0-9]+))?(\.([0-9]+))?([xX*])? ]]; do
+			major=${BASH_REMATCH[2]}
+			minor=${BASH_REMATCH[4]:-0}
+			patch=${BASH_REMATCH[6]:-0}
+			wildcard=${BASH_REMATCH[7]}
+
+			# If it's a wildcard like 16.x or 12.*
+			if [[ "$wildcard" == "x" || "$wildcard" == "X" || "$wildcard" == "*" ]]; then
+				minor=0
+				patch=0
+			fi
+
+			version="$major.$minor.$patch"
+			candidates+=("$version")
+
+			# Trim matched part and continue parsing
+			part=${part#*"${BASH_REMATCH[0]}"}
+		done
+	done
+
+	# Handle universal "*" or no match
+	if [[ ${#candidates[@]} -eq 0 ]]; then
+		if [[ "$engine" == "*" ]]; then
+			echo "0.0.0"
+			exit 0
+		else
+			echo "Could not parse any version from: $engine"
+			exit 1
+		fi
+	fi
+
+	# Sort versions and pick the minimum
+	min_version=$(printf '%s\n' "${candidates[@]}" | sort -V | head -n 1)
+
+
+	echo -n "$min_version"
+}
 
 trim() {
     local var="$*"
@@ -61,12 +153,15 @@ if [ -d ~/$mfn ]; then
 	# if the script was execute from the web
 	#if [[ $logdir != *"MagicMirror/installers"* ]]; then
 		# use the MagicMirror/installers folder
+		if [ ! -d ~/$mfn/installers ]; then
+			mkdir ~/$mfn/installers
+		fi
 		cd ~/$mfn/installers >/dev/null
 		logdir=$(pwd)
 		cd - >/dev/null
 	fi
 	logfile=$logdir/upgrade.log
-	 # echo the log will be $logfile
+ # echo the log will be $logfile
 	echo  >>$logfile
 	echo update log will be in $logfile
 	date +"Upgrade started - %a %b %e %H:%M:%S %Z %Y" >>$logfile
@@ -98,12 +193,6 @@ if [ -d ~/$mfn ]; then
 		doinstalls=$true
 		force=$true
 		test_run=$false
-	elif [ $p0 == 'testit' ]; then
-                echo user requested to test  apply changes >>$logfile
-                doinstalls=$true
-                force=$true
-		develop=$true
-                test_run=$false
 	fi
         if [ $test_run == $true ]; then
                 echo
@@ -124,7 +213,17 @@ if [ -d ~/$mfn ]; then
 		else
 			OS=$(LC_ALL=C cat /etc/os-release 2>/dev/null |grep VERSION_CODENAME |  awk -F= '{print $2}')
 		fi
-		NODE_MAJOR=20
+		#if [ $OS == "buster" ]; then
+		#	echo upgrade on buster is broken, ending install
+		#	exit 4
+		#fi
+		# if n is not installed
+		#if [ "$(which n)." == "." ]; then
+		#	sudo apt-get purge nodejs -y &&\
+		#	sudo rm -r /etc/apt/sources.list.d/nodesource.list &&\
+		#	sudo rm -r /etc/apt/keyrings/nodesource.gpg
+		#fi
+		NODE_MAJOR=22
 		if [ "${OS,,}." == "buster." ]; then
 			echo
 			echo 'MagicMirror version 2.28.0 (July 1 2024), will not run on OS level buster, due to system limitations' | tee -a $logfile
@@ -182,22 +281,25 @@ if [ -d ~/$mfn ]; then
 					fi
 				fi
 				# if n is not installed
-				NODE_MAJOR=20
+				NODE_MAJOR=22
 				# if n is not installed
 				if [ $doinstalls == $true ]; then
-					if [ "$(which n)." == "." ]; then
+					NODE_CURRENT=$(node -v 2>/dev/null)
+					if [ "$NODE_CURRENT." == "." ]; then
+			            NODE_CURRENT="V1.0.0"
+		                echo forcing low Node version  >> $logfile
+			        fi
+					nvm_command=$(get_nvm_command "$NODE_TESTED" "$NODE_CURRENT" "$ar")
+				    #echo using $nvm_command
+					#if [ "$(which n)." == "." ]; then
 						# install it globally
-						echo installing n globally
-						sudo npm i n -g  >>$logfile 2>&1
-					fi
+					#	echo installing n globally
+					#	sudo npm i n -g  >>$logfile 2>&1
+					#fi
 					# if n is installed
-					if [ "$(which n)." != "." ]; then						
+					#if [ "$(which n)." != "." ]; then
 						# use it to upgrade node
-						NODE_CURRENT=$(node -v 2>/dev/null)
-						if [ "$NODE_CURRENT." == "." ]; then
-				            NODE_CURRENT="V1.0.0"
-			                echo forcing low Node version  >> $logfile
-				        fi
+
 						echo -e "\e[0mNode currently installed. Checking version number.\e[0m" | tee -a $logfile
 				                echo -e "\e[0mMinimum Node version: \e[1m$NODE_TESTED\e[0m" | tee -a $logfile
 				                echo -e "\e[0mInstalled Node version: \e[1m$NODE_CURRENT\e[0m" | tee -a $logfile
@@ -212,15 +314,17 @@ if [ -d ~/$mfn ]; then
 								ar="--arch armv7l"
 							fi
 							echo -e "\e[96minstalling correct version of node and npm, please wait\e[0m" | tee -a $logfile
-							sudo n $NODE_TESTED $ar >>$logfile
+							#echo using $nvm_command
+							eval "$nvm_command" >>$logfile
+							hash -r
 							PATH=$PATH
 							NODE_INSTALL=false
 						fi
-					fi
-				else
-					if [ "$(which n)." == "." ]; then
-						echo "n (node version manager tool) not installed, doing test run, install skipped" >>$logfile
-					fi
+					#fi
+				#else
+				#	if [ "$(which n)." == "." ]; then
+				#		echo "n (node version manager tool) not installed, doing test run, install skipped" >>$logfile
+				#	fi
 				fi
 			fi
 		fi
@@ -236,6 +340,20 @@ if [ -d ~/$mfn ]; then
 #	fi
 
 #	echo update log will be in $logfile
+
+	# get the package.json contents once
+	package_json=$(curl -sL https://raw.githubusercontent.com/$remote_user/MagicMirror/$repo/$keyfile)
+    remote_version=$(echo "$package_json" | grep -m1 version | awk -F\" '{print $4}')
+    NODE_TESTED=v$(getRequiredNodeVersion node)
+    NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
+    # try to get the npm version from package.json
+    npm_needed=$(getRequiredNodeVersion npm)
+    if [ "$npm_needed" != 'No npm engines section specified' ]; then
+    	NPM_TESTED=v$npm_needed
+    	echo -e "\e[0mfound NPM setting in package.json=$npm_needed  ...\e[0m" >> $logfile
+    else
+      echo -e "\e[0m$npm_needed in package.json, using default=$NPM_TESTED ...\e[0m" >> $logfile
+    fi
 
 	# Check if we need to install or upgrade Node.js.
 	echo -e "\e[96mCheck current Node installation ...\e[0m" | tee -a $logfile
@@ -261,7 +379,7 @@ if [ -d ~/$mfn ]; then
 
 			# Check if a node process is currently running.
 			# If so abort installation.
-			while true
+			while false
 			do
 				node_running=$(ps -ef | grep "node " | grep -v grep)
 				if [ "$node_running." != "." ]; then
@@ -304,27 +422,31 @@ if [ -d ~/$mfn ]; then
 	# Install or upgrade node if necessary.
 	if $NODE_INSTALL; then
 		if [ $doinstalls == $true ]; then
+			if [ $mac != 'Darwin' ]; then 
+			  t=$(dpkg --print-architecture| grep armhf)
+			  echo "architecture from dpkg is $t" >>$logfile
+			fi
+			ar=
+			if [ "$t." != "." ]; then
+				ar=":armv7l"
+			fi
 			echo -e "\e[96mInstalling Node.js ...\e[0m" | tee -a $logfile
+			nvm_command=$(get_nvm_command "$NODE_TESTED" "$NODE_CURRENT" "$ar")
+			echo using $nvm_command
 			# Fetch the latest version of Node.js from the selected branch
 			# The NODE_STABLE_BRANCH variable will need to be manually adjusted when a new branch is released. (e.g. 7.x)
 			# Only tested (stable) versions are recommended as newer versions could break MagicMirror.
 			if [ $mac == 'Darwin' ]; then
-			  if [ "$(which node)" == "" ]; then 
-			    :		  
-			  fi
-			  if [ "$(which node)" != "" ]; then
-				if [ "$(which n)." == "." ]; then
-					# install it globally
-					echo installing n globally >>$logfile
-					sudo npm i n -g  >>$logfile 2>&1
-				fi
-				# if n is installed
-				if [ "$(which n)." != "." ]; then	
-				   sudo n $NODE_TESTED >>$logfile 2>&1
-				fi
-			  fi
+			  #if [ "$(which node)" == "" ]; then 
+			  #  :		  
+			  #fi
+			  #if [ "$(which node)" = "" ]; then
+				   $(eval "$nvm_command") >>$logfile 2>&1
+			  #fi
 			  #brew install node
 			else
+				r=eval "$nvm_command"
+				if [ 0 -eq 1 ]; then
 			    sudo apt-get --allow-releaseinfo-change update >>$logfile
 				echo $NODE_STABLE_BRANCH | grep -qE "x$"
 				if [ $? -eq 1 ]; then 
@@ -361,6 +483,7 @@ if [ -d ~/$mfn ]; then
 					cd - >/dev/null
 					rm ./node_release-$node_ver.tar.gz
 				fi
+				fi
 				# get the new node version number
 				new_ver=$(LC_ALL=C node -v 2>&1)
 				# if there is a failure to get it due to a missing library
@@ -374,9 +497,9 @@ if [ -d ~/$mfn ]; then
 			# if pm2 is installed
 			if [ "$(which pm2)." != "." ]; then
 				pm2_npmjs_version=$(npm view pm2 version)
-				pm2_current_version=$(npm list -g --depth=0 | grep -i pm2 | awk -F@ '{print $2}')
+				pm2_current_version=$(pm2 --version)
 				echo pm2 installed, checking version $pm2_current_version vs $pm2_npmjs_version >> $logfile
-				if [ 1 -o  ${pm2_npmjs_version:0:1} == ${pm2_current_version:0:1} -a $pm2_current_version != $pm2_npmjs_version ]; then
+				if [ 1 -eq 1 -o  ${pm2_npmjs_version:0:1} == ${pm2_current_version:0:1} -a $pm2_current_version != $pm2_npmjs_version ]; then
 					# if pm2 is managing MagicMirror,, then update
 					if [ $(pm2 ls -m | grep "\-\-" | grep -i magicmirror | wc -l) -eq 1 ]; then
 						apps_defined=$(pm2 ls -m | grep "\-\-" | wc -l)
@@ -527,40 +650,40 @@ if [ -d ~/$mfn ]; then
 		if [ $NPM_MAJOR -ge 8 ]; then
 			JustProd="--no-audit --no-fund --no-update-notifier"
 		fi
-		if [ $mac != 'Darwin' ]; then
+		if [ $mac != 'Darwin' -a "$OS." != 'trixie' ]; then
 			if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -le 512  ]; then
 				# only for arm architectures
 				if [[ $arch == a* ]]; then
-					export NODE_OPTIONS="--max-old-space-size=1024"
-					echo "increasing swap space" >>$logfile
-					sudo dphys-swapfile swapoff
-					sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile
-					#sudo nano /etc/dphys-swapfile
-					sudo dphys-swapfile setup
-					sudo dphys-swapfile swapon
+					if [ -e /etc/dphys-swapfile ]; then
+						echo "increasing swap space" >>$logfile
+						export NODE_OPTIONS="--max-old-space-size=1024"
+						echo "increasing swap space" >>$logfile
+						sudo dphys-swapfile swapoff
+						sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile
+						#sudo nano /etc/dphys-swapfile
+						sudo dphys-swapfile setup
+						sudo dphys-swapfile swapon
+					else
+					   echo swap control file /etc/dphys-swapfile doesn\'t exist >>$logfile
+					fi
 				fi
 			fi
-		fi
-		if [ $develop == $true ]; then
-			:
 		fi
 	fi
 
 	# change to MagicMirror folder
 	cd ~/$mfn
-                if [ -d defaultmodules ]; then 
-                    find ccs  -maxdepth 1 -type f \( -not -name "font-awesome.css" -not -name "main.css" -not -name "roboto.css" -not -name custom.css.sample \) | xargs -I {} mv {} config
-		fi
+
 		# save custom.css
-		#cd css
-		#	if [ -f custom.css ]; then
-		#		echo "saving custom.css" | tee -a $logfile
-		#		cp -p custom.css save_custom.css
-		#	fi
-		#cd - >/dev/null
+		cd css
+			if [ -f custom.css ]; then
+				echo "saving custom.css" | tee -a $logfile
+				cp -p custom.css save_custom.css
+			fi
+		cd - >/dev/null
 		save_alias=$(alias git 2>/dev/null)
-	        # get the current branch name
-		current_branch=$(git branch | grep \* | cut -d ' '  -f2)
+        # get the current branch name
+		current_branch=$(git branch --show-current)
 		if [ $current_branch != 'master' ]; then
 		   echo reverting to master branch from $current_branch, saving changed files | tee -a $logfile
 		   changes=$(LC_ALL=C git status | grep modified | awk -F: '{print $2}')
@@ -599,12 +722,9 @@ if [ -d ~/$mfn ]; then
 		   fi
 
 		fi
-		if [ $develop == $true ]; then 
-			:
-		fi 
 		remote_user=MagicMirrorOrg
 		# get the git remote name
-		remote=$(LC_ALL=C  git remote -v 2>/dev/null |  grep -m1 '.com/M'  | awk '{print $1}')
+		remote=$(LC_ALL=C  git remote -v 2>/dev/null |  grep -m1 -e '.com/M' -e '.com:M'  | awk '{print $1}')
 		if [ "$remote" == 'upstream' ]; then
 			git remote remove upstream > /dev/null
 			git remote add upstream https://github.com/$remote_user/MagicMirror
@@ -625,7 +745,12 @@ if [ -d ~/$mfn ]; then
 
 		  # get the local and remote package.json versions
 			local_version=$(grep -m1 version $keyfile | awk -F\" '{print $4}' | awk -F-  '{print $1}')
-			remote_version=$(curl -sL https://raw.githubusercontent.com/$remote_user/MagicMirror/master/$keyfile | grep -m1 version | awk -F\" '{print $4}')
+			repo=master
+			echo $testmode
+			if [ "${testmode}." != "." ]; then
+				repo=develop
+			fi
+			#remote_version=$(curl -sL https://raw.githubusercontent.com/$remote_user/MagicMirror/$repo/$keyfile | grep -m1 version | awk -F\" '{print $4}')
 
 			# if on 2.9
 			if [ $local_version == '2.9.0' ]; then
@@ -638,6 +763,9 @@ if [ -d ~/$mfn ]; then
 			# check if current is less than remote, dont downlevel
 			$(verlte  "$local_version" "$remote_version")
 			r=$?
+			if [ "$testmode." != "." ]; then
+				r=0
+			fi
 			if [ "$r" == 0 ]; then
 				# only change if they are different
 				if [ "$local_version." != "$remote_version." -o $force == $true -o $test_run == $true ]; then					
@@ -654,12 +782,15 @@ if [ -d ~/$mfn ]; then
 							pm2 stop $pm2_name | tee -a $logfile
 						fi
 					else
-						mmline=$(LC_ALL=C ps -ef | grep "node " | grep -v grep)
+						mmline=$(LC_ALL=C ps -ef | grep "node " | grep MagicMirror | grep -v grep)
 						if [ "$mmline." != "." ]; then 
-						echo some node app still running, please shutdown MagicMirror and restart 
-						if [ "$switched." != "." ]; then
-							git switch $switched -q >>$logfile
-						fi
+							echo some node app still running, please shutdown those apps, maybe MagicMirror, and restart
+							echo here is a list of those processes
+							echo $mline
+							if [ "$switched." != "." ]; then
+								git switch $switched -q >>$logfile
+							fi
+						date +"Upgrade ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 						exit 4
 						fi   
 					fi 
@@ -811,6 +942,18 @@ if [ -d ~/$mfn ]; then
 							done
 							# if no merge errors
 							if [ $merge_result == 0 ]; then
+								if [ "$testmode." != "." ]; then
+									cb=$(git branch | grep develop)
+									if [ $(echo $cb | grep develop | wc -l) == 1 ]; then
+										if [ $(git branch --show-current  | grep "develop" |  wc -l) == 0 ]; then
+										  git checkout develop >/dev/null
+										fi
+										git pull >/dev/null
+									else
+										git fetch origin develop:develop  >/dev/null
+										git checkout develop >/dev/null
+									fi
+								fi
 								# did the installers folder go away (2.29)
 								if [ ! -d installers ]; then
 									echo "installers folder removed, adding back" >> $logfile
@@ -831,6 +974,18 @@ if [ -d ~/$mfn ]; then
 										curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/mm.sh >installers/mm.sh
 										chmod +x installers/mm.sh
 									fi
+								else 	
+								    # check  if new MM version is 2.35 or higher with  Wayland  as default for npm start
+									$(verlt  "$remote_version" "2.35" ) 									
+									r=$?
+									if [ $r == 1 ]; then 
+										echo "fixing mm.sh for new Wayland start as default" >> $logfile										
+										if [ $mac == 'Darwin' ]; then
+											sed -i ''  's/npm start/npm run start:x11/'  installers/mm.sh 
+										else 
+											sed -i  's/npm start/npm run start:x11/'  installers/mm.sh 
+										fi
+									fi	
 								fi
 								# if we got here and the saved copy is still around
 								if [ -e foo.sh ]; then
@@ -899,7 +1054,6 @@ if [ -d ~/$mfn ]; then
 											sudo chown root node_modules/electron/dist/chrome-sandbox 2>/dev/null
 											sudo chmod 4755 node_modules/electron/dist/chrome-sandbox 2>/dev/null
 										fi
-
 										# if this is v 2.11 or higher
 										newver=$(grep -m1 version $keyfile | awk -F\" '{print $4}')
 										# no compound compare for strings, use not of reverse
@@ -932,14 +1086,8 @@ if [ -d ~/$mfn ]; then
 										fi
 										fi
 										if [ $newver == '2.11.0' ]; then
-											npm install eslint
+										npm install eslint
 										fi
-										if [ -d defaultmodules ]; then 
-									   		cd css
-											#  move css to config 
-											find . -maxdepth 1 -type f \( -not -name "font-awesome.css" -not -name "main.css" -not -name "roboto.css" -not -name "custom.css.sample" \) | xargs -I {}  mv {} ../config >/dev/null
-											cd ..
-										fi										
 									fi
 									# process updates for modules after base changed
 									cd modules
@@ -1155,14 +1303,9 @@ if [ -d ~/$mfn ]; then
 		cd css
 			# restore  custom.css
 			if [ -f save_custom.css ]; then
-				if [ ! -d ../defaultmodules ]; then
-					echo "restoring custom.css" | tee -a $logfile
-					cp -p save_custom.css custom.css >/dev/null
-					rm save_custom.css
-				else
-				   echo "restoring custom.css to config folder" | tee -a $logfile
-				   mv save_custom.css ../config >/dev/null
-				fi
+				echo "restoring custom.css" | tee -a $logfile
+				cp -p save_custom.css custom.css
+				rm save_custom.css
 			fi
 		cd - >/dev/null
 		#if [ "$lang." != "en_US.UTF-8." ]; then

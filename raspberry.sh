@@ -28,16 +28,106 @@ doInstall=1
 true=1
 false=0
 # Define the tested version of Node.js.
-NODE_TESTED="v22.14.0" #"v20.18.1" # "v16.13.0"
+NODE_TESTED="v22.21.1" #"v20.18.1" # "v16.13.0"
+if [ "$testmode." != "." ]; then
+	NODE_TESTED="v22.21.1"
+	echo setting test node version $NODE_TESTED
+fi
 BAD_NODE_VERSION=21
-NPM_TESTED="V10.9.2" #"V10.8.2" # "V7.11.2"
+NPM_TESTED="V10.9.4" #"V10.8.2" # "V7.11.2"
 NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
 USER=`whoami`
 PM2_FILE=pm2_MagicMirror.json
 forced_arch=
 pm2setup=$false
 JustProd="--only=prod"
-css_dir=css
+t=
+keyfile=package.json
+remote_user=MagicMirrorOrg
+repo=master
+#echo $testmode
+if [ "${testmode}." != "." ]; then
+	repo=develop
+fi
+
+get_nvm_command(){
+	if [ "$NVM_DIR." != "." -a -d $NVM_DIR ]; then
+		# nvm is installed, use it
+		# the lines after 'EOF' thru EOF MUST be on the start of the line
+read -r -d '' multiline_string << EOF
+export NVM_DIR=$NVM_DIR;
+. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh";
+nvm install $1
+nvm uninstall $2
+EOF
+		echo "$multiline_string"
+	else
+	   # check if n is installed
+	   if [ "$(which node)." != "." ]; then
+		   if [ "$(which n)." == "." ]; then
+		     sudo npm i n -g  >>$logfile 2>&1
+		   fi
+		   echo "sudo n $1"
+		fi
+	fi
+	echo ""
+}
+
+getRequiredNodeVersion() {
+	engine=$(echo "$package_json" | grep \"engines\" -A 2  | grep $1 | awk -F: '{print $2}' | tr -d \")
+
+	if [[ -z "$engine" ]]; then
+		echo "No $1 engines section specified"
+		exit 1
+	fi
+
+	# Normalize OR conditions by splitting and checking all clauses
+	# Extract all candidate versions
+	candidates=()
+
+	# Convert expression into newline-separated constraints
+	IFS=$'\n'
+	for part in $(echo "$engine" | tr '|' '\n'); do
+		# Match version patterns
+		while [[ $part =~ ([><=^~]*)([0-9]+)(\.([0-9]+))?(\.([0-9]+))?([xX*])? ]]; do
+			major=${BASH_REMATCH[2]}
+			minor=${BASH_REMATCH[4]:-0}
+			patch=${BASH_REMATCH[6]:-0}
+			wildcard=${BASH_REMATCH[7]}
+
+			# If it's a wildcard like 16.x or 12.*
+			if [[ "$wildcard" == "x" || "$wildcard" == "X" || "$wildcard" == "*" ]]; then
+				minor=0
+				patch=0
+			fi
+
+			version="$major.$minor.$patch"
+			candidates+=("$version")
+
+			# Trim matched part and continue parsing
+			part=${part#*"${BASH_REMATCH[0]}"}
+		done
+	done
+
+	# Handle universal "*" or no match
+	if [[ ${#candidates[@]} -eq 0 ]]; then
+		if [[ "$engine" == "*" ]]; then
+			echo "0.0.0"
+			exit 0
+		else
+			echo "Could not parse any version from: $engine"
+			exit 1
+		fi
+	fi
+
+	# Sort versions and pick the minimum
+	min_version=$(printf '%s\n' "${candidates[@]}" | sort -V | head -n 1)
+
+
+	echo -n "$min_version"
+}
+
 trim() {
     local var="$*"
     # remove leading whitespace characters
@@ -99,11 +189,11 @@ OS=$(cat /etc/os-release 2>/dev/null  | grep VERSION_CODENAME |  awk -F= '{print
 #	echo install on buster is broken, ending install
 #	exit 4
 #fi
-if [ $ARM == "armv6l" ]; then
-	echo -e "nodejs version required for MagicMirror is no longer available for armv6l (pi0w) devices\ninstallation aborted" | tee -a $logfile
-	date +"install ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
-	exit 3
-fi
+#if [ $ARM == "armv6l" ]; then
+#	echo -e "nodejs version required for MagicMirror is no longer available for armv6l (pi0w) devices\ninstallation aborted" | tee -a $logfile
+#	date +"install ended - %a %b %e %H:%M:%S %Z %Y" >>$logfile
+#	exit 3
+#fi
 
 if [ "$OS." = "buster." ]; then
 	echo
@@ -223,21 +313,32 @@ if [ $mac != 'Darwin' ]; then
 	echo -e "\e[96mInstalling helper tools ...\e[0m" | tee -a $logfile
 	sudo apt-get --assume-yes   install  curl wget git build-essential unzip >>$logfile
 fi
-if [ $mac != 'Darwin' ]; then 
+# trixie swap space chaneg requires reboot
+if [ $mac != 'Darwin' -a "$OS." != 'trixie' ]; then
 	if [ $(LC_ALL=C free -m | grep Mem | awk '{print $2}') -le 512 ]; then
 		echo " this should be a raspberry pi 02w" >>$logfile
 		export NODE_OPTIONS="--max-old-space-size=1024"
 		# if the swap space is small
 		if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -lt 512 ]; then
-			echo "increasing swap space" >>$logfile
-			swapsize=$(grep "CONF_SWAPSIZE=" /etc/dphys-swapfile | awk -F= '{print $2}')
-			sudo dphys-swapfile swapoff >>$logfile
-			sudo sed "/CONF_SWAPSIZE=$swapsize/ c \CONF_SWAPSIZE=1024" -i /etc/dphys-swapfile
-			#sudo nano /etc/dphys-swapfile
-			sudo dphys-swapfile setup >>$logfile
-			sudo dphys-swapfile swapon >>$logfile
+			# if the old swap control file exists
+			if [ -e /etc/dphys-swapfile ]; then
+				echo "increasing swap space" >>$logfile
+				swapsize=$(grep "CONF_SWAPSIZE=" /etc/dphys-swapfile | awk -F= '{print $2}')
+				sudo dphys-swapfile swapoff >>$logfile
+				sudo sed "/CONF_SWAPSIZE=$swapsize/ c \CONF_SWAPSIZE=1024" -i /etc/dphys-swapfile
+				#sudo nano /etc/dphys-swapfile
+				sudo dphys-swapfile setup >>$logfile
+				sudo dphys-swapfile swapon >>$logfile
+			else
+			   echo swap control file /etc/dphys-swapfile doesn\'t exist >>$logfile
+			fi
 		fi 
 	fi
+else
+  	if [ "$OS." == 'trixie' ]; then
+  		echo the swap file size should be increased, but on trixie this requres a reboot
+  		echo see https://forums.raspberrypi.com/viewtopic.php?t=392530#p2341749
+  	fi
 fi
 
 npminstalled=$false
@@ -254,13 +355,14 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 		echo node not installed, trying via apt-get >>$logfile
 		# install the default
 		sudo apt-get update >/dev/null
+		echo "node platform type ='$t'" >>$logfile
 		ni=$(sudo apt-get install "nodejs$t" "npm$t" -y 2>&1)
 		# log it
 		echo $ni >>$logfile
-		# if npm not installed
-		echo npm not installed, trying via apt-get >>$logfile
+		# if npm not installed		
 		if [ "$(npm -v 2>/dev/null)." == "." ]; then
-			echo npm installed now, install n >>$logfile
+			echo npm not installed, trying via apt-get >>$logfile
+			#echo npm installed now, install npm >>$logfile
 			# install it too
 			ni=$(sudo apt-get install npm -y 2>&1)
 			echo $ni >>$logfile
@@ -270,12 +372,9 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 	   echo installed node version is $nv >>$logfile
 	fi
 	# if n is not installed
-	NODE_MAJOR=20
-	# if n is not installed
-	if [ "$(which n)." == "." ]; then
-		# install it globally
-		sudo npm i n -g  >>$logfile 2>&1
-	fi
+	NODE_MAJOR=22
+	nvm_command=$(get_nvm_command "$NODE_TESTED" "$nv")
+	echo nvm_command is $nvm_command
 	arch=
 	# is npm installed?
 	echo "installing on $OS" >>$logfile
@@ -285,23 +384,40 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 		# yes
 		# check if node is already at the right level
 		# get node version
-		v=$(node -v)
+		v=$(node -v 2>/dev/null)
 		if [ "$v." != "." ]; then
+			echo installed node version = $v >>$logfile
+			# get the package.json contents once
+			package_json=$(curl -sL https://raw.githubusercontent.com/$remote_user/MagicMirror/$repo/$keyfile)
+			remote_version=$(echo "$package_json" | grep -m1 version | awk -F\" '{print $4}')
+			NODE_TESTED=v$(getRequiredNodeVersion node)
+			NODE_STABLE_BRANCH="${NODE_TESTED:1:2}.x"
+			# try to get the npm version from package.json
+			npm_needed=$(getRequiredNodeVersion npm)
+			if [ "$npm_needed" != 'No npm engines section specified' ]; then
+				NPM_TESTED=V$npm_needed
+				echo -e "\e[0mfound NPM setting in package.json=$npm_needed  ...\e[0m" >> $logfile
+			else
+				echo -e "\e[0m$npm_needed in package.json, using default=$NPM_TESTED ...\e[0m" >> $logfile
+			fi
 			testver=${NODE_TESTED:1:2}
 			if [ ${v:1:2} -lt $testver -o ${v:1:2} -eq $BAD_NODE_VERSION  ]; then
 				if [ ${v:1:2} -eq $BAD_NODE_VERSION ]; then
 					 NODE_TESTED=v22
 				fi
 				echo -e "\e[96minstalling correct version of node and npm, please wait\e[0m" | tee -a $logfile
-				#nr=$(sudo npm install -g n)
+				# checking for 32 bit user space
+				t=$(file $(which bash) | grep armhf)
 				if [ "$t." != "." ]; then
 					t="--arch armv7l"
 				fi 
-				sudo n ${NODE_TESTED:1} $t  >> $logfile
-				PATH="$PATH"
-				nodev=$(node -v)
+				eval "$nvm_command" >>$logfile
+				hash -r
+				nodev=$(node -v 2>/dev/null)
+				echo "node version $nodev was installed" >> $logfile
 				if [ "${nodev:0:3}" != ${NODE_TESTED:0:3} ]; then
 					echo node failed to install, exiting | tee -a $logfile
+					date +"install aborted - %a %b %e %H:%M:%S %Z %Y" >>$logfile
 					exit
 				fi
 			fi
@@ -312,6 +428,7 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 		fi
 	#fi
 fi
+
 if [ $npminstalled == $false ]; then
 	# Check if we need to install or upgrade Node.js.
 	echo -e "\e[96mCheck current Node installation ...\e[0m" | tee -a $logfile
@@ -328,6 +445,7 @@ if [ $npminstalled == $false ]; then
 		if verlt $NODE_CURRENT $NODE_TESTED; then
 			echo -e "\e[96mNode should be upgraded.\e[0m" | tee -a $logfile
 			NODE_INSTALL=true
+
 
 			# Check if a node process is currenlty running.
 			# If so abort installation.
@@ -358,10 +476,10 @@ if [ $npminstalled == $false ]; then
 		# Only tested (stable) versions are recommended as newer versions could break MagicMirror.
 		if [ $mac == 'Darwin' ]; then
 		  if [ "$(which n)" == "" ]; then 
-		     sudo npm i n -g >null
+		     :
 		  fi
 		  if [ "$(which n)" ]; then 
-		     sudo n $NODE_TESTED>>$logfile 2>&1	 
+		      $(eval "$nvm_command") >>$logfile 2>&1
 		  fi	 		  
 		else
 			if [ "$OS." == 'bullseye.' ]; then
@@ -370,46 +488,51 @@ if [ $npminstalled == $false ]; then
 				fi
 			fi
 			
-			# sudo apt-get install --only-upgrade libstdc++6
-			node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - )
-			echo Node release info = $node_info >> $logfile
-			#sudo apt-get install -y nodejs
-			if [ "$(echo $node_info | grep -i "Unsupported architecture")." == "." -a $ARM != "armv6l" ]; then
-				sudo apt-get install -y nodejs
+			if [ "$nvm_command." != "." ]; then
+				eval "$nvm_command" >>$logfile
 			else
-				echo node $NODE_STABLE_BRANCH version installer not available, doing manually >>$logfile
-				# no longer supported install
-				sudo apt-get install -y --only-upgrade libstdc++6  >> $logfile
-				# have to do it manually
-				ARM1=$ARM
-				if [ $ARM == 'armv6l' ]; then 
-					export NODE_OPTIONS="--max-old-space-size=1024"
-					if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -lt 512 ]; then
-						echo "increasing swap space" >>$logfile
-						sudo dphys-swapfile swapoff
-						sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile
-						#sudo nano /etc/dphys-swapfile
-						sudo dphys-swapfile setup
-						sudo dphys-swapfile swapon
-					fi 
-					curl -sL https://unofficial-builds.nodejs.org/download/release/${NODE_TESTED}/node-${NODE_TESTED}-linux-armv6l.tar.gz >node_release-${NODE_TESTED}.tar.gz
-					node_ver=$NODE_TESTED
+
+				# sudo apt-get install --only-upgrade libstdc++6
+				node_info=$(curl -sL https://deb.nodesource.com/setup_$NODE_STABLE_BRANCH | sudo -E bash - )
+				echo Node release info = $node_info >> $logfile
+				#sudo apt-get install -y nodejs
+				if [ "$(echo $node_info | grep -i "Unsupported architecture")." == "." -a $ARM != "armv6l" ]; then
+					sudo apt-get install -y nodejs
 				else
-					node_vnum=$(echo $NODE_STABLE_BRANCH | awk -F. '{print $1}')
-					if [ $ARM == 'x86_64' ]; then
-						ARM1= x64
+					echo node $NODE_STABLE_BRANCH version installer not available, doing manually >>$logfile
+					# no longer supported install
+					sudo apt-get install -y --only-upgrade libstdc++6  >> $logfile
+					# have to do it manually
+					ARM1=$ARM
+					if [ $ARM == 'armv6l' ]; then
+						export NODE_OPTIONS="--max-old-space-size=1024"
+						if [ $(LC_ALL=C free -m | grep Swap | awk '{print $2}') -lt 512 ]; then
+							echo "increasing swap space" >>$logfile
+							sudo dphys-swapfile swapoff
+							sudo sed '/SWAPSIZE=100/ c \SWAPSIZE=1024' -i /etc/dphys-swapfile
+							#sudo nano /etc/dphys-swapfile
+							sudo dphys-swapfile setup
+							sudo dphys-swapfile swapon
+						fi
+						curl -sL https://unofficial-builds.nodejs.org/download/release/${NODE_TESTED}/node-${NODE_TESTED}-linux-armv6l.tar.gz >node_release-${NODE_TESTED}.tar.gz
+						node_ver=$NODE_TESTED
+					else
+						node_vnum=$(echo $NODE_STABLE_BRANCH | awk -F. '{print $1}')
+						if [ $ARM == 'x86_64' ]; then
+							ARM1= x64
+						fi
+						# get the highest release number in the stable branch line for this processor architecture
+						node_ver=$(curl -sL https://nodejs.org/download/release/index.tab | grep $ARM1 | grep -m 1 v$node_vnum | awk '{print $1}')
+						echo "latest release in the $NODE_STABLE_BRANCH family for $ARM is $node_ver" >> $logfile
+						# download that file
+						curl -sL https://nodejs.org/download/release/v$node_ver/node-v$node_ver-linux-$ARM1.tar.gz >node_release-$node_ver.tar.gz
 					fi
-					# get the highest release number in the stable branch line for this processor architecture
-					node_ver=$(curl -sL https://nodejs.org/download/release/index.tab | grep $ARM1 | grep -m 1 v$node_vnum | awk '{print $1}')
-					echo "latest release in the $NODE_STABLE_BRANCH family for $ARM is $node_ver" >> $logfile
-					# download that file
-					curl -sL https://nodejs.org/download/release/v$node_ver/node-v$node_ver-linux-$ARM1.tar.gz >node_release-$node_ver.tar.gz
+					cd /usr/local
+					echo using release tar file = node_release-$node_ver.tar.gz >> $logfile
+					sudo tar --strip-components 1 -xzf  $HOME/node_release-$node_ver.tar.gz
+					cd - >/dev/null
+					rm ./node_release-$node_ver.tar.gz
 				fi
-				cd /usr/local
-				echo using release tar file = node_release-$node_ver.tar.gz >> $logfile
-				sudo tar --strip-components 1 -xzf  $HOME/node_release-$node_ver.tar.gz
-				cd - >/dev/null
-				rm ./node_release-$node_ver.tar.gz
 			fi
 			# get the new node version number
 			new_ver=$(LC_ALL=C node -v 2>&1)
@@ -506,6 +629,11 @@ if [ $doInstall == 1 ]; then
 		mkdir installers 2>/dev/null
 	fi
 
+	if [ "$testmode." != "." ]; then
+		git fetch origin develop:develop  >/dev/null 2>&1
+		git checkout develop >/dev/null
+	fi
+
 	newver=$(grep -i version package.json | awk -F\" '{ print $4 }')
 
 	if [ $newver == '2.11.0' -a $ARM == 'x86_64' ]; then
@@ -531,13 +659,9 @@ if [ $doInstall == 1 ]; then
 	  	   echo "erase vendor package-lock.json to allow later nan/fsevents install on mac" >>$logfile
 	  fi
 	fi
-	if [ -d defaultmodules ]; then 
-           css_dir=config
-        fi
-    	if [ ! -e $css_dir/custom.css ]; then
-       		touch $css_dir/custom.css
-    	fi
-   
+    if [ ! -e css/custom.css ]; then
+       touch css/custom.css
+    fi
     if [ $newver == '2.13.0' ]; then
       # fix downlevel node-ical
       sed '/node-ical/ c \         "node-ical\"\:\"^0.12.1\",' < package.json >new_package.json
@@ -630,22 +754,28 @@ if command_exists plymouth; then
 		if [ ! -d ~/MagicMirror/splashscreen ]; then
 			mkdir ~/MagicMirror/splashscreen
 			cd ~/MagicMirror/splashscreen
-			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/splash.png >splash.png
-			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/MagicMirror.plymouth >MagicMirror.plymouth
-			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/MagicMirror.script >MagicMirror.script
+
+			#curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/splash.png >splash.png
+			curl -sL https://github.com/sdetweil/MagicMirror_scripts/blob/master/splashscreen/splash.png >splash.png
+			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/refs/heads/master/splashscreen/MagicMirror.plymouth >MagicMirror.plymouth
+			#curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/MagicMirror.plymouth >MagicMirror.plymouth
+			curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/refs/heads/master/splashscreen/MagicMirror.script >MagicMirror.script
+			#curl -sL https://raw.githubusercontent.com/sdetweil/MagicMirror_scripts/master/MagicMirror.script >MagicMirror.script
 			cd - >/dev/null
 		fi
-		if sudo cp ~/MagicMirror/splashscreen/splash.png $THEME_DIR/MagicMirror/splash.png && sudo cp ~/MagicMirror/splashscreen/MagicMirror.plymouth $THEME_DIR/MagicMirror/MagicMirror.plymouth && sudo cp ~/MagicMirror/splashscreen/MagicMirror.script $THEME_DIR/MagicMirror/MagicMirror.script; then
-			echo
-			if [ "$(which plymouth-set-default-theme)." != "." ]; then
-				if sudo plymouth-set-default-theme -R MagicMirror; then
-					echo -e "\e[92mSplashscreen: Changed theme to MagicMirror successfully.\e[0m" | tee -a $logfile
-				else
-					echo -e "\e[91mSplashscreen: Couldn't change theme to MagicMirror!\e[0m" | tee -a $logfile
+		if [ $OS != "bookworm" ]; then 
+			if sudo cp ~/MagicMirror/splashscreen/splash.png $THEME_DIR/MagicMirror/splash.png && sudo cp ~/MagicMirror/splashscreen/MagicMirror.plymouth $THEME_DIR/MagicMirror/MagicMirror.plymouth && sudo cp ~/MagicMirror/splashscreen/MagicMirror.script $THEME_DIR/MagicMirror/MagicMirror.script; then
+				echo
+				if [ "$(which plymouth-set-default-theme)." != "." ]; then
+					if sudo plymouth-set-default-theme -R MagicMirror; then
+						echo -e "\e[92mSplashscreen: Changed theme to MagicMirror successfully.\e[0m" | tee -a $logfile
+					else
+						echo -e "\e[91mSplashscreen: Couldn't change theme to MagicMirror!\e[0m" | tee -a $logfile
+					fi
 				fi
+			else
+				echo -e "\e[91mSplashscreen: Copying theme failed!\e[0m" | tee -a $logfile
 			fi
-		else
-			echo -e "\e[91mSplashscreen: Copying theme failed!\e[0m" | tee -a $logfile
 		fi
 	else
 		echo -e "\e[91mSplashscreen: Themes folder doesn't exist!\e[0m" | tee -a $logfile
