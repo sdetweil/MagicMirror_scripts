@@ -1,5 +1,5 @@
 #!/bin/bash
-cd ~/MagicMirror
+cd $(dirname "$0")/..
 
 if [ $(ps -ef | grep -v grep | grep -i -e xway -e labwc | wc -l) -ne 0 ]; then 
    # if WAYLAND_DISPLAYis set, use it, else set to -0
