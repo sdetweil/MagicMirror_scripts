@@ -49,6 +49,11 @@ repo=master
 if [ "${testmode}." != "." ]; then
 	repo=develop
 fi
+# checking for 32 bit user space
+t=$(file $(which bash) | grep armhf)
+if [ "$t." != "." ]; then
+	t="--arch armv7l"
+fi 
 
 get_nvm_command(){
 	if [ "$NVM_DIR." != "." -a -d $NVM_DIR ]; then
@@ -416,7 +421,7 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 				if [ "$t." != "." ]; then
 					t="--arch armv7l"
 				fi 
-				eval "$nvm_command" >>$logfile
+				eval "$nvm_command $t" >>$logfile
 				hash -r
 				nodev=$(node -v 2>/dev/null)
 				echo "node version $nodev was installed" >> $logfile
@@ -494,7 +499,7 @@ if [ $npminstalled == $false ]; then
 			fi
 			
 			if [ "$nvm_command." != "." ]; then
-				eval "$nvm_command" >>$logfile
+				eval "$nvm_command $t" >>$logfile
 			else
 
 				# sudo apt-get install --only-upgrade libstdc++6
