@@ -500,6 +500,7 @@ if [ $npminstalled == $false ]; then
 			
 			if [ "$nvm_command." != "." ]; then
 				eval "$nvm_command $t" >>$logfile
+				hash -r
 			else
 
 				# sudo apt-get install --only-upgrade libstdc++6
