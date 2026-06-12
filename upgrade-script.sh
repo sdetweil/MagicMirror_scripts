@@ -34,6 +34,11 @@ repo=master
 if [ "${testmode}." != "." ]; then
 	repo=develop
 fi
+# checking for 32 bit user space
+ar=$(file $(which bash) | grep armhf)
+if [ "$ar." != "." ]; then
+	ar=":armv7l"
+fi
 
 get_nvm_command(){
 	if [ "$NVM_DIR." != "." -a -d $NVM_DIR ]; then
@@ -252,13 +257,7 @@ if [ -d ~/$mfn ]; then
 			if [ $arch != 'armv6l' ]; then
 				# check for node installed
 				nv=$(node -v 2>/dev/null)
-				# if not
-				t=$(dpkg --print-architecture| grep armhf)
-				echo "architecture from dpkg is $t" >>$logfile
-				ar=
-				if [ "$t." != "." ]; then
-					ar=":armv7l"
-				fi
+
 				if [ "$nv." == "." ]; then
 					echo node not installed, trying via apt-get >>$logfile
 					if [ $doinstalls == $true ]; then
@@ -310,9 +309,6 @@ if [ -d ~/$mfn ]; then
 						fi
 						# if needed
 						if verlt $NODE_CURRENT $NODE_TESTED; then
-							if [ "$t." != "." ]; then
-								ar="--arch armv7l"
-							fi
 							echo -e "\e[96minstalling correct version of node and npm, please wait\e[0m" | tee -a $logfile
 							#echo using $nvm_command
 							eval "$nvm_command" >>$logfile
@@ -422,12 +418,6 @@ if [ -d ~/$mfn ]; then
 	# Install or upgrade node if necessary.
 	if $NODE_INSTALL; then
 		if [ $doinstalls == $true ]; then
-			t=$(dpkg --print-architecture| grep armhf)
-			echo "architecture from dpkg is $t" >>$logfile
-			ar=
-			if [ "$t." != "." ]; then
-				ar=":armv7l"
-			fi
 			echo -e "\e[96mInstalling Node.js ...\e[0m" | tee -a $logfile
 			nvm_command=$(get_nvm_command "$NODE_TESTED" "$NODE_CURRENT" "$ar")
 			echo using $nvm_command
