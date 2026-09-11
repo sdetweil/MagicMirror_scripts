@@ -508,6 +508,7 @@ if [ $npminstalled == $false ]; then
 				echo Node release info = $node_info >> $logfile
 				#sudo apt-get install -y nodejs
 				if [ "$(echo $node_info | grep -i "Unsupported architecture")." == "." -a $ARM != "armv6l" ]; then
+					sudo apt-get update
 					sudo apt-get install -y nodejs
 				else
 					echo node $NODE_STABLE_BRANCH version installer not available, doing manually >>$logfile
