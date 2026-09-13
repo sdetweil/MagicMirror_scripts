@@ -8,7 +8,7 @@ if [ $USER == 'root' ]; then
 	 exit 1
 fi
 
-NODE_OPTIONS=--max_old_space_size=4096
+NODE_OPTIONS="--max_old_space_size=4096 --legacy-peer-deps"
 
 echo -e "\e[0m"
 echo '$$\      $$\                     $$\           $$\      $$\ $$\                                          $$$$$$\'
@@ -366,7 +366,7 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 			t="--arch armv7l"
 		fi 
 		echo "node platform type ='$t'" >>$logfile
-		ni=$(sudo apt-get install "nodejs$t" "npm$t" -y 2>&1)
+		ni=$(sudo apt-get install "nodejs$t" "npm$t" -y 2>&1 | -tee -a $logfile)
 		# log it
 		echo $ni >>$logfile
 		# if npm not installed		
@@ -696,7 +696,7 @@ if [ $doInstall == 1 ]; then
 	NPM_MAJOR=$(echo ${NPM_MAJOR[0]} | awk '{$1=$1};1')
 	# compare
 	if [ $NPM_MAJOR -ge 8 ]; then
-		JustProd="--no-audit --no-fund --no-update-notifier" 
+		JustProd="--no-audit --no-fund --no-update-notifier"
 	fi
 	rm package-lock.json 2>/dev/null
 	npm_i_r=$(LC_ALL=C  npm  $forced_arch $Justprod --omit=dev $NODE_OPTIONS install)
