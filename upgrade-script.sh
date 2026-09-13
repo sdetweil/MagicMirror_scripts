@@ -663,7 +663,11 @@ if [ -d ~/$mfn ]; then
 	cd ~/$mfn
 
 		# save custom.css
-		cd css
+		if verlt "2.35.0" newver; then
+			cd css
+		else
+			cd config
+		fi
 			if [ -f custom.css ]; then
 				echo "saving custom.css" | tee -a $logfile
 				cp -p custom.css save_custom.css
@@ -1288,7 +1292,11 @@ if [ -d ~/$mfn ]; then
 		  exit 3
 		fi
 		# should be in MagicMirror base
-		cd css
+		if verlt "2.35.0" newver; then
+			cd css
+		else
+			cd config
+		fi
 			# restore  custom.css
 			if [ -f save_custom.css ]; then
 				echo "restoring custom.css" | tee -a $logfile

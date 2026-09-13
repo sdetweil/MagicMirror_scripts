@@ -671,8 +671,10 @@ if [ $doInstall == 1 ]; then
 	  	   echo "erase vendor package-lock.json to allow later nan/fsevents install on mac" >>$logfile
 	  fi
 	fi
-    if [ ! -e css/custom.css ]; then
+	 if verlt "2.35.0" $newver; then
        touch css/custom.css
+    else
+       touch config/custom.css
     fi
     if [ $newver == '2.13.0' ]; then
       # fix downlevel node-ical
