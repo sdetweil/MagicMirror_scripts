@@ -663,7 +663,7 @@ if [ -d ~/$mfn ]; then
 	cd ~/$mfn
 
 		# save custom.css
-		if verlt "2.35.0" newver; then
+		if verlt "2.35.0" remote_version; then
 			cd css
 		else
 			cd config
@@ -1037,6 +1037,13 @@ if [ -d ~/$mfn ]; then
 										fi
 										done_update=`date +"completed - %a %b %e %H:%M:%S %Z %Y"`
 										echo npm install $done_update on base >> $logfile
+										$(verlte  "2.38.0" "$remote_version")
+										r=$?
+										# if its the 64 bit only electron, and we are running 32 bit mode
+										if [ r == 1 -a "$ar." != "."]; then
+										   # install the last 32 bit electron
+										   npm install @electron@43 >>$logfile 2>&1
+										fi
 										if [ ! -e node_modules/@electron/rebuild ]; then	  
 										   npm install @electron/rebuild >>$logfile 2>&1
 										fi    
