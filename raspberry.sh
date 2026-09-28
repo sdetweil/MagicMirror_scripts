@@ -366,7 +366,7 @@ if [ $mac != 'Darwin' -a $ARM != "armv6l" ]; then
 			t="--arch armv7l"
 		fi 
 		echo "node platform type ='$t'" >>$logfile
-		ni=$(sudo apt-get install "nodejs$t" "npm$t" -y 2>&1 | -tee -a $logfile)
+		ni=$(sudo apt-get install "nodejs$t" "npm$t" -y 2>&1 | tee -a $logfile)
 		# log it
 		echo $ni >>$logfile
 		# if npm not installed		
