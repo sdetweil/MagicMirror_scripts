@@ -202,7 +202,7 @@ OS=$(cat /etc/os-release 2>/dev/null  | grep VERSION_CODENAME |  awk -F= '{print
 
 if [ "$OS." = "buster." ]; then
 	echo
-	echo 'MagicMirror version 2.28.0 (July 1 2024), will not run on OS level buster, due to system limitations' | tee -a $logfile
+	echo 'MagicMirror version since 2.28.0 (July 1 2024), will not run on OS level buster, due to system limitations' | tee -a $logfile
 	echo
 	echo you must upgrade to a newer release of the raspi OS before continuing
 	echo

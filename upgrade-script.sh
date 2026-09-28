@@ -231,7 +231,7 @@ if [ -d ~/$mfn ]; then
 		NODE_MAJOR=22
 		if [ "${OS,,}." == "buster." ]; then
 			echo
-			echo 'MagicMirror version 2.28.0 (July 1 2024), will not run on OS level buster, due to system limitations' | tee -a $logfile
+			echo 'MagicMirror versions since 2.28.0 (July 1 2024), will not run on OS level buster, due to system limitations' | tee -a $logfile
 			echo
 			echo you must upgrade to a newer release of the raspi OS at some point
 			echo
