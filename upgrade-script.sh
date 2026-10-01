@@ -1040,7 +1040,7 @@ if [ -d ~/$mfn ]; then
 										$(verlte  "2.38.0" "$remote_version")
 										r=$?
 										# if its the 64 bit only electron, and we are running 32 bit mode
-										if [ r == 1 -a "$ar." != "."]; then
+										if [ r == 1 -a "$ar." != "." ]; then
 										   # install the last 32 bit electron
 										   npm install @electron@43 >>$logfile 2>&1
 										fi
