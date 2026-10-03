@@ -729,7 +729,7 @@ if [ $doInstall == 1 ]; then
 		$(verlte  "2.38.0" "$remote_version")
 		r=$?
 		# if its the 64 bit only electron, and we are running 32 bit mode
-		if [ r == 0 -a "t." != "." ]; then
+		if [ r == 0 -a "$t." != "." ]; then
 		   # install the last 32 bit electron
 		   echo installing 32 bit electron on $remote_version | tee -a $logfile
 		   npm install @electron@43 >>$logfile 2>&1
