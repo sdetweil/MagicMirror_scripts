@@ -738,7 +738,7 @@ if [ $doInstall == 1 ]; then
 			el_version=$(grep '\"electron\":' package.json | awk -F: '{print $2}' |  tr -d '\"^ ')
 			if [ ${el_version:0:4} == '44.4' ]; then
 				echo installing electron @ 44.5.1 on $remote_version | tee -a $logfile
-				npm install  --no-save electron@44.5.1 >/dev/null 2>&1
+				npm install  --no-save electron@44.5.1 >>$logfile 2>&1
 			fi
 		fi
 		if [ ! -e node_modules/@electron/rebuild ]; then	  
